@@ -16,7 +16,7 @@ function readDB() {
                 {
                     username: 'SuperAdmin',
                     password: 'password123',
-                    isPasswordChanged: true, // Master account pehle se set hai
+                    isPasswordChanged: true,
                     role: 'ADMIN',
                     points: 100000000,
                     createdBy: 'SYSTEM'
@@ -75,18 +75,17 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS - DIRECT DASHBOARD OR CHANGE PASSWORD CHECK
+// 2. LOGIN PROCESS
 app.post('/login-process', (req, res) => {
     const { username, password } = req.body;
     const db = readDB();
     let user = db.users.find(u => u.username === username);
 
-    // Agar user nahi hai toh naya user create kar rahe hain (first time login flag ke sath)
     if (!user) {
         user = {
             username: username,
             password: password,
-            isPasswordChanged: false, // Abhi tak password change nahi kiya
+            isPasswordChanged: false,
             role: 'USER',
             points: 1000,
             createdBy: 'System'
@@ -96,17 +95,14 @@ app.post('/login-process', (req, res) => {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    // Password verification
     if (user.password !== password) {
         return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
     }
 
-    // Agar user ne pehle naya password nahi banaya hai toh Change Password page dikhao
     if (!user.isPasswordChanged) {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    // Ek baar naya password ban gaya hai toh SEEDHA DASHBOARD kholega
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
@@ -161,15 +157,17 @@ app.post('/update-password', (req, res) => {
     let user = db.users.find(u => u.username === username);
     if (user) {
         user.password = newPassword;
-        user.isPasswordChanged = true; // Permanently saved: ab dubara change password nahi maangega
+        user.isPasswordChanged = true;
         writeDB(db);
     }
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 4. MAIN DASHBOARD PAGE
+// 4. MAIN DASHBOARD PAGE (DYNAMIC LOGGED-IN USERNAME DISPLAY)
 app.get('/dashboard', (req, res) => {
+    const loggedInUser = req.query.username || 'SuperAdmin';
     const db = readDB();
+
     let usersListHtml = db.users.map(u => `
         <tr style="border-bottom: 1px solid #ddd;">
             <td style="padding: 6px 8px; font-weight: bold; color: #0088cc;">${u.username}</td>
@@ -224,8 +222,10 @@ app.get('/dashboard', (req, res) => {
                 </div>
 
                 <div class="flex items-center space-x-2 ml-4">
-                    <span class="font-semibold text-white">29demo ▾</span>
-                    <div class="relative">
+                    <!-- DYNAMIC USERNAME BASED ON LOGGED IN USER -->
+                    <span class="font-semibold text-white cursor-pointer">${loggedInUser} ▾</span>
+                    <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
+                    <div class="relative ml-1">
                         <input type="text" placeholder="All Client" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
                         <i class="fa-solid fa-magnifying-glass absolute right-1.5 top-1.5 text-gray-500 text-[10px]"></i>
                     </div>
@@ -317,6 +317,7 @@ app.get('/dashboard', (req, res) => {
                         <button onclick="document.getElementById('addAccountModal').classList.add('hidden')" class="text-gray-500 font-bold">&times;</button>
                     </div>
                     <form action="/api/users/create" method="POST" class="space-y-3">
+                        <input type="hidden" name="createdBy" value="${loggedInUser}">
                         <div>
                             <label class="block font-semibold mb-1">Username:</label>
                             <input type="text" name="username" required placeholder="Enter Username" class="w-full border p-2 rounded">
@@ -344,14 +345,14 @@ app.get('/dashboard', (req, res) => {
 });
 
 app.post('/api/users/create', (req, res) => {
-    const { username, points } = req.body;
+    const { username, points, createdBy } = req.body;
     const db = readDB();
     if (db.users.find(u => u.username === username)) {
-        return res.send("<script>alert('User already exists!'); window.location='/dashboard';</script>");
+        return res.send(`<script>alert('User already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'SuperAdmin')}';</script>`);
     }
-    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
+    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'SuperAdmin', createdAt: new Date() });
     writeDB(db);
-    res.send("<script>alert('Account created successfully!'); window.location='/dashboard';</script>");
+    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'SuperAdmin')}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
