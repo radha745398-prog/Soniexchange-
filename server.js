@@ -54,7 +54,7 @@ app.get('/', (req, res) => {
                         <span class="text-gray-600 text-sm font-semibold">Sign In</span>
                         <div class="border-t border-gray-300 flex-grow ml-3"></div>
                     </div>
-                    <form action="/login-process" method="POST" class="space-y-4">
+                    <form action="/login-process" method="POST" class="space-y-4" autocomplete="off">
                         <div>
                             <input type="text" name="username" required placeholder="Username" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
@@ -74,11 +74,14 @@ app.get('/', (req, res) => {
 
 // 2. LOGIN PROCESS
 app.post('/login-process', (req, res) => {
-    const { username, password } = req.body;
-    const db = readDB();
-    let user = db.users.find(u => u.username === username);
+    let { username, password } = req.body;
+    username = username.trim();
+    password = password.trim();
 
-    // Agar user database mein nahi hai, toh use naya user maan kar pehle password change par bhejo
+    const db = readDB();
+    let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+
+    // Agar user pehle se nahi hai toh naya user create karo aur password change ke liye bhejo
     if (!user) {
         db.users.push({
             username: username,
@@ -86,24 +89,23 @@ app.post('/login-process', (req, res) => {
             isPasswordChanged: false,
             role: 'USER',
             points: 1000,
-            createdBy: 'System'
+            createdBy: 'Soniexchange'
         });
         writeDB(db);
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    // Password check
+    // Password match check
     if (user.password !== password) {
         return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
     }
 
-    // Agar password change nahi hua hai toh change-password page dikhao
-    if (!user.isPasswordChanged) {
-        return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
+    // Agar pehle se password change ho chuka hai toh seedha dashboard par bhejo, change-password par nahi
+    if (user.isPasswordChanged || user.username === 'Soniexchange') {
+        return res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     }
 
-    // Sab theek hai toh seedha dashboard par jao
-    res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
+    res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
 });
 
 // 3. CHANGE PASSWORD PAGE
@@ -124,7 +126,7 @@ app.get('/change-password', (req, res) => {
                 <div class="text-center font-bold text-gray-700 text-base mb-4 flex items-center justify-center">
                     Login 🔐
                 </div>
-                <form action="/update-password" method="POST" class="space-y-3 text-xs">
+                <form action="/update-password" method="POST" class="space-y-3 text-xs" autocomplete="off">
                     <input type="hidden" name="username" value="${username}">
                     <div>
                         <label class="block font-semibold text-gray-600 mb-1">Current Password:</label>
@@ -346,10 +348,10 @@ app.get('/dashboard', (req, res) => {
 app.post('/api/users/create', (req, res) => {
     const { username, points, createdBy } = req.body;
     const db = readDB();
-    if (db.users.find(u => u.username === username)) {
+    if (db.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
         return res.send(`<script>alert('User already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
     }
-    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'Soniexchange', createdAt: new Date() });
+    db.users.push({ username: username.trim(), password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'Soniexchange', createdAt: new Date() });
     writeDB(db);
     res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
 });
