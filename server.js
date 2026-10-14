@@ -32,7 +32,59 @@ function writeDB(data) {
 
 readDB();
 
+// --- STEP 1: EXACT SIGN-IN PAGE LIKE REFERENCE ---
 app.get('/', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Soni - Sign In</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-between p-6 text-white font-sans">
+            
+            <div class="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
+                <!-- TOP LOGO / TEXT -->
+                <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white">Soni</h1>
+
+                <!-- SIGN IN BOX -->
+                <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="border-t border-gray-300 flex-grow mr-3"></div>
+                        <span class="text-gray-600 text-sm font-semibold">Sign In</span>
+                        <div class="border-t border-gray-300 flex-grow ml-3"></div>
+                    </div>
+
+                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                        <div>
+                            <input type="text" id="username" required placeholder="Username" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <input type="password" id="password" required placeholder="Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow">
+                            Login →
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                function handleLogin(event) {
+                    event.preventDefault();
+                    // Bina kisi condition ke seedha dashboard par bhej dega
+                    window.location.href = "/dashboard";
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// --- STEP 2: FULL DASHBOARD PAGE ---
+app.get('/dashboard', (req, res) => {
     const db = readDB();
     let usersListHtml = db.users.map(u => `
         <tr style="border-bottom: 1px solid #eee;">
@@ -62,7 +114,7 @@ app.get('/', (req, res) => {
                     <span class="font-black text-sm tracking-wider text-cyan-400">SONI EXCHANGE</span>
                 </div>
                 <div>
-                    <span class="bg-blue-900 px-3 py-1 rounded font-bold border border-blue-700">Admin Panel</span>
+                    <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded font-bold transition">Logout</a>
                 </div>
             </header>
 
@@ -136,11 +188,11 @@ app.post('/api/users/create', (req, res) => {
     const { username, points } = req.body;
     const db = readDB();
     if (db.users.find(u => u.username === username)) {
-        return res.send("<script>alert('User already exists!'); window.location='/';</script>");
+        return res.send("<script>alert('User already exists!'); window.location='/dashboard';</script>");
     }
     db.users.push({ username, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
     writeDB(db);
-    res.send("<script>alert('Account created successfully!'); window.location='/';</script>");
+    res.send("<script>alert('Account created successfully!'); window.location='/dashboard';</script>");
 });
 
 const PORT = process.env.PORT || 5000;
