@@ -16,7 +16,7 @@ function readDB() {
                 {
                     username: 'SuperAdmin',
                     password: 'password123',
-                    mustChangePassword: false,
+                    isPasswordChanged: true, // Master account pehle se set hai
                     role: 'ADMIN',
                     points: 100000000,
                     createdBy: 'SYSTEM'
@@ -34,7 +34,7 @@ function writeDB(data) {
 
 readDB();
 
-// 1. SIGN IN PAGE
+// 1. MAIN HOMEPAGE - PROPER LOGIN SCREEN ONLY
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -45,9 +45,12 @@ app.get('/', (req, res) => {
             <title>Soni - Sign In</title>
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-between p-6 text-white font-sans">
-            <div class="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
+        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
+            <div class="flex flex-col items-center justify-center w-full max-w-sm">
+                <!-- LOGO -->
                 <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white">Soni</h1>
+                
+                <!-- LOGIN BOX -->
                 <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full">
                     <div class="flex items-center justify-center mb-6">
                         <div class="border-t border-gray-300 flex-grow mr-3"></div>
@@ -72,26 +75,42 @@ app.get('/', (req, res) => {
     `);
 });
 
-// LOGIN PROCESS WITH PERMANENT FIX
+// 2. LOGIN PROCESS - DIRECT DASHBOARD OR CHANGE PASSWORD CHECK
 app.post('/login-process', (req, res) => {
     const { username, password } = req.body;
     const db = readDB();
     let user = db.users.find(u => u.username === username);
-    
+
+    // Agar user nahi hai toh naya user create kar rahe hain (first time login flag ke sath)
     if (!user) {
-        db.users.push({ username, password, mustChangePassword: true, role: 'USER', points: 1000, createdBy: 'System' });
+        user = {
+            username: username,
+            password: password,
+            isPasswordChanged: false, // Abhi tak password change nahi kiya
+            role: 'USER',
+            points: 1000,
+            createdBy: 'System'
+        };
+        db.users.push(user);
         writeDB(db);
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    if (user.mustChangePassword) {
+    // Password verification
+    if (user.password !== password) {
+        return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
+    }
+
+    // Agar user ne pehle naya password nahi banaya hai toh Change Password page dikhao
+    if (!user.isPasswordChanged) {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
+    // Ek baar naya password ban gaya hai toh SEEDHA DASHBOARD kholega
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 2. CHANGE PASSWORD PAGE
+// 3. CHANGE PASSWORD PAGE (FIRST TIME ONLY)
 app.get('/change-password', (req, res) => {
     const username = req.query.username || 'User';
     res.send(`
@@ -142,13 +161,13 @@ app.post('/update-password', (req, res) => {
     let user = db.users.find(u => u.username === username);
     if (user) {
         user.password = newPassword;
-        user.mustChangePassword = false; // Yeh permanent fix hai, ab dubara password change nahi maangega
+        user.isPasswordChanged = true; // Permanently saved: ab dubara change password nahi maangega
         writeDB(db);
     }
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 3. DASHBOARD PAGE
+// 4. MAIN DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     const db = readDB();
     let usersListHtml = db.users.map(u => `
@@ -330,7 +349,7 @@ app.post('/api/users/create', (req, res) => {
     if (db.users.find(u => u.username === username)) {
         return res.send("<script>alert('User already exists!'); window.location='/dashboard';</script>");
     }
-    db.users.push({ username, password: 'password123', mustChangePassword: true, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
+    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
     writeDB(db);
     res.send("<script>alert('Account created successfully!'); window.location='/dashboard';</script>");
 });
