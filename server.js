@@ -14,8 +14,8 @@ function readDB() {
         const initialData = {
             users: [
                 {
-                    username: 'SuperAdmin',
-                    password: 'password123',
+                    username: 'Soniexchange',
+                    password: 'Lyy@5656',
                     isPasswordChanged: true,
                     role: 'ADMIN',
                     points: 100000000,
@@ -34,7 +34,7 @@ function writeDB(data) {
 
 readDB();
 
-// 1. MAIN HOMEPAGE - PROPER LOGIN SCREEN ONLY
+// 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -47,10 +47,7 @@ app.get('/', (req, res) => {
         </head>
         <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
             <div class="flex flex-col items-center justify-center w-full max-w-sm">
-                <!-- LOGO -->
                 <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white">Soni</h1>
-                
-                <!-- LOGIN BOX -->
                 <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full">
                     <div class="flex items-center justify-center mb-6">
                         <div class="border-t border-gray-300 flex-grow mr-3"></div>
@@ -81,32 +78,35 @@ app.post('/login-process', (req, res) => {
     const db = readDB();
     let user = db.users.find(u => u.username === username);
 
+    // Agar user database mein nahi hai, toh use naya user maan kar pehle password change par bhejo
     if (!user) {
-        user = {
+        db.users.push({
             username: username,
             password: password,
             isPasswordChanged: false,
             role: 'USER',
             points: 1000,
             createdBy: 'System'
-        };
-        db.users.push(user);
+        });
         writeDB(db);
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
+    // Password check
     if (user.password !== password) {
         return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
     }
 
+    // Agar password change nahi hua hai toh change-password page dikhao
     if (!user.isPasswordChanged) {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
+    // Sab theek hai toh seedha dashboard par jao
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 3. CHANGE PASSWORD PAGE (FIRST TIME ONLY)
+// 3. CHANGE PASSWORD PAGE
 app.get('/change-password', (req, res) => {
     const username = req.query.username || 'User';
     res.send(`
@@ -163,9 +163,9 @@ app.post('/update-password', (req, res) => {
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 4. MAIN DASHBOARD PAGE (DYNAMIC LOGGED-IN USERNAME DISPLAY)
+// 4. MAIN DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
-    const loggedInUser = req.query.username || 'SuperAdmin';
+    const loggedInUser = req.query.username || 'Soniexchange';
     const db = readDB();
 
     let usersListHtml = db.users.map(u => `
@@ -222,7 +222,6 @@ app.get('/dashboard', (req, res) => {
                 </div>
 
                 <div class="flex items-center space-x-2 ml-4">
-                    <!-- DYNAMIC USERNAME BASED ON LOGGED IN USER -->
                     <span class="font-semibold text-white cursor-pointer">${loggedInUser} ▾</span>
                     <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
                     <div class="relative ml-1">
@@ -348,11 +347,11 @@ app.post('/api/users/create', (req, res) => {
     const { username, points, createdBy } = req.body;
     const db = readDB();
     if (db.users.find(u => u.username === username)) {
-        return res.send(`<script>alert('User already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'SuperAdmin')}';</script>`);
+        return res.send(`<script>alert('User already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
     }
-    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'SuperAdmin', createdAt: new Date() });
+    db.users.push({ username, password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'Soniexchange', createdAt: new Date() });
     writeDB(db);
-    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'SuperAdmin')}';</script>`);
+    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
