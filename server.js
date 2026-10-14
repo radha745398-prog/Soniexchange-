@@ -81,7 +81,6 @@ app.post('/login-process', (req, res) => {
     const db = readDB();
     let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
 
-    // Agar user pehle se nahi hai toh naya user create karo aur password change ke liye bhejo
     if (!user) {
         db.users.push({
             username: username,
@@ -95,12 +94,10 @@ app.post('/login-process', (req, res) => {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    // Password match check
     if (user.password !== password) {
         return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
     }
 
-    // Agar pehle se password change ho chuka hai toh seedha dashboard par bhejo, change-password par nahi
     if (user.isPasswordChanged || user.username === 'Soniexchange') {
         return res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     }
@@ -165,31 +162,9 @@ app.post('/update-password', (req, res) => {
     res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 4. MAIN DASHBOARD PAGE
+// 4. MAIN DASHBOARD PAGE (CLEANED UP WITHOUT TABLE & ADD ACCOUNT)
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const db = readDB();
-
-    let usersListHtml = db.users.map(u => `
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 6px 8px; font-weight: bold; color: #0088cc;">${u.username}</td>
-            <td style="padding: 6px 8px;">0.00</td>
-            <td style="padding: 6px 8px; text-align: center;"><input type="checkbox" checked class="w-3 h-3"></td>
-            <td style="padding: 6px 8px; text-align: center;"><input type="checkbox" checked class="w-3 h-3"></td>
-            <td style="padding: 6px 8px; font-weight: bold;">${u.points}</td>
-            <td style="padding: 6px 8px;">0</td>
-            <td style="padding: 6px 8px;">${u.role}</td>
-            <td style="padding: 6px 8px; text-align: center;">
-                <div class="inline-flex space-x-1">
-                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">D</button>
-                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">W</button>
-                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">L</button>
-                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">C</button>
-                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">P</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
 
     res.send(`
         <!DOCTYPE html>
@@ -206,6 +181,7 @@ app.get('/dashboard', (req, res) => {
         </head>
         <body class="bg-gray-100 min-h-screen flex flex-col text-xs">
 
+            <!-- TOP NAVBAR -->
             <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto">
                 <div class="flex items-center space-x-3">
                     <span class="font-serif font-black text-xl tracking-wider text-white">Soni</span>
@@ -234,6 +210,7 @@ app.get('/dashboard', (req, res) => {
             </header>
 
             <div class="flex flex-1 relative overflow-hidden">
+                <!-- 39 SPORTS SIDEBAR -->
                 <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-40 shadow-2xl border-r">
                     <div class="p-2.5 bg-gray-100 border-b flex justify-between items-center">
                         <span class="font-bold text-sm text-gray-800">Sports</span>
@@ -284,52 +261,10 @@ app.get('/dashboard', (req, res) => {
 
                 <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
-                <main class="flex-1 p-3 overflow-y-auto">
-                    <div class="flex justify-between items-center mb-3">
-                        <button onclick="document.getElementById('addAccountModal').classList.remove('hidden')" class="bg-gray-200 hover:bg-gray-300 font-bold px-3 py-1 rounded text-gray-700">Add Account</button>
-                    </div>
-
-                    <div class="bg-white rounded border shadow-sm overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-[11px]">
-                            <thead>
-                                <tr class="bg-gray-100 border-b text-gray-700 font-bold">
-                                    <th class="p-2 border-r">Account</th>
-                                    <th class="p-2 border-r">Credit Ref.</th>
-                                    <th class="p-2 border-r text-center">Partnership</th>
-                                    <th class="p-2 border-r text-center">Status</th>
-                                    <th class="p-2 border-r">Balance</th>
-                                    <th class="p-2 border-r">Exposure</th>
-                                    <th class="p-2 border-r">Type</th>
-                                    <th class="p-2 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${usersListHtml}
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- EMPTY CLEAN MAIN BODY -->
+                <main class="flex-1 p-4">
+                    <!-- Dashboard body clean -->
                 </main>
-            </div>
-
-            <div id="addAccountModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-lg shadow-xl p-5 w-full max-w-sm">
-                    <div class="flex justify-between items-center mb-3 border-b pb-2">
-                        <h3 class="font-bold text-gray-800">Add Account</h3>
-                        <button onclick="document.getElementById('addAccountModal').classList.add('hidden')" class="text-gray-500 font-bold">&times;</button>
-                    </div>
-                    <form action="/api/users/create" method="POST" class="space-y-3">
-                        <input type="hidden" name="createdBy" value="${loggedInUser}">
-                        <div>
-                            <label class="block font-semibold mb-1">Username:</label>
-                            <input type="text" name="username" required placeholder="Enter Username" class="w-full border p-2 rounded">
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">Points:</label>
-                            <input type="number" name="points" value="1000" class="w-full border p-2 rounded">
-                        </div>
-                        <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Create Account</button>
-                    </form>
-                </div>
             </div>
 
             <script>
@@ -343,17 +278,6 @@ app.get('/dashboard', (req, res) => {
         </body>
         </html>
     `);
-});
-
-app.post('/api/users/create', (req, res) => {
-    const { username, points, createdBy } = req.body;
-    const db = readDB();
-    if (db.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
-        return res.send(`<script>alert('User already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
-    }
-    db.users.push({ username: username.trim(), password: 'password123', isPasswordChanged: false, role: 'USER', points: Number(points) || 0, createdBy: createdBy || 'Soniexchange', createdAt: new Date() });
-    writeDB(db);
-    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
