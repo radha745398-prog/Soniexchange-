@@ -16,7 +16,6 @@ function readDB() {
                 {
                     username: 'Soniexchange',
                     password: 'Lyy@5656',
-                    isPasswordChanged: true,
                     role: 'ADMIN',
                     points: 100000000,
                     createdBy: 'SYSTEM'
@@ -72,7 +71,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS
+// 2. STRICT LOGIN PROCESS (GALAT DALNE PAR ERROR HI AAYEGA)
 app.post('/login-process', (req, res) => {
     let { username, password } = req.body;
     username = username.trim();
@@ -81,88 +80,16 @@ app.post('/login-process', (req, res) => {
     const db = readDB();
     let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
 
-    if (!user) {
-        db.users.push({
-            username: username,
-            password: password,
-            isPasswordChanged: false,
-            role: 'USER',
-            points: 1000,
-            createdBy: 'Soniexchange'
-        });
-        writeDB(db);
-        return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
+    // Agar user nahi mila ya password galat hai toh yahin rok do
+    if (!user || user.password !== password) {
+        return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
     }
 
-    if (user.password !== password) {
-        return res.send("<script>alert('Incorrect Password!'); window.history.back();</script>");
-    }
-
-    if (user.isPasswordChanged || user.username === 'Soniexchange') {
-        return res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
-    }
-
-    res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
+    // Sab theek hai toh seedha dashboard par jao
+    res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
 });
 
-// 3. CHANGE PASSWORD PAGE
-app.get('/change-password', (req, res) => {
-    const username = req.query.username || 'User';
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Soni - Change Password</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
-            <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white italic">Soni</h1>
-            <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-sm">
-                <div class="text-center font-bold text-gray-700 text-base mb-4 flex items-center justify-center">
-                    Login 🔐
-                </div>
-                <form action="/update-password" method="POST" class="space-y-3 text-xs" autocomplete="off">
-                    <input type="hidden" name="username" value="${username}">
-                    <div>
-                        <label class="block font-semibold text-gray-600 mb-1">Current Password:</label>
-                        <input type="password" name="currentPassword" required placeholder="Enter Current password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-gray-600 mb-1">New Password:</label>
-                        <input type="password" name="newPassword" required placeholder="Enter New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-gray-600 mb-1">Confirm Password:</label>
-                        <input type="password" name="confirmPassword" required placeholder="Confirm New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
-                    </div>
-                    <button type="submit" class="w-full bg-[#1b3d4f] hover:bg-[#122834] text-white font-bold py-2.5 rounded transition shadow mt-3">
-                        Change Password
-                    </button>
-                </form>
-            </div>
-        </body>
-        </html>
-    `);
-});
-
-app.post('/update-password', (req, res) => {
-    const { username, newPassword, confirmPassword } = req.body;
-    if (newPassword !== confirmPassword) {
-        return res.send("<script>alert('New Password and Confirm Password do not match!'); window.history.back();</script>");
-    }
-    const db = readDB();
-    let user = db.users.find(u => u.username === username);
-    if (user) {
-        user.password = newPassword;
-        user.isPasswordChanged = true;
-        writeDB(db);
-    }
-    res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
-});
-
-// 4. MAIN DASHBOARD PAGE (CLEANED UP WITHOUT TABLE & ADD ACCOUNT)
+// 3. MAIN DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -261,9 +188,8 @@ app.get('/dashboard', (req, res) => {
 
                 <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
-                <!-- EMPTY CLEAN MAIN BODY -->
                 <main class="flex-1 p-4">
-                    <!-- Dashboard body clean -->
+                    <!-- Clean Dashboard -->
                 </main>
             </div>
 
