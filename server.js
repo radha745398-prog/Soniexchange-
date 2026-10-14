@@ -15,6 +15,7 @@ function readDB() {
             users: [
                 {
                     username: 'SuperAdmin',
+                    password: 'password123',
                     role: 'ADMIN',
                     points: 100000000,
                     createdBy: 'SYSTEM'
@@ -32,7 +33,7 @@ function writeDB(data) {
 
 readDB();
 
-// --- STEP 1: EXACT SIGN-IN PAGE LIKE REFERENCE ---
+// 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -44,25 +45,20 @@ app.get('/', (req, res) => {
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
         <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-between p-6 text-white font-sans">
-            
             <div class="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
-                <!-- TOP LOGO / TEXT -->
                 <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white">Soni</h1>
-
-                <!-- SIGN IN BOX -->
                 <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full">
                     <div class="flex items-center justify-center mb-6">
                         <div class="border-t border-gray-300 flex-grow mr-3"></div>
                         <span class="text-gray-600 text-sm font-semibold">Sign In</span>
                         <div class="border-t border-gray-300 flex-grow ml-3"></div>
                     </div>
-
-                    <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <form action="/login-process" method="POST" class="space-y-4">
                         <div>
-                            <input type="text" id="username" required placeholder="Username" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
+                            <input type="text" name="username" required placeholder="Username" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
                         <div>
-                            <input type="password" id="password" required placeholder="Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
+                            <input type="password" name="password" required placeholder="Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
                         <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow">
                             Login →
@@ -70,20 +66,79 @@ app.get('/', (req, res) => {
                     </form>
                 </div>
             </div>
-
-            <script>
-                function handleLogin(event) {
-                    event.preventDefault();
-                    // Bina kisi condition ke seedha dashboard par bhej dega
-                    window.location.href = "/dashboard";
-                }
-            </script>
         </body>
         </html>
     `);
 });
 
-// --- STEP 2: FULL DASHBOARD PAGE ---
+app.post('/login-process', (req, res) => {
+    const { username, password } = req.body;
+    const db = readDB();
+    let user = db.users.find(u => u.username === username);
+    if (!user) {
+        db.users.push({ username, password, role: 'USER', points: 1000, createdBy: 'System' });
+        writeDB(db);
+    }
+    res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
+});
+
+// 2. CHANGE PASSWORD PAGE (Screenshot wala exact design)[span_3](start_span)[span_3](end_span)
+app.get('/change-password', (req, res) => {
+    const username = req.query.username || 'User';
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Soni - Change Password</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
+            <h1 class="text-5xl font-serif font-bold tracking-widest mb-8 text-white italic">Soni</h1>
+            <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-sm">
+                <div class="text-center font-bold text-gray-700 text-base mb-4 flex items-center justify-center">
+                    Login 🔐
+                </div>
+                <form action="/update-password" method="POST" class="space-y-3 text-xs">
+                    <input type="hidden" name="username" value="${username}">
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">Current Password:</label>
+                        <input type="password" name="currentPassword" required placeholder="Enter Current password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">New Password:</label>
+                        <input type="password" name="newPassword" required placeholder="Enter New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">Confirm Password:</label>
+                        <input type="password" name="confirmPassword" required placeholder="Confirm New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-gray-800 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <button type="submit" class="w-full bg-[#1b3d4f] hover:bg-[#122834] text-white font-bold py-2.5 rounded transition shadow mt-3">
+                        Change Password
+                    </button>
+                </form>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+app.post('/update-password', (req, res) => {
+    const { username, newPassword, confirmPassword } = req.body;
+    if (newPassword !== confirmPassword) {
+        return res.send("<script>alert('New Password and Confirm Password do not match!'); window.history.back();</script>");
+    }
+    const db = readDB();
+    let user = db.users.find(u => u.username === username);
+    if (user) {
+        user.password = newPassword;
+        writeDB(db);
+    }
+    res.redirect('/dashboard');
+});
+
+// 3. MAIN DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     const db = readDB();
     let usersListHtml = db.users.map(u => `
@@ -173,8 +228,8 @@ app.get('/dashboard', (req, res) => {
 
             <script>
                 function toggleSidebar() {
-                    const sidebar = document.getElementById('sportsSidebar');
-                    const overlay = document.getElementById('sidebarOverlay');
+                    let sidebar = document.getElementById('sportsSidebar');
+                    let overlay = document.getElementById('sidebarOverlay');
                     if(sidebar) sidebar.classList.toggle('-translate-x-full');
                     if(overlay) overlay.classList.toggle('hidden');
                 }
@@ -190,10 +245,10 @@ app.post('/api/users/create', (req, res) => {
     if (db.users.find(u => u.username === username)) {
         return res.send("<script>alert('User already exists!'); window.location='/dashboard';</script>");
     }
-    db.users.push({ username, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
+    db.users.push({ username, password: 'password123', role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
     writeDB(db);
     res.send("<script>alert('Account created successfully!'); window.location='/dashboard';</script>");
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}!`));
+app.listen(PORT, () => console.log('Server running!'));
