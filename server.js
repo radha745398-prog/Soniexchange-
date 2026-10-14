@@ -72,14 +72,13 @@ app.get('/', (req, res) => {
     `);
 });
 
-// LOGIN CHECK & REDIRECT LOGIC
+// LOGIN PROCESS
 app.post('/login-process', (req, res) => {
     const { username, password } = req.body;
     const db = readDB();
     let user = db.users.find(u => u.username === username);
     
     if (!user) {
-        // Naya random user banega aur ise password change karna hi padega
         db.users.push({ username, password, mustChangePassword: true, role: 'USER', points: 1000, createdBy: 'System' });
         writeDB(db);
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
@@ -92,7 +91,7 @@ app.post('/login-process', (req, res) => {
     res.redirect('/dashboard');
 });
 
-// 2. CHANGE PASSWORD PAGE (Screenshot wala exact design)[span_0](start_span)[span_0](end_span)
+// 2. CHANGE PASSWORD PAGE
 app.get('/change-password', (req, res) => {
     const username = req.query.username || 'User';
     res.send(`
@@ -143,21 +142,33 @@ app.post('/update-password', (req, res) => {
     let user = db.users.find(u => u.username === username);
     if (user) {
         user.password = newPassword;
-        user.mustChangePassword = false; // Password change hone ke baad flag hata diya
+        user.mustChangePassword = false;
         writeDB(db);
     }
     res.redirect('/dashboard');
 });
 
-// 3. MAIN DASHBOARD PAGE
+// 3. EXACT HUBUHU DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     const db = readDB();
     let usersListHtml = db.users.map(u => `
-        <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px; font-weight: bold;">${u.username}</td>
-            <td style="padding: 10px;"><span style="background: #0088cc; color:white; padding:3px 8px; border-radius:4px; font-size:11px;">${u.role}</span></td>
-            <td style="padding: 10px; font-weight: bold; color: #0b3c5d;">${u.points} Points</td>
-            <td style="padding: 10px; color: #666;">${u.createdBy}</td>
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 6px 8px; font-weight: bold; color: #0088cc;">${u.username}</td>
+            <td style="padding: 6px 8px;">0.00</td>
+            <td style="padding: 6px 8px; text-align: center;"><input type="checkbox" checked class="w-3 h-3"></td>
+            <td style="padding: 6px 8px; text-align: center;"><input type="checkbox" checked class="w-3 h-3"></td>
+            <td style="padding: 6px 8px; font-weight: bold;">${u.points}</td>
+            <td style="padding: 6px 8px;">0</td>
+            <td style="padding: 6px 8px;">${u.role}</td>
+            <td style="padding: 6px 8px; text-align: center;">
+                <div class="inline-flex space-x-1">
+                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">D</button>
+                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">W</button>
+                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">L</button>
+                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">C</button>
+                    <button class="bg-gray-200 text-gray-800 px-1.5 py-0.5 text-[10px] rounded font-bold">P</button>
+                </div>
+            </td>
         </tr>
     `).join('');
 
@@ -167,66 +178,119 @@ app.get('/dashboard', (req, res) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Soni Exchange - Dashboard</title>
+            <title>Soni Exchange - Admin Panel</title>
             <script src="https://cdn.tailwindcss.com"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>
+                body { font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; }
+            </style>
         </head>
-        <body class="bg-gray-100 min-h-screen flex flex-col font-sans">
-            <header class="bg-[#0b3c5d] text-white p-3 flex justify-between items-center shadow-md text-xs">
+        <body class="bg-gray-100 min-h-screen flex flex-col text-xs">
+
+            <!-- TOP BLUE HEADER NAVBAR -->
+            <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleSidebar()" class="text-white text-base focus:outline-none px-2 py-1 bg-black/20 rounded">
-                        <i class="fa-solid fa-bars"></i>
+                    <span class="font-serif font-black text-xl tracking-wider text-white">Soni</span>
+                    <button onclick="toggleSidebar()" class="text-white hover:bg-black/20 px-2 py-1 rounded focus:outline-none">
+                        <i class="fa-solid fa-bars text-sm"></i>
                     </button>
-                    <span class="font-black text-sm tracking-wider text-cyan-400">SONI EXCHANGE</span>
+                    <nav class="flex items-center space-x-2 font-medium">
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">List of Clients</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Market ▾</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Virtual Market ▾</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Reports ▾</a>
+                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Multi Login</a>
+                    </nav>
                 </div>
-                <div>
-                    <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded font-bold transition">Logout</a>
+
+                <div class="flex items-center space-x-2 ml-4">
+                    <span class="font-semibold text-white">29demo ▾</span>
+                    <div class="relative">
+                        <input type="text" placeholder="All Client" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute right-1.5 top-1.5 text-gray-500 text-[10px]"></i>
+                    </div>
                 </div>
             </header>
 
             <div class="flex flex-1 relative overflow-hidden">
-                <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out z-30 shadow-2xl border-r">
-                    <div class="p-3 bg-[#0b3c5d] text-white flex justify-between items-center">
-                        <span class="font-bold text-xs uppercase tracking-wider">Sports (39)</span>
-                        <button onclick="toggleSidebar()" class="text-white"><i class="fa-solid fa-xmark text-sm"></i></button>
+                
+                <!-- EXACT 39 SPORTS SIDEBAR (SCREENSHOT WALA) -->
+                <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-40 shadow-2xl border-r">
+                    <div class="p-2.5 bg-gray-100 border-b flex justify-between items-center">
+                        <span class="font-bold text-sm text-gray-800">Sports</span>
+                        <button onclick="toggleSidebar()" class="text-gray-600 hover:text-black"><i class="fa-solid fa-xmark text-sm"></i></button>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Football</div>
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Tennis</div>
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Cricket</div>
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Horse Racing</div>
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Basketball</div>
-                        <div class="px-2 py-1.5 hover:bg-gray-100 rounded border-b">Kabaddi</div>
+                    <div class="flex-1 overflow-y-auto p-2 space-y-1.5 text-[11px] font-semibold text-gray-700">
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Football</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Tennis</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Mixed Martial Arts</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Cricket</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Golf</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Boxing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Beach Volleyball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Table Tennis</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Futsal</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Horse Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>E Games</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Basketball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>MotoGP</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Chess</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Volleyball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Ice Hockey</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Badminton</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Cycling</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Motorbikes</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Athletics</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Basketball 3X3</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Sumo</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Virtual sports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Handball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Politics</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Motor Sports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Baseball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Rugby Union</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Rugby League</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Darts</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>American Football</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Snooker</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Soccer</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Esports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Greyhound Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Kabaddi</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Boat Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Esoccer</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Wrestling</span> <span>+</span></div>
                     </div>
                 </aside>
 
-                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 hidden z-20"></div>
+                <!-- OVERLAY -->
+                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
-                <main class="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
-                    <div class="bg-white rounded-lg shadow p-6 mb-6">
-                        <h2 class="font-bold text-sm text-gray-800 uppercase mb-4 border-b pb-2"><i class="fa-solid fa-user-plus mr-1 text-green-600"></i> Add New Account</h2>
-                        <form action="/api/users/create" method="POST" class="space-y-4 text-xs">
-                            <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Username / Client ID:</label>
-                                <input type="text" name="username" required placeholder="e.g. Master123" class="w-full border p-2 rounded">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Initial Points:</label>
-                                <input type="number" name="points" value="1000" class="w-full border p-2 rounded">
-                            </div>
-                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded shadow transition">CREATE ACCOUNT</button>
-                        </form>
+                <!-- MAIN CONTENT AREA -->
+                <main class="flex-1 p-3 overflow-y-auto">
+                    
+                    <!-- TOP SUB BAR / ACTION BUTTONS -->
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex space-x-2">
+                            <button onclick="document.getElementById('addAccountModal').classList.remove('hidden')" class="bg-gray-200 hover:bg-gray-300 font-bold px-3 py-1 rounded text-gray-700">Add Account</button>
+                        </div>
                     </div>
 
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="font-bold text-sm text-gray-800 uppercase mb-4"><i class="fa-solid fa-address-book mr-1 text-cyan-600"></i> Account List</h2>
-                        <table class="w-full text-left border-collapse text-xs">
+                    <!-- CLIENTS TABLE -->
+                    <div class="bg-white rounded border shadow-sm overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-[11px]">
                             <thead>
-                                <tr class="bg-gray-100 border-b border-gray-300 text-gray-700">
-                                    <th class="p-2">Username</th>
-                                    <th class="p-2">Role</th>
-                                    <th class="p-2">Points Balance</th>
-                                    <th class="p-2">Created By</th>
+                                <tr class="bg-gray-100 border-b text-gray-700 font-bold">
+                                    <th class="p-2 border-r">Account</th>
+                                    <th class="p-2 border-r">Credit Ref.</th>
+                                    <th class="p-2 border-r text-center">Partnership</th>
+                                    <th class="p-2 border-r text-center">Status</th>
+                                    <th class="p-2 border-r">Balance</th>
+                                    <th class="p-2 border-r">Exposure</th>
+                                    <th class="p-2 border-r">Type</th>
+                                    <th class="p-2 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -235,6 +299,27 @@ app.get('/dashboard', (req, res) => {
                         </table>
                     </div>
                 </main>
+            </div>
+
+            <!-- ADD ACCOUNT MODAL POPUP -->
+            <div id="addAccountModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-xl p-5 w-full max-w-sm">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <h3 class="font-bold text-gray-800">Add Account</h3>
+                        <button onclick="document.getElementById('addAccountModal').classList.add('hidden')" class="text-gray-500 font-bold">&times;</button>
+                    </div>
+                    <form action="/api/users/create" method="POST" class="space-y-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Username:</label>
+                            <input type="text" name="username" required placeholder="Enter Username" class="w-full border p-2 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Points:</label>
+                            <input type="number" name="points" value="1000" class="w-full border p-2 rounded">
+                        </div>
+                        <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Create Account</button>
+                    </form>
+                </div>
             </div>
 
             <script>
