@@ -72,7 +72,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// LOGIN PROCESS
+// LOGIN PROCESS WITH PERMANENT FIX
 app.post('/login-process', (req, res) => {
     const { username, password } = req.body;
     const db = readDB();
@@ -88,7 +88,7 @@ app.post('/login-process', (req, res) => {
         return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
-    res.redirect('/dashboard');
+    res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
 // 2. CHANGE PASSWORD PAGE
@@ -142,13 +142,13 @@ app.post('/update-password', (req, res) => {
     let user = db.users.find(u => u.username === username);
     if (user) {
         user.password = newPassword;
-        user.mustChangePassword = false;
+        user.mustChangePassword = false; // Yeh permanent fix hai, ab dubara password change nahi maangega
         writeDB(db);
     }
-    res.redirect('/dashboard');
+    res.redirect(`/dashboard?username=${encodeURIComponent(username)}`);
 });
 
-// 3. EXACT HUBUHU DASHBOARD PAGE
+// 3. DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     const db = readDB();
     let usersListHtml = db.users.map(u => `
@@ -187,7 +187,6 @@ app.get('/dashboard', (req, res) => {
         </head>
         <body class="bg-gray-100 min-h-screen flex flex-col text-xs">
 
-            <!-- TOP BLUE HEADER NAVBAR -->
             <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto">
                 <div class="flex items-center space-x-3">
                     <span class="font-serif font-black text-xl tracking-wider text-white">Soni</span>
@@ -215,70 +214,61 @@ app.get('/dashboard', (req, res) => {
             </header>
 
             <div class="flex flex-1 relative overflow-hidden">
-                
-                <!-- EXACT 39 SPORTS SIDEBAR (SCREENSHOT WALA) -->
                 <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col absolute inset-y-0 left-0 transform -translate-x-full transition-transform duration-200 ease-in-out z-40 shadow-2xl border-r">
                     <div class="p-2.5 bg-gray-100 border-b flex justify-between items-center">
                         <span class="font-bold text-sm text-gray-800">Sports</span>
                         <button onclick="toggleSidebar()" class="text-gray-600 hover:text-black"><i class="fa-solid fa-xmark text-sm"></i></button>
                     </div>
                     <div class="flex-1 overflow-y-auto p-2 space-y-1.5 text-[11px] font-semibold text-gray-700">
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Football</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Tennis</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Mixed Martial Arts</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Cricket</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Golf</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Boxing</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Beach Volleyball</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Table Tennis</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Futsal</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Horse Racing</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>E Games</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Basketball</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>MotoGP</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Chess</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Volleyball</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Ice Hockey</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Badminton</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Cycling</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Motorbikes</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Athletics</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Basketball 3X3</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Sumo</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Virtual sports</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Handball</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Politics</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Motor Sports</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Baseball</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Rugby Union</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Rugby League</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Darts</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>American Football</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Snooker</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Soccer</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Esports</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Greyhound Racing</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Kabaddi</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Boat Racing</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Esoccer</span> <span>+</span></div>
-                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b border-gray-100"><span>Wrestling</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Mixed Martial Arts</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Golf</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boxing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Beach Volleyball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Table Tennis</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Futsal</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Horse Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>E Games</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>MotoGP</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Chess</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Volleyball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Ice Hockey</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cycling</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motorbikes</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Athletics</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball 3X3</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Sumo</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Virtual sports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Handball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Politics</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motor Sports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Baseball</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby Union</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby League</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Darts</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>American Football</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Snooker</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Soccer</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esports</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Greyhound Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Kabaddi</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boat Racing</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esoccer</span> <span>+</span></div>
+                        <div class="flex justify-between items-center py-1 px-1.5 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Wrestling</span> <span>+</span></div>
                     </div>
                 </aside>
 
-                <!-- OVERLAY -->
                 <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
-                <!-- MAIN CONTENT AREA -->
                 <main class="flex-1 p-3 overflow-y-auto">
-                    
-                    <!-- TOP SUB BAR / ACTION BUTTONS -->
                     <div class="flex justify-between items-center mb-3">
-                        <div class="flex space-x-2">
-                            <button onclick="document.getElementById('addAccountModal').classList.remove('hidden')" class="bg-gray-200 hover:bg-gray-300 font-bold px-3 py-1 rounded text-gray-700">Add Account</button>
-                        </div>
+                        <button onclick="document.getElementById('addAccountModal').classList.remove('hidden')" class="bg-gray-200 hover:bg-gray-300 font-bold px-3 py-1 rounded text-gray-700">Add Account</button>
                     </div>
 
-                    <!-- CLIENTS TABLE -->
                     <div class="bg-white rounded border shadow-sm overflow-x-auto">
                         <table class="w-full text-left border-collapse text-[11px]">
                             <thead>
@@ -301,7 +291,6 @@ app.get('/dashboard', (req, res) => {
                 </main>
             </div>
 
-            <!-- ADD ACCOUNT MODAL POPUP -->
             <div id="addAccountModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
                 <div class="bg-white rounded-lg shadow-xl p-5 w-full max-w-sm">
                     <div class="flex justify-between items-center mb-3 border-b pb-2">
