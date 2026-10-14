@@ -16,6 +16,7 @@ function readDB() {
                 {
                     username: 'SuperAdmin',
                     password: 'password123',
+                    mustChangePassword: false,
                     role: 'ADMIN',
                     points: 100000000,
                     createdBy: 'SYSTEM'
@@ -71,18 +72,27 @@ app.get('/', (req, res) => {
     `);
 });
 
+// LOGIN CHECK & REDIRECT LOGIC
 app.post('/login-process', (req, res) => {
     const { username, password } = req.body;
     const db = readDB();
     let user = db.users.find(u => u.username === username);
+    
     if (!user) {
-        db.users.push({ username, password, role: 'USER', points: 1000, createdBy: 'System' });
+        // Naya random user banega aur ise password change karna hi padega
+        db.users.push({ username, password, mustChangePassword: true, role: 'USER', points: 1000, createdBy: 'System' });
         writeDB(db);
+        return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
-    res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
+
+    if (user.mustChangePassword) {
+        return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
+    }
+
+    res.redirect('/dashboard');
 });
 
-// 2. CHANGE PASSWORD PAGE (Screenshot wala exact design)[span_3](start_span)[span_3](end_span)
+// 2. CHANGE PASSWORD PAGE (Screenshot wala exact design)[span_0](start_span)[span_0](end_span)
 app.get('/change-password', (req, res) => {
     const username = req.query.username || 'User';
     res.send(`
@@ -133,6 +143,7 @@ app.post('/update-password', (req, res) => {
     let user = db.users.find(u => u.username === username);
     if (user) {
         user.password = newPassword;
+        user.mustChangePassword = false; // Password change hone ke baad flag hata diya
         writeDB(db);
     }
     res.redirect('/dashboard');
@@ -245,7 +256,7 @@ app.post('/api/users/create', (req, res) => {
     if (db.users.find(u => u.username === username)) {
         return res.send("<script>alert('User already exists!'); window.location='/dashboard';</script>");
     }
-    db.users.push({ username, password: 'password123', role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
+    db.users.push({ username, password: 'password123', mustChangePassword: true, role: 'USER', points: Number(points) || 0, createdBy: 'SuperAdmin', createdAt: new Date() });
     writeDB(db);
     res.send("<script>alert('Account created successfully!'); window.location='/dashboard';</script>");
 });
