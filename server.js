@@ -7,13 +7,23 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// --- FIREBASE INITIALIZATION DIRECTLY FROM FILE ---
+// --- FIREBASE INITIALIZATION (ROBUST FIX FOR RENDER) ---
 try {
-    const serviceAccount = require('./serviceAccountKey.json');
+    let serviceAccount;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        let rawKey = process.env.FIREBASE_SERVICE_ACCOUNT;
+        serviceAccount = JSON.parse(rawKey);
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+    } else {
+        serviceAccount = require('./serviceAccountKey.json');
+    }
+
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
-    console.log("Firebase Connected Successfully via serviceAccountKey.json!");
+    console.log("Firebase Connected Successfully!");
 } catch (error) {
     console.error("Firebase Connection Error:", error.message);
 }
@@ -484,7 +494,7 @@ app.get('/insertuser', async (req, res) => {
 
                 function validateForm() {
                     let clientName = document.getElementById('clientName').value;
-                    let password = document.getElementById('password').value;
+                    let serviceAccount = document.getElementById('password').value;
                     let retypePassword = document.getElementById('retypePassword').value;
                     
                     let firstLetterName = clientName.charAt(0);
@@ -493,15 +503,15 @@ app.get('/insertuser', async (req, res) => {
                         return false;
                     }
 
-                    let firstLetterPass = password.charAt(0);
-                    let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+                    let firstLetterPass = serviceAccount.charAt(0);
+                    let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(serviceAccount);
 
                     if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
                         alert('Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!');
                         return false;
                     }
 
-                    if (password !== retypePassword) {
+                    if (serviceAccount !== retypePassword) {
                         alert('Passwords do not match!');
                         return false;
                     }
@@ -538,7 +548,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 
     if (creator.txnPassword && creator.txnPassword !== txnPassword) {
-        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.blank();</script>`);
     }
 
     if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
