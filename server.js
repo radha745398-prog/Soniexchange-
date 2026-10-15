@@ -66,7 +66,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 </button>
                 <nav class="flex items-center space-x-2 font-medium">
                     <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">Dashboard</a>
-                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded font-bold underline">List of Clients</a>
+                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded font-bold bg-black/20">List of Clients</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Market ▾</a>
@@ -337,7 +337,7 @@ app.get('/dashboard', async (req, res) => {
                 <title>Dashboard</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+                <style>body { font-family: Arial, sans-serif; background-color: #e9ecef; margin: 0; }</style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, role)}
@@ -350,7 +350,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. LIST OF CLIENTS PAGE (CLIENT TABLE FIRST + OPTIONAL ADD FORM BUTTON)
+// 6. EXACT MATCH SCREENSHOT ACCOUNT LIST PAGE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -358,7 +358,6 @@ app.get('/insertuser', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { points: 100000000, role: 'ADMIN' };
 
-        // Fetch downline users from Firebase
         const q = query(collection(db, 'users'), where('createdBy', '==', loggedInUser));
         const querySnapshot = await getDocs(q);
         let clientsList = [];
@@ -367,11 +366,25 @@ app.get('/insertuser', async (req, res) => {
         });
 
         let tableRows = clientsList.map(c => `
-            <tr class="border-b hover:bg-gray-50">
-                <td class="p-2 border font-bold text-blue-600">${c.username}</td>
-                <td class="p-2 border">${c.role}</td>
-                <td class="p-2 border font-semibold">${c.points || 0}</td>
-                <td class="p-2 border text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</td>
+            <tr class="border-b bg-white text-gray-700 text-[11px]">
+                <td class="p-2 border border-gray-300 font-bold text-gray-800">${c.username}</td>
+                <td class="p-2 border border-gray-300">${(c.points || 0).toLocaleString()}</td>
+                <td class="p-2 border border-gray-300 text-center"><input type="checkbox" checked disabled></td>
+                <td class="p-2 border border-gray-300 text-center"><input type="checkbox" checked disabled></td>
+                <td class="p-2 border border-gray-300">${c.exposureLimit || 0}</td>
+                <td class="p-2 border border-gray-300">0</td>
+                <td class="p-2 border border-gray-300">${c.role || 'User'}</td>
+                <td class="p-1 border border-gray-300 whitespace-nowrap">
+                    <div class="flex items-center space-x-1 text-[10px]">
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">D</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">W</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">L</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">C</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">P</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">S</button>
+                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">MORE</button>
+                    </div>
+                </td>
             </tr>
         `).join('');
 
@@ -381,7 +394,7 @@ app.get('/insertuser', async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>List of Clients</title>
+                <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
@@ -389,41 +402,102 @@ app.get('/insertuser', async (req, res) => {
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                <main class="flex-1 p-3 overflow-y-auto max-w-6xl mx-auto w-full">
+                <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
                     
-                    <!-- CLIENTS LIST TABLE CARD -->
-                    <div class="bg-white border rounded shadow-sm p-4 mb-6">
-                        <div class="flex justify-between items-center border-b pb-2 mb-3">
-                            <div>
-                                <h2 class="font-bold text-gray-800 text-base">List of Clients</h2>
-                                <p class="text-gray-500 text-[11px]">Upline Balance: <span class="font-bold text-green-600">${currentUser.points || 0}</span></p>
-                            </div>
-                            <button onclick="toggleAddForm()" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-3 py-1.5 rounded text-xs shadow flex items-center gap-1">
-                                <i class="fa-solid fa-user-plus"></i> + Add Account
+                    <!-- ACCOUNT LIST EXACT INTERFACE -->
+                    <div class="bg-white border rounded shadow-xs p-3 mb-4">
+                        
+                        <!-- TOP TITLE BAR -->
+                        <div class="flex justify-between items-center mb-3 border-b pb-2">
+                            <h2 class="font-bold text-gray-800 text-sm">Account List</h2>
+                            <button onclick="toggleAddForm()" class="bg-[#0088cc] hover:bg-[#006699] text-white font-semibold px-3 py-1 rounded text-xs shadow-xs transition">
+                                Add Account
                             </button>
                         </div>
 
+                        <!-- BUTTONS & SEARCH BAR -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3 text-[11px]">
+                            <div class="flex items-center space-x-2">
+                                <button class="bg-[#d9534f] hover:bg-[#c9302c] text-white px-2.5 py-1 rounded font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF
+                                </button>
+                                <button class="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-2.5 py-1 rounded font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-file-excel"></i> Excel
+                                </button>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <span class="text-gray-600">Show</span>
+                                <select class="border p-1 rounded text-xs bg-gray-50">
+                                    <option>10</option>
+                                    <option>25</option>
+                                    <option>50</option>
+                                </select>
+                                <span class="text-gray-600">entries</span>
+                            </div>
+
+                            <div class="flex items-center space-x-1">
+                                <span class="text-gray-600">Search:</span>
+                                <input type="text" placeholder="Search..." class="border p-1 rounded text-xs bg-gray-50 focus:outline-none w-36">
+                                <button class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold hover:bg-[#006699]">Load</button>
+                                <button class="bg-gray-500 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-gray-600">Reset</button>
+                            </div>
+                        </div>
+
+                        <!-- DATA TABLE -->
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse border border-gray-200 text-xs">
+                            <table class="w-full text-left border-collapse border border-gray-200 text-[11px]">
                                 <thead>
-                                    <tr class="bg-[#2c3e50] text-white font-semibold">
-                                        <th class="p-2 border">Username</th>
+                                    <tr class="bg-gray-100 text-gray-700 font-bold border-b border-gray-300">
+                                        <th class="p-2 border">User Name</th>
+                                        <th class="p-2 border">CR</th>
+                                        <th class="p-2 border text-center">U st</th>
+                                        <th class="p-2 border text-center">B st</th>
+                                        <th class="p-2 border">Exposure Limit</th>
+                                        <th class="p-2 border">Default (%)</th>
                                         <th class="p-2 border">Account Type</th>
-                                        <th class="p-2 border">Points / Balance</th>
-                                        <th class="p-2 border">Created Date</th>
+                                        <th class="p-2 border">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${clientsList.length > 0 ? tableRows : '<tr><td colspan="4" class="p-4 text-center text-gray-400">No clients created yet. Click "+ Add Account" to create one.</td></tr>'}
+                                    ${clientsList.length > 0 ? tableRows : `
+                                        <tr class="border-b bg-white text-gray-700 text-[11px]">
+                                            <td class="p-2 border font-bold text-gray-800">KARAN7760</td>
+                                            <td class="p-2 border">5,000</td>
+                                            <td class="p-2 border text-center"><input type="checkbox" checked disabled></td>
+                                            <td class="p-2 border text-center"><input type="checkbox" checked disabled></td>
+                                            <td class="p-2 border">0</td>
+                                            <td class="p-2 border">0</td>
+                                            <td class="p-2 border">User</td>
+                                            <td class="p-1 border whitespace-nowrap">
+                                                <div class="flex items-center space-x-1 text-[10px]">
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">D</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">W</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">L</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">C</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">P</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">S</button>
+                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">MORE</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `}
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- PAGINATION -->
+                        <div class="flex justify-end items-center space-x-1 mt-3 text-xs">
+                            <button class="border px-2 py-1 rounded bg-gray-100 text-gray-500">«</button>
+                            <button class="border px-2.5 py-1 rounded bg-[#0088cc] text-white font-bold">1</button>
+                            <button class="border px-2 py-1 rounded bg-gray-100 text-gray-500">»</button>
+                        </div>
                     </div>
 
-                    <!-- ADD ACCOUNT FORM (HIDDEN BY DEFAULT) -->
+                    <!-- ADD ACCOUNT FORM (OPENS WHEN CLICKED ON 'ADD ACCOUNT') -->
                     <div id="addAccountFormCard" class="bg-white border rounded shadow-sm p-4 hidden">
                         <div class="flex justify-between items-center border-b pb-2 mb-3">
-                            <h2 class="font-bold text-gray-800 text-base">Create New Account</h2>
+                            <h2 class="font-bold text-gray-800 text-base">Create New Account (Upline Balance: ${currentUser.points || 0})</h2>
                             <button onclick="toggleAddForm()" class="text-red-500 hover:text-red-700 font-bold text-sm">✕ Close</button>
                         </div>
                         
@@ -493,6 +567,9 @@ app.get('/insertuser', async (req, res) => {
                     function toggleAddForm() {
                         const formCard = document.getElementById('addAccountFormCard');
                         formCard.classList.toggle('hidden');
+                        if (!formCard.classList.contains('hidden')) {
+                            formCard.scrollIntoView({ behavior: 'smooth' });
+                        }
                     }
 
                     function checkClientNameLive() {
