@@ -55,7 +55,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// COMMON HEADER & 39 SPORTS SIDEBAR (NO LOGO)
+// COMMON HEADER & 39 SPORTS SIDEBAR
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -80,7 +80,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 <span class="font-semibold text-white">${loggedInUser} (${userRole}) ▾</span>
                 <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
                 <div class="relative ml-1">
-                    <input type="text" placeholder="Soni Client" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
+                    <input type="text" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
                     <i class="fa-solid fa-magnifying-glass absolute right-1.5 top-1.5 text-gray-500 text-[10px]"></i>
                 </div>
             </div>
@@ -164,7 +164,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
     `;
 }
 
-// 1. SIGN IN PAGE (NO LOGO)
+// 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
