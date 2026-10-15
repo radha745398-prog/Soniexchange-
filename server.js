@@ -87,7 +87,7 @@ app.post('/login-process', (req, res) => {
     res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
 });
 
-// COMMON HEADER & SIDEBAR TEMPLATE FUNCTION
+// COMMON HEADER & 39 SPORTS SIDEBAR
 function getHeaderAndSidebar(loggedInUser) {
     return `
         <!-- TOP NAVBAR -->
@@ -109,7 +109,7 @@ function getHeaderAndSidebar(loggedInUser) {
             </div>
 
             <div class="flex items-center space-x-2 ml-4">
-                <span class="font-semibold text-white cursor-pointer">${loggedInUser} ▾</span>
+                <span class="font-semibold text-white">${loggedInUser} ▾</span>
                 <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
                 <div class="relative ml-1">
                     <input type="text" placeholder="All Client" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
@@ -171,7 +171,7 @@ function getHeaderAndSidebar(loggedInUser) {
     `;
 }
 
-// 3. MAIN DASHBOARD PAGE
+// 3. MAIN DASHBOARD PAGE (KHALI SCREEN JAB TAK LIST OF CLIENTS PAR CLICK NA HO)
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -187,13 +187,13 @@ app.get('/dashboard', (req, res) => {
             <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
         </head>
         <body class="min-h-screen flex flex-col text-xs">
+
             ${getHeaderAndSidebar(loggedInUser)}
-            <main class="flex-1 p-6">
-                <div class="bg-white p-6 rounded shadow border text-center">
-                    <h2 class="text-xl font-bold text-gray-700">Welcome to Soni Exchange Admin Panel</h2>
-                    <p class="text-gray-500 mt-2">Top menu bar se <b>List of Clients</b> par click karein naya account banane ke liye.</p>
-                </div>
+
+            <!-- Khali Screen -->
+            <main class="flex-1 p-3">
             </main>
+
             <script>
                 function toggleSidebar() {
                     let sidebar = document.getElementById('sportsSidebar');
@@ -207,7 +207,7 @@ app.get('/dashboard', (req, res) => {
     `);
 });
 
-// 4. EXACT SCREENSHOT PAGE (LIST OF CLIENTS / INSERT USER)
+// 4. ADD ACCOUNT FORM (JAB "List of Clients" PAR CLICK HOGA)
 app.get('/insertuser', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -220,15 +220,12 @@ app.get('/insertuser', (req, res) => {
             <title>Soni Exchange - Add Account</title>
             <script src="https://cdn.tailwindcss.com"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-            <style>
-                body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
-            </style>
+            <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
         </head>
         <body class="min-h-screen flex flex-col text-xs">
 
             ${getHeaderAndSidebar(loggedInUser)}
 
-            <!-- MAIN FORM CONTENT: EXACT SCREENSHOT HUBUHU LAYOUT -->
             <main class="flex-1 p-3 overflow-y-auto max-w-5xl mx-auto w-full">
                 <div class="bg-white border rounded shadow-sm p-4">
                     <h2 class="font-bold text-gray-800 text-base mb-3 border-b pb-1">Add Account</h2>
@@ -257,15 +254,15 @@ app.get('/insertuser', (req, res) => {
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
-                                        <input type="text" name="fullName" placeholder="Full Name" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <input type="text" name="fullName" placeholder="Full Name" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">City:</label>
-                                        <input type="text" name="city" placeholder="City" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <input type="text" name="city" placeholder="City" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Phone:</label>
-                                        <input type="text" name="phone" placeholder="Phone Number" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <input type="text" name="phone" placeholder="Phone Number" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                     </div>
                                 </div>
                             </div>
@@ -276,7 +273,7 @@ app.get('/insertuser', (req, res) => {
                                 <div class="space-y-2.5">
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
-                                        <select name="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <select name="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                             <option value="">Select Account Type</option>
                                             <option value="Super">Super</option>
                                             <option value="Master">Master</option>
@@ -285,7 +282,7 @@ app.get('/insertuser', (req, res) => {
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Credit Reference:</label>
-                                        <input type="number" name="creditRef" placeholder="Credit Reference" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <input type="number" name="creditRef" placeholder="Credit Reference" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                     </div>
                                 </div>
                             </div>
@@ -315,7 +312,7 @@ app.get('/insertuser', (req, res) => {
                         <div class="flex flex-col items-end space-y-2 pt-2">
                             <div class="w-full sm:w-64">
                                 <label class="block text-gray-700 font-semibold mb-0.5">Transaction Password:</label>
-                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                             </div>
                             <button type="submit" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-4 py-2 rounded text-xs shadow transition">Create Account</button>
                         </div>
@@ -341,7 +338,7 @@ app.get('/insertuser', (req, res) => {
 
                     let valid = true;
 
-                    // Validation 1: First letter of Client Name must be Capital
+                    // First letter Capital check for Client Name
                     let firstLetterName = clientName.charAt(0);
                     if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
                         nameError.classList.remove('hidden');
@@ -350,7 +347,7 @@ app.get('/insertuser', (req, res) => {
                         nameError.classList.add('hidden');
                     }
 
-                    // Validation 2: First letter of Password must be Capital & contain special char ($ ¢ ¥ @ #)
+                    // First letter Capital + Special Character check for Password
                     let firstLetterPass = password.charAt(0);
                     let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
@@ -367,7 +364,7 @@ app.get('/insertuser', (req, res) => {
                     }
 
                     if (!valid) {
-                        alert('Rule Error: Client Name & Password ka pehla letter Capital hona chahiye aur Password me special character ($ ¢ ¥ @ #) hona chahiye!');
+                        alert('Rule Error: Client Name & Password ka pehla letter Capital hona chahiye aur Password mein special character ($ ¢ ¥ @ #) hona zaroori hai!');
                     }
 
                     return valid;
@@ -378,19 +375,26 @@ app.get('/insertuser', (req, res) => {
     `);
 });
 
+// CREATE CLIENT API
 app.post('/api/clients/create', (req, res) => {
     const { clientName, createdBy } = req.body;
     const db = readDB();
+
     if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
         return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
     }
+
     db.users.push({
         username: clientName,
         password: req.body.password,
         role: req.body.accountType || 'USER',
-        points: Number(req.body.creditRef) || 1000,
+        points: Number(req.body.creditRef) || 0,
         createdBy: createdBy || 'Soniexchange',
         createdAt: new Date()
     });
     writeDB(db);
-    res.send(`<script>alert('Account created successfully!'); window.location='/insertuser?username
+    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log('Server running!'));
