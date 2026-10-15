@@ -507,7 +507,7 @@ app.get('/insertuser', async (req, res) => {
                         return false;
                     }
 
-                    if (password !== retypePassword) {
+ycin                    if (password !== retypePassword) {
                         alert('Passwords do not match!');
                         return false;
                     }
@@ -544,7 +544,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 
     if (creator.txnPassword && creator.txnPassword !== txnPassword) {
-        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`;
+        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
     }
 
     if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
