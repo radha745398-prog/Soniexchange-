@@ -352,11 +352,11 @@ app.get('/insertuser', (req, res) => {
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">User Temporary Password:</label>
                                         <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
+                                        <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!</p>
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
-                                        <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
-                                        <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!</p>
+                                        <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
@@ -413,17 +413,20 @@ app.get('/insertuser', (req, res) => {
                     let inputField = document.getElementById('clientName');
 
                     if (clientName.length === 0) {
-                        inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                        inputField.style.border = "1px solid #d1d5db";
+                        inputField.style.backgroundColor = "#f9fafb";
                         nameError.classList.add('hidden');
                         return;
                     }
 
                     let firstChar = clientName.charAt(0);
                     if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
-                        inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                        inputField.style.border = "2px solid #ef4444";
+                        inputField.style.backgroundColor = "#fef2f2";
                         nameError.classList.remove('hidden');
                     } else {
-                        inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                        inputField.style.border = "2px solid #22c55e";
+                        inputField.style.backgroundColor = "#f0fdf4";
                         nameError.classList.add('hidden');
                     }
                 }
@@ -434,7 +437,8 @@ app.get('/insertuser', (req, res) => {
                     let inputField = document.getElementById('password');
 
                     if (password.length === 0) {
-                        inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                        inputField.style.border = "1px solid #d1d5db";
+                        inputField.style.backgroundColor = "#f9fafb";
                         passError.classList.add('hidden');
                         return;
                     }
@@ -443,10 +447,12 @@ app.get('/insertuser', (req, res) => {
                     let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                     if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
-                        inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                        inputField.style.border = "2px solid #ef4444";
+                        inputField.style.backgroundColor = "#fef2f2";
                         passError.classList.remove('hidden');
                     } else {
-                        inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                        inputField.style.border = "2px solid #22c55e";
+                        inputField.style.backgroundColor = "#f0fdf4";
                         passError.classList.add('hidden');
                     }
                 }
@@ -488,7 +494,6 @@ app.post('/api/clients/create', (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
 
-    // Server-side strict validation check
     const firstCharName = clientName ? clientName.charAt(0) : '';
     if (!firstCharName || firstCharName !== firstCharName.toUpperCase() || firstCharName === firstCharName.toLowerCase()) {
         return res.send(`<script>alert('Server Error: Username must start with a Capital letter!'); window.history.back();</script>`);
