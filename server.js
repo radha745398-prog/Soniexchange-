@@ -7,19 +7,13 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// --- FIREBASE INITIALIZATION ---
+// --- FIREBASE INITIALIZATION DIRECTLY FROM FILE ---
 try {
-    let serviceAccount;
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    } else {
-        serviceAccount = require('./serviceAccountKey.json');
-    }
-
+    const serviceAccount = require('./serviceAccountKey.json');
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
     });
-    console.log("Firebase Connected Successfully!");
+    console.log("Firebase Connected Successfully via serviceAccountKey.json!");
 } catch (error) {
     console.error("Firebase Connection Error:", error.message);
 }
