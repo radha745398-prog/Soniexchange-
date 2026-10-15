@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -236,7 +236,7 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        res.redirect(`/users?username=${encodeURIComponent(user.username)}`);
+        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
         res.send("<script>alert('Login Error'); window.history.back();</script>");
@@ -330,13 +330,37 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE
-app.get('/dashboard', (req, res) => {
+// 5. DASHBOARD ROUTE (LOGIN KE BAAD YEHI KHULEGA - CLEAN)
+app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    res.redirect(`/users?username=${encodeURIComponent(loggedInUser)}`);
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Dashboard</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, role)}
+                <main class="flex-1 p-3"></main>
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        res.redirect('/');
+    }
 });
 
-// 6. EXACT MATCH SCREENSHOT: ACCOUNT LIST PAGE (/users OR List of Clients)
+// 6. ACCOUNT LIST PAGE (/users - ONLY OPENS WHEN "LIST OF CLIENTS" IS CLICKED)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -344,7 +368,7 @@ app.get('/users', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        // Fetch users from Firebase Firestore
+        // Fetch ONLY actual created users from Firebase Firestore (No fake dummy data)
         const querySnapshot = await getDocs(collection(db, "users"));
         let usersList = [];
         querySnapshot.forEach((doc) => {
@@ -353,16 +377,9 @@ app.get('/users', async (req, res) => {
             }
         });
 
-        // Dummy fallback data if Firestore has no extra clients yet
-        if (usersList.length === 0) {
-            usersList = [
-                { username: 'KALLAN7780', points: 5000, exposure: 0, defaultPct: 0, role: 'User' },
-                { username: 'RADHEY1167', points: 50000, exposure: 50000, defaultPct: 0, role: 'User' },
-                { username: 'SOMANNA74', points: 100, exposure: 1000000, defaultPct: 0, role: 'User' }
-            ];
-        }
-
-        let tableRows = usersList.map(u => `
+        let tableRows = usersList.length === 0 ? `
+            <tr><td colspan="8" class="text-center p-4 text-gray-500">No clients found. Click "Add Account" to create one.</td></tr>
+        ` : usersList.map(u => `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
                 <td class="p-2 font-semibold text-gray-800 border-r">${u.username}</td>
                 <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
