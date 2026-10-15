@@ -346,12 +346,12 @@ app.get('/insertuser', (req, res) => {
                                 <div class="space-y-2.5">
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Client/User Name:</label>
-                                        <input type="text" id="clientName" name="clientName" required placeholder="ATOM3" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
-                                        <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">The username field must start with a Capital character!</p>
+                                        <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="ATOM3" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
+                                        <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">Username must start with a Capital letter!</p>
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">User Temporary Password:</label>
-                                        <input type="password" id="password" name="password" required placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
@@ -407,40 +407,75 @@ app.get('/insertuser', (req, res) => {
             </main>
 
             <script>
+                function checkClientNameLive() {
+                    let clientName = document.getElementById('clientName').value;
+                    let nameError = document.getElementById('nameError');
+                    let inputField = document.getElementById('clientName');
+
+                    if (clientName.length === 0) {
+                        inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                        nameError.classList.add('hidden');
+                        return;
+                    }
+
+                    let firstChar = clientName.charAt(0);
+                    if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
+                        inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                        nameError.classList.remove('hidden');
+                    } else {
+                        inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                        nameError.classList.add('hidden');
+                    }
+                }
+
+                function checkPasswordLive() {
+                    let password = document.getElementById('password').value;
+                    let passError = document.getElementById('passError');
+                    let inputField = document.getElementById('password');
+
+                    if (password.length === 0) {
+                        inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                        passError.classList.add('hidden');
+                        return;
+                    }
+
+                    let firstChar = password.charAt(0);
+                    let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+
+                    if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
+                        inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                        passError.classList.remove('hidden');
+                    } else {
+                        inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                        passError.classList.add('hidden');
+                    }
+                }
+
                 function validateForm() {
                     let clientName = document.getElementById('clientName').value;
                     let password = document.getElementById('password').value;
                     let retypePassword = document.getElementById('retypePassword').value;
                     
-                    let nameError = document.getElementById('nameError');
-                    let passError = document.getElementById('passError');
-
-                    let valid = true;
-
                     let firstLetterName = clientName.charAt(0);
                     if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-                        nameError.classList.remove('hidden');
-                        valid = false;
-                    } else {
-                        nameError.classList.add('hidden');
+                        alert('Username must start with a Capital letter!');
+                        return false;
                     }
 
                     let firstLetterPass = password.charAt(0);
                     let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                     if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
-                        passError.classList.remove('hidden');
-                        valid = false;
-                    } else {
-                        passError.classList.add('hidden');
+                        alert('Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!');
+                        return false;
                     }
 
                     if (password !== retypePassword) {
                         alert('Passwords do not match!');
-                        valid = false;
+                        return false;
                     }
 
-                    return valid;
+                    return true;
                 }
             </script>
         </body>
@@ -450,8 +485,20 @@ app.get('/insertuser', (req, res) => {
 
 // 7. CREATE ACCOUNT & BALANCE DEDUCTION API
 app.post('/api/clients/create', (req, res) => {
-    const { clientName, createdBy, txnPassword, accountType, creditRef } = req.body;
+    const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
+
+    // Server-side strict validation check
+    const firstCharName = clientName ? clientName.charAt(0) : '';
+    if (!firstCharName || firstCharName !== firstCharName.toUpperCase() || firstCharName === firstCharName.toLowerCase()) {
+        return res.send(`<script>alert('Server Error: Username must start with a Capital letter!'); window.history.back();</script>`);
+    }
+
+    const firstCharPass = password ? password.charAt(0) : '';
+    const hasSpecial = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+    if (!firstCharPass || firstCharPass !== firstCharPass.toUpperCase() || firstCharPass === firstCharPass.toLowerCase() || !hasSpecial) {
+        return res.send(`<script>alert('Server Error: Password must start with a Capital letter and contain a special character!'); window.history.back();</script>`);
+    }
 
     const db = readDB();
     const creator = db.users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
@@ -478,7 +525,7 @@ app.post('/api/clients/create', (req, res) => {
 
     db.users.push({
         username: clientName,
-        password: req.body.password,
+        password: password,
         role: accountType || 'Client',
         points: pointsToGive,
         createdBy: createdBy,
