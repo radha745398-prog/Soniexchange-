@@ -7,17 +7,14 @@ const bcrypt = require('bcryptjs');
 const app = express();
 
 // ==========================================
-// FIREBASE INITIALIZATION VIA ENVIRONMENT VARIABLES
+// FIREBASE INITIALIZATION VIA RENDER SECRET FILE
 // ==========================================
 try {
+  const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined
-    })
+    credential: admin.credential.cert(serviceAccount)
   });
-  console.log("Firebase connected successfully via Environment Variables!");
+  console.log("Firebase connected successfully via Secret File!");
 } catch (error) {
   console.error("Firebase initialization error:", error);
 }
@@ -35,14 +32,14 @@ app.use(session({
   secret: 'soniexchange_secure_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set to true if using HTTPS in production with proper proxy setup
+  cookie: { secure: false }
 }));
 
 // ==========================================
 // AUTHENTICATION & API ROUTES
 // ==========================================
 
-// Master Admin Seeding / Initialization Route (if needed)
+// Master Admin Seeding Route
 app.post('/api/init-admin', async (req, res) => {
   try {
     const adminRef = db.collection('users').doc('Soniexchange');
