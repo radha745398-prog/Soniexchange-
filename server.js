@@ -507,7 +507,7 @@ app.get('/insertuser', async (req, res) => {
                         return false;
                     }
 
-ycin                    if (password !== retypePassword) {
+                    if (password !== retypePassword) {
                         alert('Passwords do not match!');
                         return false;
                     }
@@ -575,5 +575,7 @@ app.post('/api/clients/create', async (req, res) => {
     res.send(`<script>alert('Account created successfully and points deducted from your balance!'); window.location='/dashboard?username=${encodeURIComponent(createdBy)}';</script>`);
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server running on port 5000 with Firebase!'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT} with Firebase!`);
+});
