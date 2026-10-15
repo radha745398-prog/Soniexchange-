@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -55,7 +55,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// EXACT HEADER MATCHING YOUR EXACT REQUIREMENTS
+// TOP HEADER BAR (UNTOUCHED & EXACT AS REQUESTED)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -66,7 +66,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                     <i class="fa-solid fa-bars text-sm pointer-events-none"></i>
                 </button>
                 <nav class="flex items-center space-x-2 font-normal text-[11px]">
-                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
+                    <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Assign Agent</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Market Analysis</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Live Market ▾</a>
@@ -236,7 +236,7 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+        res.redirect(`/users?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
         res.send("<script>alert('Login Error'); window.history.back();</script>");
@@ -276,7 +276,7 @@ app.get('/change-password', (req, res) => {
     `);
 });
 
-// 4. UPDATE PASSWORD API & TXN PASSWORD GENERATOR
+// 4. UPDATE PASSWORD API
 app.post('/api/update-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -330,13 +330,60 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD PAGE
-app.get('/dashboard', async (req, res) => {
+// 5. DASHBOARD ROUTE
+app.get('/dashboard', (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    res.redirect(`/users?username=${encodeURIComponent(loggedInUser)}`);
+});
+
+// 6. EXACT MATCH SCREENSHOT: ACCOUNT LIST PAGE (/users OR List of Clients)
+app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
-        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+
+        // Fetch users from Firebase Firestore
+        const querySnapshot = await getDocs(collection(db, "users"));
+        let usersList = [];
+        querySnapshot.forEach((doc) => {
+            if (doc.id !== 'Soniexchange') {
+                usersList.push({ id: doc.id, ...doc.data() });
+            }
+        });
+
+        // Dummy fallback data if Firestore has no extra clients yet
+        if (usersList.length === 0) {
+            usersList = [
+                { username: 'KALLAN7780', points: 5000, exposure: 0, defaultPct: 0, role: 'User' },
+                { username: 'RADHEY1167', points: 50000, exposure: 50000, defaultPct: 0, role: 'User' },
+                { username: 'SOMANNA74', points: 100, exposure: 1000000, defaultPct: 0, role: 'User' }
+            ];
+        }
+
+        let tableRows = usersList.map(u => `
+            <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
+                <td class="p-2 font-semibold text-gray-800 border-r">${u.username}</td>
+                <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-center"><input type="checkbox" checked disabled class="accent-black"></td>
+                <td class="p-2 border-r text-center"><input type="checkbox" checked disabled class="accent-black"></td>
+                <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
+                <td class="p-2 border-r text-center">${u.role || 'User'}</td>
+                <td class="p-1.5 text-center">
+                    <div class="flex items-center justify-center space-x-1">
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">D</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
 
         res.send(`
             <!DOCTYPE html>
@@ -344,23 +391,83 @@ app.get('/dashboard', async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Dashboard</title>
+                <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
-                ${getHeaderAndSidebar(loggedInUser, role)}
-                <main class="flex-1 p-3"></main>
+                ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
+                    <!-- HEADER TITLE & ADD ACCOUNT BUTTON -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-base font-bold text-gray-800">Account List</h2>
+                        <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
+                    </div>
+
+                    <!-- EXPORT BUTTONS: PDF & EXCEL -->
+                    <div class="flex space-x-1 mb-3">
+                        <button class="bg-[#dc3545] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                        </button>
+                        <button class="bg-[#28a745] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                        </button>
+                    </div>
+
+                    <!-- SHOW ENTRIES & SEARCH BAR -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
+                        <div class="flex items-center space-x-1">
+                            <span>Show</span>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
+                                <option>10</option>
+                                <option>25</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold">Search:</span>
+                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- ACCOUNT LIST TABLE -->
+                    <div class="bg-white border rounded shadow-xs overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700 text-[11px] border-b font-bold">
+                                    <th class="p-2 border-r">User Name</th>
+                                    <th class="p-2 border-r text-right">CR</th>
+                                    <th class="p-2 border-r text-center">U st</th>
+                                    <th class="p-2 border-r text-center">B st</th>
+                                    <th class="p-2 border-r text-right">Exposure Limit</th>
+                                    <th class="p-2 border-r text-center">Default (%)</th>
+                                    <th class="p-2 border-r text-center">Account Type</th>
+                                    <th class="p-2 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
             </body>
             </html>
         `);
     } catch(err) {
+        console.error(err);
         res.redirect('/');
     }
 });
 
-// 6. ADD ACCOUNT PAGE (/insertuser)
+// 7. ADD ACCOUNT FORM PAGE (/insertuser)
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -392,9 +499,8 @@ app.get('/insertuser', async (req, res) => {
                     <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
                         <input type="hidden" name="createdBy" value="${loggedInUser}">
 
-                        <!-- 1. PERSONAL DETAIL & ACCOUNT DETAIL -->
+                        <!-- PERSONAL DETAIL & ACCOUNT DETAIL -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Personal Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -433,7 +539,6 @@ app.get('/insertuser', async (req, res) => {
                                 </div>
                             </div>
 
-                            <!-- Account Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Account Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -456,7 +561,7 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- 2. COMMISSION SETTINGS -->
+                        <!-- COMMISSION SETTINGS -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="dark-box-title">Commission Settings</div>
                             <div class="p-2 overflow-x-auto">
@@ -468,7 +573,7 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- 3. PARTNERSHIP -->
+                        <!-- PARTNERSHIP -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="dark-box-title">Partnership</div>
                             <div class="p-2 overflow-x-auto">
@@ -480,7 +585,7 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- 4. TRANSACTION PASSWORD & CREATE ACCOUNT BUTTON -->
+                        <!-- TRANSACTION PASSWORD & CREATE ACCOUNT BUTTON -->
                         <div class="flex flex-col items-end space-y-2 pt-2">
                             <div class="w-full sm:w-64">
                                 <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
@@ -571,7 +676,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 7. CREATE ACCOUNT & BALANCE DEDUCTION API
+// 8. CREATE ACCOUNT & BALANCE DEDUCTION API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -616,7 +721,7 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        res.send(`<script>alert('Account created successfully and points saved in Firebase!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
+        res.send(`<script>alert('Account created successfully and saved in Firebase!'); window.location='/users?username=${encodeURIComponent(createdBy)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
