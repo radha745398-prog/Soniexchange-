@@ -87,7 +87,6 @@ app.post('/login-process', (req, res) => {
         return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
     }
 
-    // If user must change password on first login
     if (user.mustChangePassword) {
         return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
     }
@@ -141,7 +140,6 @@ app.post('/api/update-password', (req, res) => {
         return res.send("<script>alert('User not found!'); window.location='/';</script>");
     }
 
-    // Generate random 6-digit transaction password
     const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.password = newPassword;
@@ -285,16 +283,13 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
     `;
 }
 
-// 5. DASHBOARD & DOWNLINE HIERARCHY VIEW
+// 5. DASHBOARD PAGE (100% BLANK SCREEN BY DEFAULT)
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const db = readDB();
     const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
 
     if (!currentUser) return res.redirect('/');
-
-    // Find direct downlines created by this user
-    const downlineUsers = db.users.filter(u => u.createdBy.toLowerCase() === loggedInUser.toLowerCase());
 
     res.send(`
         <!DOCTYPE html>
@@ -309,53 +304,13 @@ app.get('/dashboard', (req, res) => {
         </head>
         <body class="min-h-screen flex flex-col text-xs">
             ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
-            <main class="flex-1 p-4 max-w-6xl mx-auto w-full space-y-4">
-                <div class="bg-white p-4 rounded shadow border flex justify-between items-center">
-                    <div>
-                        <h2 class="font-bold text-sm text-gray-800">Welcome, ${currentUser.username} (${currentUser.role})</h2>
-                        <p class="text-gray-500 text-[11px]">Available Points: <span class="font-bold text-green-600 text-sm">${currentUser.points}</span></p>
-                    </div>
-                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0077b6] hover:bg-[#005f9e] text-white px-3 py-2 rounded font-bold shadow">＋ Add Downline Account</a>
-                </div>
-
-                <div class="bg-white p-4 rounded shadow border">
-                    <h3 class="font-bold text-gray-800 text-xs mb-3 border-b pb-1">My Downline Accounts (Tree Hierarchy)</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 border-b text-[11px] text-gray-700">
-                                    <th class="p-2">Username</th>
-                                    <th class="p-2">Role</th>
-                                    <th class="p-2">Allotted Points</th>
-                                    <th class="p-2">Created By</th>
-                                    <th class="p-2">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${downlineUsers.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-gray-400">No downline accounts found.</td></tr>` : 
-                                    downlineUsers.map(u => `
-                                        <tr class="border-b hover:bg-gray-50">
-                                            <td class="p-2 font-semibold text-blue-600">${u.username}</td>
-                                            <td class="p-2">${u.role}</td>
-                                            <td class="p-2 font-bold">${u.points}</td>
-                                            <td class="p-2">${u.createdBy}</td>
-                                            <td class="p-2">
-                                                <a href="/dashboard?username=${encodeURIComponent(u.username)}" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-[10px] font-bold text-gray-700">View Downline →</a>
-                                            </td>
-                                        </tr>
-                                    `).join('')
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </main>
+            <main class="flex-1 p-3"></main>
         </body>
         </html>
     `);
 });
 
-// 6. ADD ACCOUNT FORM PAGE
+// 6. ADD ACCOUNT FORM PAGE (OPENS ONLY ON "List of Clients" CLICK)
 app.get('/insertuser', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const db = readDB();
@@ -502,15 +457,13 @@ app.post('/api/clients/create', (req, res) => {
     const creator = db.users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
 
     if (!creator) {
-        return res.send(`<script>alert('Creator session error!'); window.location='/';</script>');
+        return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
     }
 
-    // Verify creator's transaction password
     if (creator.txnPassword && creator.txnPassword !== txnPassword) {
         return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
     }
 
-    // Check if creator has enough balance
     if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
         return res.send(`<script>alert('Insufficient Points in your balance! You have only ${creator.points} points.'); window.history.back();</script>`);
     }
@@ -519,12 +472,10 @@ app.post('/api/clients/create', (req, res) => {
         return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
     }
 
-    // Deduct points from creator if not admin
     if (creator.role !== 'ADMIN') {
         creator.points -= pointsToGive;
     }
 
-    // Push new user with mustChangePassword = true
     db.users.push({
         username: clientName,
         password: req.body.password,
