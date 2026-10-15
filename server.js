@@ -71,25 +71,23 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. STRICT LOGIN PROCESS (GALAT DALNE PAR ERROR HI AAYEGA)
+// 2. LOGIN PROCESS
 app.post('/login-process', (req, res) => {
     let { username, password } = req.body;
-    username = username.trim();
-    password = password.trim();
+    username = username ? username.trim() : '';
+    password = password ? password.trim() : '';
 
     const db = readDB();
     let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
 
-    // Agar user nahi mila ya password galat hai toh yahin rok do
     if (!user || user.password !== password) {
         return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
     }
 
-    // Sab theek hai toh seedha dashboard par jao
     res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
 });
 
-// 3. MAIN DASHBOARD PAGE
+// 3. MAIN DASHBOARD PAGE WITH EXACT "LIST OF CLIENTS" / ADD ACCOUNT FORM
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -103,10 +101,10 @@ app.get('/dashboard', (req, res) => {
             <script src="https://cdn.tailwindcss.com"></script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
-                body { font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; }
+                body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
             </style>
         </head>
-        <body class="bg-gray-100 min-h-screen flex flex-col text-xs">
+        <body class="min-h-screen flex flex-col text-xs">
 
             <!-- TOP NAVBAR -->
             <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto">
@@ -116,7 +114,7 @@ app.get('/dashboard', (req, res) => {
                         <i class="fa-solid fa-bars text-sm"></i>
                     </button>
                     <nav class="flex items-center space-x-2 font-medium">
-                        <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">List of Clients</a>
+                        <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="bg-black/20 px-2 py-1 rounded font-bold">List of Clients</a>
                         <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
                         <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
                         <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Market ▾</a>
@@ -188,8 +186,99 @@ app.get('/dashboard', (req, res) => {
 
                 <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
-                <main class="flex-1 p-4">
-                    <!-- Clean Dashboard -->
+                <!-- MAIN CONTENT: EXACT ADD ACCOUNT / INSERT USER FORM -->
+                <main class="flex-1 p-3 overflow-y-auto max-w-5xl mx-auto">
+                    <div class="bg-white border rounded shadow-sm p-4">
+                        <h2 class="font-bold text-gray-800 text-sm mb-3">Add Account</h2>
+                        
+                        <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
+                            <input type="hidden" name="createdBy" value="${loggedInUser}">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Personal Detail Box -->
+                                <div class="border rounded p-3 bg-white">
+                                    <div class="bg-[#34495e] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Personal Detail</div>
+                                    <div class="space-y-2.5">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
+                                            <input type="text" id="clientName" name="clientName" required placeholder="e.g. Rahul123" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">First letter must be a Capital letter (Uppercase)!</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
+                                            <input type="password" id="password" name="password" required placeholder="Password" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
+                                            <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with a Capital letter and include special characters ($ ¢ ¥ @ # etc.)!</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
+                                            <input type="text" name="fullName" placeholder="Full Name" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">City:</label>
+                                            <input type="text" name="city" placeholder="City" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Phone:</label>
+                                            <input type="text" name="phone" placeholder="Phone Number" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Account Detail Box -->
+                                <div class="border rounded p-3 bg-white">
+                                    <div class="bg-[#34495e] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Account Detail</div>
+                                    <div class="space-y-2.5">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
+                                            <select name="accountType" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                                <option value="">Select Account Type</option>
+                                                <option value="Super">Super</option>
+                                                <option value="Master">Master</option>
+                                                <option value="Client">Client</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Credit Reference:</label>
+                                            <input type="number" name="creditRef" placeholder="Credit Reference" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Commission Settings -->
+                            <div class="border rounded p-3 bg-white">
+                                <div class="bg-[#34495e] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Commission Settings</div>
+                                <div class="grid grid-cols-3 gap-2 text-gray-600 font-semibold bg-gray-100 p-2 rounded text-[11px]">
+                                    <div>Upline: <span class="font-normal">0</span></div>
+                                    <div>Downline: <span class="font-normal">0</span></div>
+                                    <div>Our: <span class="font-normal">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Partnership -->
+                            <div class="border rounded p-3 bg-white">
+                                <div class="bg-[#34495e] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Partnership</div>
+                                <div class="grid grid-cols-3 gap-2 text-gray-600 font-semibold bg-gray-100 p-2 rounded text-[11px]">
+                                    <div>Upline: <span class="font-normal">0</span></div>
+                                    <div>Downline: <span class="font-normal">0</span></div>
+                                    <div>Our: <span class="font-normal">0</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Password & Button -->
+                            <div class="flex flex-col items-end space-y-2 pt-2">
+                                <div class="w-full sm:w-64">
+                                    <label class="block text-gray-700 font-semibold mb-0.5">Transaction Password:</label>
+                                    <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-gray-50 text-xs">
+                                </div>
+                                <button type="submit" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-4 py-2 rounded text-xs shadow transition">Create Account</button>
+                            </div>
+                        </form>
+                    </div>
                 </main>
             </div>
 
@@ -200,10 +289,70 @@ app.get('/dashboard', (req, res) => {
                     if(sidebar) sidebar.classList.toggle('-translate-x-full');
                     if(overlay) overlay.classList.toggle('hidden');
                 }
+
+                function validateForm() {
+                    let clientName = document.getElementById('clientName').value;
+                    let password = document.getElementById('password').value;
+                    let retypePassword = document.getElementById('retypePassword').value;
+                    
+                    let nameError = document.getElementById('nameError');
+                    let passError = document.getElementById('passError');
+
+                    let valid = true;
+
+                    // Check if first letter of client name is capital
+                    let firstLetterName = clientName.charAt(0);
+                    if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
+                        nameError.classList.remove('hidden');
+                        valid = false;
+                    } else {
+                        nameError.classList.add('hidden');
+                    }
+
+                    // Check password: first letter capital + special characters ($ ¢ ¥ @ # etc.)
+                    let firstLetterPass = password.charAt(0);
+                    let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+
+                    if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
+                        passError.classList.remove('hidden');
+                        valid = false;
+                    } else {
+                        passError.classList.add('hidden');
+                    }
+
+                    if (password !== retypePassword) {
+                        alert('Passwords do not match!');
+                        valid = false;
+                    }
+
+                    if (!valid) {
+                        alert('Please check validation rules: First letter must be Capital and password must contain special characters ($ ¢ ¥ @ # etc.)!');
+                    }
+
+                    return valid;
+                }
             </script>
         </body>
         </html>
     `);
+});
+
+app.post('/api/clients/create', (req, res) => {
+    const { clientName, createdBy } = req.body;
+    const db = readDB();
+    if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
+        return res.send(`<script>alert('Client already exists!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
+    }
+    db.users.push({
+        username: clientName,
+        password: req.body.password,
+        role: req.body.accountType || 'USER',
+        points: Number(req.body.creditRef) || 1000,
+        createdBy: createdBy || 'Soniexchange',
+        createdAt: new Date()
+    });
+    writeDB(db);
+    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
