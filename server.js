@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -55,34 +55,36 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// COMMON HEADER & 39 SPORTS SIDEBAR
+// EXACT HEADER MATCHING YOUR EXACT REQUIREMENTS
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
-        <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto relative" style="z-index: 50;">
+        <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between text-[11px] whitespace-nowrap overflow-x-auto relative shadow-sm" style="z-index: 50; min-height: 40px;">
             <div class="flex items-center space-x-3">
-                <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/25 px-2 py-1 rounded focus:outline-none cursor-pointer">
-                    <i class="fa-solid fa-bars text-base pointer-events-none"></i>
+                <span class="font-bold text-sm tracking-wide text-white">Soni</span>
+                <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1.5 py-0.5 rounded focus:outline-none cursor-pointer">
+                    <i class="fa-solid fa-bars text-sm pointer-events-none"></i>
                 </button>
-                <nav class="flex items-center space-x-2 font-medium">
-                    <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">Dashboard</a>
-                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded font-bold bg-black/20">List of Clients</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Market ▾</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Virtual Market ▾</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Reports ▾</a>
-                    <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Multi Login</a>
+                <nav class="flex items-center space-x-2 font-normal text-[11px]">
+                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Assign Agent</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Market Analysis</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Live Market ▾</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Live Virtual Market ▾</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Reports ▾</a>
+                    <a href="#" class="hover:underline py-0.5 px-1">Multi Login</a>
                 </nav>
             </div>
 
-            <div class="flex items-center space-x-2 ml-4">
-                <span class="font-semibold text-white">${loggedInUser} (${userRole}) ▾</span>
+            <div class="flex items-center space-x-3 ml-4">
+                <span class="font-normal text-white text-[11px]">${loggedInUser} ▾</span>
                 <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
-                <div class="relative ml-1">
-                    <input type="text" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
-                    <i class="fa-solid fa-magnifying-glass absolute right-1.5 top-1.5 text-gray-500 text-[10px]"></i>
-                </div>
+                <form onsubmit="return handleClientSearch(event)" class="relative ml-1 flex items-center">
+                    <input type="text" id="headerSearchInput" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
+                    <button type="submit" class="absolute right-1.5 text-gray-600 text-[11px]">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -160,6 +162,14 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 if (closeBtn) closeBtn.onclick = closeSidebar;
                 if (overlay) overlay.onclick = closeSidebar;
             });
+
+            function handleClientSearch(e) {
+                e.preventDefault();
+                const q = document.getElementById('headerSearchInput').value;
+                if(q) {
+                    alert('Searching: ' + q);
+                }
+            }
         </script>
     `;
 }
@@ -337,7 +347,7 @@ app.get('/dashboard', async (req, res) => {
                 <title>Dashboard</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #e9ecef; margin: 0; }</style>
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, role)}
@@ -350,7 +360,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. EXACT MATCH SCREENSHOT ACCOUNT LIST PAGE
+// 6. ADD ACCOUNT PAGE (/insertuser)
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -358,185 +368,79 @@ app.get('/insertuser', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { points: 100000000, role: 'ADMIN' };
 
-        const q = query(collection(db, 'users'), where('createdBy', '==', loggedInUser));
-        const querySnapshot = await getDocs(q);
-        let clientsList = [];
-        querySnapshot.forEach((doc) => {
-            clientsList.push(doc.data());
-        });
-
-        let tableRows = clientsList.map(c => `
-            <tr class="border-b bg-white text-gray-700 text-[11px]">
-                <td class="p-2 border border-gray-300 font-bold text-gray-800">${c.username}</td>
-                <td class="p-2 border border-gray-300">${(c.points || 0).toLocaleString()}</td>
-                <td class="p-2 border border-gray-300 text-center"><input type="checkbox" checked disabled></td>
-                <td class="p-2 border border-gray-300 text-center"><input type="checkbox" checked disabled></td>
-                <td class="p-2 border border-gray-300">${c.exposureLimit || 0}</td>
-                <td class="p-2 border border-gray-300">0</td>
-                <td class="p-2 border border-gray-300">${c.role || 'User'}</td>
-                <td class="p-1 border border-gray-300 whitespace-nowrap">
-                    <div class="flex items-center space-x-1 text-[10px]">
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">D</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">W</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">L</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">C</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">P</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">S</button>
-                        <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold hover:bg-black">MORE</button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Account List</title>
+                <title>Add Account</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
+                    .dark-box-title { background-color: #2b3a4a; color: #ffffff; padding: 4px 8px; font-weight: bold; font-size: 11px; }
+                    .table-row-bg { background-color: #f8f9fa; }
+                </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
-                    
-                    <!-- ACCOUNT LIST EXACT INTERFACE -->
-                    <div class="bg-white border rounded shadow-xs p-3 mb-4">
-                        
-                        <!-- TOP TITLE BAR -->
-                        <div class="flex justify-between items-center mb-3 border-b pb-2">
-                            <h2 class="font-bold text-gray-800 text-sm">Account List</h2>
-                            <button onclick="toggleAddForm()" class="bg-[#0088cc] hover:bg-[#006699] text-white font-semibold px-3 py-1 rounded text-xs shadow-xs transition">
-                                Add Account
-                            </button>
-                        </div>
+                <main class="flex-1 p-3 max-w-6xl mx-auto w-full">
+                    <h2 class="text-base font-bold text-gray-800 mb-3">Add Account</h2>
 
-                        <!-- BUTTONS & SEARCH BAR -->
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3 text-[11px]">
-                            <div class="flex items-center space-x-2">
-                                <button class="bg-[#d9534f] hover:bg-[#c9302c] text-white px-2.5 py-1 rounded font-bold flex items-center gap-1">
-                                    <i class="fa-solid fa-file-pdf"></i> PDF
-                                </button>
-                                <button class="bg-[#5cb85c] hover:bg-[#4cae4c] text-white px-2.5 py-1 rounded font-bold flex items-center gap-1">
-                                    <i class="fa-solid fa-file-excel"></i> Excel
-                                </button>
-                            </div>
+                    <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
+                        <input type="hidden" name="createdBy" value="${loggedInUser}">
 
-                            <div class="flex items-center space-x-2">
-                                <span class="text-gray-600">Show</span>
-                                <select class="border p-1 rounded text-xs bg-gray-50">
-                                    <option>10</option>
-                                    <option>25</option>
-                                    <option>50</option>
-                                </select>
-                                <span class="text-gray-600">entries</span>
-                            </div>
-
-                            <div class="flex items-center space-x-1">
-                                <span class="text-gray-600">Search:</span>
-                                <input type="text" placeholder="Search..." class="border p-1 rounded text-xs bg-gray-50 focus:outline-none w-36">
-                                <button class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold hover:bg-[#006699]">Load</button>
-                                <button class="bg-gray-500 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-gray-600">Reset</button>
-                            </div>
-                        </div>
-
-                        <!-- DATA TABLE -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse border border-gray-200 text-[11px]">
-                                <thead>
-                                    <tr class="bg-gray-100 text-gray-700 font-bold border-b border-gray-300">
-                                        <th class="p-2 border">User Name</th>
-                                        <th class="p-2 border">CR</th>
-                                        <th class="p-2 border text-center">U st</th>
-                                        <th class="p-2 border text-center">B st</th>
-                                        <th class="p-2 border">Exposure Limit</th>
-                                        <th class="p-2 border">Default (%)</th>
-                                        <th class="p-2 border">Account Type</th>
-                                        <th class="p-2 border">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${clientsList.length > 0 ? tableRows : `
-                                        <tr class="border-b bg-white text-gray-700 text-[11px]">
-                                            <td class="p-2 border font-bold text-gray-800">KARAN7760</td>
-                                            <td class="p-2 border">5,000</td>
-                                            <td class="p-2 border text-center"><input type="checkbox" checked disabled></td>
-                                            <td class="p-2 border text-center"><input type="checkbox" checked disabled></td>
-                                            <td class="p-2 border">0</td>
-                                            <td class="p-2 border">0</td>
-                                            <td class="p-2 border">User</td>
-                                            <td class="p-1 border whitespace-nowrap">
-                                                <div class="flex items-center space-x-1 text-[10px]">
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">D</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">W</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">L</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">C</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">P</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">S</button>
-                                                    <button class="bg-[#333] text-white px-1.5 py-0.5 rounded font-bold">MORE</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    `}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- PAGINATION -->
-                        <div class="flex justify-end items-center space-x-1 mt-3 text-xs">
-                            <button class="border px-2 py-1 rounded bg-gray-100 text-gray-500">«</button>
-                            <button class="border px-2.5 py-1 rounded bg-[#0088cc] text-white font-bold">1</button>
-                            <button class="border px-2 py-1 rounded bg-gray-100 text-gray-500">»</button>
-                        </div>
-                    </div>
-
-                    <!-- ADD ACCOUNT FORM (OPENS WHEN CLICKED ON 'ADD ACCOUNT') -->
-                    <div id="addAccountFormCard" class="bg-white border rounded shadow-sm p-4 hidden">
-                        <div class="flex justify-between items-center border-b pb-2 mb-3">
-                            <h2 class="font-bold text-gray-800 text-base">Create New Account (Upline Balance: ${currentUser.points || 0})</h2>
-                            <button onclick="toggleAddForm()" class="text-red-500 hover:text-red-700 font-bold text-sm">✕ Close</button>
-                        </div>
-                        
-                        <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
-                            <input type="hidden" name="createdBy" value="${loggedInUser}">
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Personal Detail Box -->
-                                <div class="border rounded p-3 bg-white shadow-xs">
-                                    <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Personal Detail</div>
-                                    <div class="space-y-2.5">
+                        <!-- 1. PERSONAL DETAIL & ACCOUNT DETAIL -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Personal Detail Box -->
+                            <div class="border bg-white rounded-xs shadow-xs">
+                                <div class="dark-box-title">Personal Detail</div>
+                                <div class="p-3 space-y-2 text-[11px]">
+                                    <div class="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label class="block text-gray-700 font-semibold mb-0.5">Client/User Name:</label>
-                                            <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="ATOM3" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
+                                            <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="29EMO" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
                                             <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">Username must start with a Capital letter!</p>
                                         </div>
                                         <div>
-                                            <label class="block text-gray-700 font-semibold mb-0.5">User Temporary Password:</label>
-                                            <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none">
+                                            <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
+                                            <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="••••••••••••" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
                                         </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
-                                            <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
-                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!</p>
+                                            <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
-                                            <input type="text" name="fullName" placeholder="Full Name" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                            <input type="text" name="fullName" placeholder="Full Name" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">City:</label>
+                                            <input type="text" name="city" placeholder="City" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Phone:</label>
+                                            <input type="text" name="phone" placeholder="Phone Number" class="w-full border p-1 rounded bg-white text-xs">
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Account Detail Box -->
-                                <div class="border rounded p-3 bg-white shadow-xs">
-                                    <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Account Detail</div>
-                                    <div class="space-y-2.5">
+                            <!-- Account Detail Box -->
+                            <div class="border bg-white rounded-xs shadow-xs">
+                                <div class="dark-box-title">Account Detail</div>
+                                <div class="p-3 space-y-2 text-[11px]">
+                                    <div class="grid grid-cols-2 gap-2">
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
-                                            <select name="accountType" id="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                            <select name="accountType" id="accountType" class="w-full border p-1 rounded bg-white text-xs">
                                                 <option value="">Select Account Type</option>
                                                 ${currentUser.role === 'ADMIN' ? '<option value="Super">Super</option>' : ''}
                                                 <option value="Master">Master</option>
@@ -544,51 +448,67 @@ app.get('/insertuser', async (req, res) => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-gray-700 font-semibold mb-0.5">Points / Credit Reference:</label>
-                                            <input type="number" id="creditRef" name="creditRef" required placeholder="Points to allot" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Credit Reference:</label>
+                                            <input type="number" id="creditRef" name="creditRef" required placeholder="Credit Reference" class="w-full border p-1 rounded bg-white text-xs">
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Transaction Password & Button -->
-                            <div class="flex flex-col items-end space-y-2 pt-2">
-                                <div class="w-full sm:w-64">
-                                    <label class="block text-gray-700 font-semibold mb-0.5">Transaction Password:</label>
-                                    <input type="password" name="txnPassword" required placeholder="Enter transaction password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
-                                </div>
-                                <button type="submit" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-4 py-2 rounded text-xs shadow transition">Create Account</button>
+                        <!-- 2. COMMISSION SETTINGS -->
+                        <div class="border bg-white rounded-xs shadow-xs">
+                            <div class="dark-box-title">Commission Settings</div>
+                            <div class="p-2 overflow-x-auto">
+                                <table class="w-full text-left text-[11px] border border-gray-200">
+                                    <tr class="table-row-bg border-b"><td class="p-1.5 font-semibold w-32 border-r">Upline</td><td class="p-1.5">0</td></tr>
+                                    <tr class="border-b"><td class="p-1.5 font-semibold border-r">Downline</td><td class="p-1.5">0</td></tr>
+                                    <tr class="table-row-bg"><td class="p-1.5 font-semibold border-r">Our</td><td class="p-1.5">0</td></tr>
+                                </table>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <!-- 3. PARTNERSHIP -->
+                        <div class="border bg-white rounded-xs shadow-xs">
+                            <div class="dark-box-title">Partnership</div>
+                            <div class="p-2 overflow-x-auto">
+                                <table class="w-full text-left text-[11px] border border-gray-200">
+                                    <tr class="table-row-bg border-b"><td class="p-1.5 font-semibold w-32 border-r">Upline</td><td class="p-1.5">0</td></tr>
+                                    <tr class="border-b"><td class="p-1.5 font-semibold border-r">Downline</td><td class="p-1.5">0</td></tr>
+                                    <tr class="table-row-bg"><td class="p-1.5 font-semibold border-r">Our</td><td class="p-1.5">0</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 4. TRANSACTION PASSWORD & CREATE ACCOUNT BUTTON -->
+                        <div class="flex flex-col items-end space-y-2 pt-2">
+                            <div class="w-full sm:w-64">
+                                <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
+                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white text-xs focus:outline-none">
+                            </div>
+                            <button type="submit" class="bg-[#0088cc] hover:bg-[#006699] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition">Create Account</button>
+                        </div>
+                    </form>
                 </main>
 
                 <script>
-                    function toggleAddForm() {
-                        const formCard = document.getElementById('addAccountFormCard');
-                        formCard.classList.toggle('hidden');
-                        if (!formCard.classList.contains('hidden')) {
-                            formCard.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }
-
                     function checkClientNameLive() {
                         let clientName = document.getElementById('clientName').value;
                         let nameError = document.getElementById('nameError');
                         let inputField = document.getElementById('clientName');
 
                         if (clientName.length === 0) {
-                            inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border p-1 rounded bg-white text-xs focus:outline-none";
                             nameError.classList.add('hidden');
                             return;
                         }
 
                         let firstChar = clientName.charAt(0);
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
-                            inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             nameError.classList.remove('hidden');
                         } else {
-                            inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             nameError.classList.add('hidden');
                         }
                     }
@@ -599,7 +519,7 @@ app.get('/insertuser', async (req, res) => {
                         let inputField = document.getElementById('password');
 
                         if (password.length === 0) {
-                            inputField.className = "w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border p-1 rounded bg-white text-xs focus:outline-none";
                             passError.classList.add('hidden');
                             return;
                         }
@@ -608,10 +528,10 @@ app.get('/insertuser', async (req, res) => {
                         let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
-                            inputField.className = "w-full border-2 border-red-500 p-1.5 rounded bg-red-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             passError.classList.remove('hidden');
                         } else {
-                            inputField.className = "w-full border-2 border-green-500 p-1.5 rounded bg-green-50 text-xs focus:outline-none";
+                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             passError.classList.add('hidden');
                         }
                     }
