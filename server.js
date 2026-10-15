@@ -21,7 +21,7 @@ function readDB() {
                     usedPoints: 0,
                     createdBy: 'SYSTEM',
                     mustChangePassword: false,
-                    txnPassword: '745398' // Aapka official transaction password
+                    txnPassword: '745398'
                 }
             ]
         };
@@ -228,4 +228,268 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Chess</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Volleyball</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Ice Hockey</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> 
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cycling</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motorbikes</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Athletics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball 3X3</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Sumo</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Virtual sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Handball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Politics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motor Sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Baseball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby Union</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby League</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Darts</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>American Football</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Snooker</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Soccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Greyhound Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Kabaddi</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boat Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esoccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Wrestling</span> <span>+</span></div>
+            </div>
+        </aside>
+
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 hidden" style="z-index: 999998;"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.getElementById('sidebarToggleBtn');
+                const closeBtn = document.getElementById('sidebarCloseBtn');
+                const sidebar = document.getElementById('sportsSidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+
+                function openSidebar(e) {
+                    if (e) e.stopPropagation();
+                    if (sidebar) sidebar.classList.remove('-translate-x-full');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+
+                function closeSidebar(e) {
+                    if (e) e.stopPropagation();
+                    if (sidebar) sidebar.classList.add('-translate-x-full');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+
+                if (toggleBtn) toggleBtn.onclick = openSidebar;
+                if (closeBtn) closeBtn.onclick = closeSidebar;
+                if (overlay) overlay.onclick = closeSidebar;
+            });
+        </script>
+    `;
+}
+
+// 5. DASHBOARD PAGE (100% BLANK SCREEN BY DEFAULT)
+app.get('/dashboard', (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    const db = readDB();
+    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+
+    if (!currentUser) return res.redirect('/');
+
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Soni Exchange - Dashboard</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+        </head>
+        <body class="min-h-screen flex flex-col text-xs">
+            ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+            <main class="flex-1 p-3"></main>
+        </body>
+        </html>
+    `);
+});
+
+// 6. ADD ACCOUNT FORM PAGE (OPENS ONLY ON "List of Clients" CLICK)
+app.get('/insertuser', (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    const db = readDB();
+    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+
+    if (!currentUser) return res.redirect('/');
+
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Soni Exchange - Add Account</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+        </head>
+        <body class="min-h-screen flex flex-col text-xs">
+            ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+            <main class="flex-1 p-3 overflow-y-auto max-w-5xl mx-auto w-full">
+                <div class="bg-white border rounded shadow-sm p-4">
+                    <h2 class="font-bold text-gray-800 text-base mb-3 border-b pb-1">Add Account (Upline Balance: ${currentUser.points})</h2>
+                    
+                    <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
+                        <input type="hidden" name="createdBy" value="${loggedInUser}">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Personal Detail Box -->
+                            <div class="border rounded p-3 bg-white shadow-xs">
+                                <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Personal Detail</div>
+                                <div class="space-y-2.5">
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Client/User Name:</label>
+                                        <input type="text" id="clientName" name="clientName" required placeholder="ATOM3" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">The username field must start with a Capital character!</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">User Temporary Password:</label>
+                                        <input type="password" id="password" name="password" required placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
+                                        <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
+                                        <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
+                                        <input type="text" name="fullName" placeholder="Full Name" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">City:</label>
+                                        <input type="text" name="city" placeholder="City" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Phone:</label>
+                                        <input type="text" name="phone" placeholder="Phone Number" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Detail Box -->
+                            <div class="border rounded p-3 bg-white shadow-xs">
+                                <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Account Detail</div>
+                                <div class="space-y-2.5">
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
+                                        <select name="accountType" id="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                            <option value="">Select Account Type</option>
+                                            ${currentUser.role === 'ADMIN' ? '<option value="Super">Super</option>' : ''}
+                                            <option value="Master">Master</option>
+                                            <option value="Client">Client</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Points / Credit Reference:</label>
+                                        <input type="number" id="creditRef" name="creditRef" required placeholder="Points to allot" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transaction Password & Button -->
+                        <div class="flex flex-col items-end space-y-2 pt-2">
+                            <div class="w-full sm:w-64">
+                                <label class="block text-gray-700 font-semibold mb-0.5">Transaction Password:</label>
+                                <input type="password" name="txnPassword" required placeholder="Enter transaction password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                            </div>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-4 py-2 rounded text-xs shadow transition">Create Account</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+
+            <script>
+                function validateForm() {
+                    let clientName = document.getElementById('clientName').value;
+                    let password = document.getElementById('password').value;
+                    let retypePassword = document.getElementById('retypePassword').value;
+                    
+                    let nameError = document.getElementById('nameError');
+                    let passError = document.getElementById('passError');
+
+                    let valid = true;
+
+                    let firstLetterName = clientName.charAt(0);
+                    if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
+                        nameError.classList.remove('hidden');
+                        valid = false;
+                    } else {
+                        nameError.classList.add('hidden');
+                    }
+
+                    let firstLetterPass = password.charAt(0);
+                    let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+
+                    if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
+                        passError.classList.remove('hidden');
+                        valid = false;
+                    } else {
+                        passError.classList.add('hidden');
+                    }
+
+                    if (password !== retypePassword) {
+                        alert('Passwords do not match!');
+                        valid = false;
+                    }
+
+                    return valid;
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// 7. CREATE ACCOUNT & BALANCE DEDUCTION API
+app.post('/api/clients/create', (req, res) => {
+    const { clientName, createdBy, txnPassword, accountType, creditRef } = req.body;
+    const pointsToGive = Number(creditRef) || 0;
+
+    const db = readDB();
+    const creator = db.users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
+
+    if (!creator) {
+        return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
+    }
+
+    if (creator.txnPassword && creator.txnPassword !== txnPassword) {
+        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+    }
+
+    if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
+        return res.send(`<script>alert('Insufficient Points in your balance! You have only ${creator.points} points.'); window.history.back();</script>`);
+    }
+
+    if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
+        return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
+    }
+
+    if (creator.role !== 'ADMIN') {
+        creator.points -= pointsToGive;
+    }
+
+    db.users.push({
+        username: clientName,
+        password: req.body.password,
+        role: accountType || 'Client',
+        points: pointsToGive,
+        createdBy: createdBy,
+        mustChangePassword: true,
+        txnPassword: null,
+        createdAt: new Date()
+    });
+
+    writeDB(db);
+    res.send(`<script>alert('Account created successfully and points deducted from your balance!'); window.location='/dashboard?username=${encodeURIComponent(createdBy)}';</script>`);
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log('Server running on port 5000!'));
