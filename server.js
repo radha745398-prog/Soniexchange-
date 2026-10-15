@@ -18,7 +18,10 @@ function readDB() {
                     password: 'Lyy@5656',
                     role: 'ADMIN',
                     points: 100000000,
-                    createdBy: 'SYSTEM'
+                    usedPoints: 0,
+                    createdBy: 'SYSTEM',
+                    mustChangePassword: false,
+                    txnPassword: null
                 }
             ]
         };
@@ -71,7 +74,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS
+// 2. LOGIN PROCESS & FIRST-TIME PASSWORD CHECK
 app.post('/login-process', (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -84,11 +87,96 @@ app.post('/login-process', (req, res) => {
         return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
     }
 
+    // If user must change password on first login
+    if (user.mustChangePassword) {
+        return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
+    }
+
     res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
 });
 
-// COMMON HEADER & 39 SPORTS SIDEBAR WITH ABSOLUTE RELIABLE JS
-function getHeaderAndSidebar(loggedInUser) {
+// 3. FIRST TIME PASSWORD CHANGE PAGE
+app.get('/change-password', (req, res) => {
+    const username = req.query.username || '';
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Change Password & Get Transaction Password</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
+            <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
+                <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
+                <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your password. Upon updating, your unique 6-digit transaction password will be generated.</p>
+                <form action="/api/update-password" method="POST" class="space-y-3">
+                    <input type="hidden" name="username" value="${username}">
+                    <div>
+                        <label class="block font-semibold mb-1">New Password:</label>
+                        <input type="password" name="newPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Confirm New Password:</label>
+                        <input type="password" name="confirmPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
+                    </div>
+                    <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Update Password</button>
+                </form>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+// 4. UPDATE PASSWORD API & 6-DIGIT TXN PASSWORD GENERATOR
+app.post('/api/update-password', (req, res) => {
+    const { username, newPassword, confirmPassword } = req.body;
+    if (newPassword !== confirmPassword) {
+        return res.send("<script>alert('Passwords do not match!'); window.history.back();</script>");
+    }
+
+    const db = readDB();
+    let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+        return res.send("<script>alert('User not found!'); window.location='/';</script>");
+    }
+
+    // Generate random 6-digit transaction password
+    const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    user.txnPassword = txnPass;
+    writeDB(db);
+
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Transaction Password Generated</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs font-sans">
+            <div class="bg-white p-6 rounded shadow-lg max-w-lg w-full text-center space-y-4">
+                <h2 class="text-green-600 font-bold text-lg">Success! आपका password बदला जा चुका है।</h2>
+                <div class="bg-gray-100 p-4 rounded border">
+                    <p class="font-semibold text-gray-700 mb-1">Your transaction password is:</p>
+                    <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
+                </div>
+                <p class="text-gray-600 text-[11px] leading-relaxed">
+                    Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
+                    लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण इसी से किए जा सकते हैं और इस पासवर्ड को किसी के साथ साझा न करें।
+                </p>
+                <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+// COMMON HEADER & 39 SPORTS SIDEBAR
+function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
         <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto relative" style="z-index: 50;">
@@ -98,6 +186,7 @@ function getHeaderAndSidebar(loggedInUser) {
                     <i class="fa-solid fa-bars text-base pointer-events-none"></i>
                 </button>
                 <nav class="flex items-center space-x-2 font-medium">
+                    <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">Dashboard</a>
                     <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">List of Clients</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
@@ -109,7 +198,7 @@ function getHeaderAndSidebar(loggedInUser) {
             </div>
 
             <div class="flex items-center space-x-2 ml-4">
-                <span class="font-semibold text-white">${loggedInUser} ▾</span>
+                <span class="font-semibold text-white">${loggedInUser} (${userRole}) ▾</span>
                 <a href="/" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
                 <div class="relative ml-1">
                     <input type="text" placeholder="All Client" class="text-black bg-white px-2 py-0.5 pr-6 rounded text-[11px] w-28 focus:outline-none">
@@ -188,23 +277,24 @@ function getHeaderAndSidebar(loggedInUser) {
                     if (overlay) overlay.classList.add('hidden');
                 }
 
-                if (toggleBtn) {
-                    toggleBtn.onclick = openSidebar;
-                }
-                if (closeBtn) {
-                    closeBtn.onclick = closeSidebar;
-                }
-                if (overlay) {
-                    overlay.onclick = closeSidebar;
-                }
+                if (toggleBtn) toggleBtn.onclick = openSidebar;
+                if (closeBtn) closeBtn.onclick = closeSidebar;
+                if (overlay) overlay.onclick = closeSidebar;
             });
         </script>
     `;
 }
 
-// 3. MAIN DASHBOARD PAGE (BLANK SCREEN BY DEFAULT)
+// 5. DASHBOARD & DOWNLINE HIERARCHY VIEW
 app.get('/dashboard', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
+    const db = readDB();
+    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+
+    if (!currentUser) return res.redirect('/');
+
+    // Find direct downlines created by this user
+    const downlineUsers = db.users.filter(u => u.createdBy.toLowerCase() === loggedInUser.toLowerCase());
 
     res.send(`
         <!DOCTYPE html>
@@ -218,16 +308,60 @@ app.get('/dashboard', (req, res) => {
             <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
         </head>
         <body class="min-h-screen flex flex-col text-xs">
-            ${getHeaderAndSidebar(loggedInUser)}
-            <main class="flex-1 p-3"></main>
+            ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+            <main class="flex-1 p-4 max-w-6xl mx-auto w-full space-y-4">
+                <div class="bg-white p-4 rounded shadow border flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-sm text-gray-800">Welcome, ${currentUser.username} (${currentUser.role})</h2>
+                        <p class="text-gray-500 text-[11px]">Available Points: <span class="font-bold text-green-600 text-sm">${currentUser.points}</span></p>
+                    </div>
+                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0077b6] hover:bg-[#005f9e] text-white px-3 py-2 rounded font-bold shadow">＋ Add Downline Account</a>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow border">
+                    <h3 class="font-bold text-gray-800 text-xs mb-3 border-b pb-1">My Downline Accounts (Tree Hierarchy)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 border-b text-[11px] text-gray-700">
+                                    <th class="p-2">Username</th>
+                                    <th class="p-2">Role</th>
+                                    <th class="p-2">Allotted Points</th>
+                                    <th class="p-2">Created By</th>
+                                    <th class="p-2">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${downlineUsers.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-gray-400">No downline accounts found.</td></tr>` : 
+                                    downlineUsers.map(u => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-2 font-semibold text-blue-600">${u.username}</td>
+                                            <td class="p-2">${u.role}</td>
+                                            <td class="p-2 font-bold">${u.points}</td>
+                                            <td class="p-2">${u.createdBy}</td>
+                                            <td class="p-2">
+                                                <a href="/dashboard?username=${encodeURIComponent(u.username)}" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-[10px] font-bold text-gray-700">View Downline →</a>
+                                            </td>
+                                        </tr>
+                                    `).join('')
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
         </body>
         </html>
     `);
 });
 
-// 4. ADD ACCOUNT FORM (ON "List of Clients" CLICK)
+// 6. ADD ACCOUNT FORM PAGE
 app.get('/insertuser', (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
+    const db = readDB();
+    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+
+    if (!currentUser) return res.redirect('/');
 
     res.send(`
         <!DOCTYPE html>
@@ -241,11 +375,11 @@ app.get('/insertuser', (req, res) => {
             <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
         </head>
         <body class="min-h-screen flex flex-col text-xs">
-            ${getHeaderAndSidebar(loggedInUser)}
+            ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
             <main class="flex-1 p-3 overflow-y-auto max-w-5xl mx-auto w-full">
                 <div class="bg-white border rounded shadow-sm p-4">
-                    <h2 class="font-bold text-gray-800 text-base mb-3 border-b pb-1">Add Account</h2>
+                    <h2 class="font-bold text-gray-800 text-base mb-3 border-b pb-1">Add Account (Upline Balance: ${currentUser.points})</h2>
                     
                     <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
                         <input type="hidden" name="createdBy" value="${loggedInUser}">
@@ -256,12 +390,12 @@ app.get('/insertuser', (req, res) => {
                                 <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Personal Detail</div>
                                 <div class="space-y-2.5">
                                     <div>
-                                        <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Client/User Name:</label>
                                         <input type="text" id="clientName" name="clientName" required placeholder="ATOM3" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
                                         <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">The username field must start with a Capital character!</p>
                                     </div>
                                     <div>
-                                        <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
+                                        <label class="block text-gray-700 font-semibold mb-0.5">User Temporary Password:</label>
                                         <input type="password" id="password" name="password" required placeholder="••••••••••••" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs focus:outline-none focus:border-cyan-500">
                                     </div>
                                     <div>
@@ -290,46 +424,26 @@ app.get('/insertuser', (req, res) => {
                                 <div class="space-y-2.5">
                                     <div>
                                         <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
-                                        <select name="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                        <select name="accountType" id="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                             <option value="">Select Account Type</option>
-                                            <option value="Super">Super</option>
+                                            ${currentUser.role === 'ADMIN' ? '<option value="Super">Super</option>' : ''}
                                             <option value="Master">Master</option>
                                             <option value="Client">Client</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-gray-700 font-semibold mb-0.5">Credit Reference:</label>
-                                        <input type="number" name="creditRef" placeholder="Credit Reference" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                        <label class="block text-gray-700 font-semibold mb-0.5">Points / Credit Reference:</label>
+                                        <input type="number" id="creditRef" name="creditRef" required placeholder="Points to allot" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Commission Settings -->
-                        <div class="border rounded p-3 bg-white shadow-xs">
-                            <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Commission Settings</div>
-                            <div class="grid grid-cols-3 gap-2 text-gray-600 font-semibold bg-gray-100 p-2 rounded text-[11px]">
-                                <div>Upline: <span class="font-normal text-gray-800">0</span></div>
-                                <div>Downline: <span class="font-normal text-gray-800">0</span></div>
-                                <div>Our: <span class="font-normal text-gray-800">0</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Partnership -->
-                        <div class="border rounded p-3 bg-white shadow-xs">
-                            <div class="bg-[#2c3e50] text-white px-2 py-1 font-bold text-[11px] mb-3 rounded-sm">Partnership</div>
-                            <div class="grid grid-cols-3 gap-2 text-gray-600 font-semibold bg-gray-100 p-2 rounded text-[11px]">
-                                <div>Upline: <span class="font-normal text-gray-800">0</span></div>
-                                <div>Downline: <span class="font-normal text-gray-800">0</span></div>
-                                <div>Our: <span class="font-normal text-gray-800">0</span></div>
                             </div>
                         </div>
 
                         <!-- Transaction Password & Button -->
                         <div class="flex flex-col items-end space-y-2 pt-2">
                             <div class="w-full sm:w-64">
-                                <label class="block text-gray-700 font-semibold mb-0.5">Transaction Password:</label>
-                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
+                                <label class="block text-gray-700 font-semibold mb-0.5">Your 6-Digit Transaction Password:</label>
+                                <input type="password" name="txnPassword" required maxlength="6" placeholder="Enter your 6-digit txn password" class="w-full border border-gray-300 p-1.5 rounded bg-gray-50 text-xs">
                             </div>
                             <button type="submit" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-4 py-2 rounded text-xs shadow transition">Create Account</button>
                         </div>
@@ -371,10 +485,6 @@ app.get('/insertuser', (req, res) => {
                         valid = false;
                     }
 
-                    if (!valid) {
-                        alert('Rule Error: Client Name & Password ka pehla letter Capital hona chahiye aur Password mein special character ($ ¢ ¥ @ #) hona zaroori hai!');
-                    }
-
                     return valid;
                 }
             </script>
@@ -383,26 +493,52 @@ app.get('/insertuser', (req, res) => {
     `);
 });
 
-// CREATE CLIENT API
+// 7. CREATE ACCOUNT & BALANCE DEDUCTION API
 app.post('/api/clients/create', (req, res) => {
-    const { clientName, createdBy } = req.body;
-    const db = readDB();
+    const { clientName, createdBy, txnPassword, accountType, creditRef } = req.body;
+    const pointsToGive = Number(creditRef) || 0;
 
-    if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
-        return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
+    const db = readDB();
+    const creator = db.users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
+
+    if (!creator) {
+        return res.send(`<script>alert('Creator session error!'); window.location='/';</script>');
     }
 
+    // Verify creator's transaction password
+    if (creator.txnPassword && creator.txnPassword !== txnPassword) {
+        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+    }
+
+    // Check if creator has enough balance
+    if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
+        return res.send(`<script>alert('Insufficient Points in your balance! You have only ${creator.points} points.'); window.history.back();</script>`);
+    }
+
+    if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
+        return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
+    }
+
+    // Deduct points from creator if not admin
+    if (creator.role !== 'ADMIN') {
+        creator.points -= pointsToGive;
+    }
+
+    // Push new user with mustChangePassword = true
     db.users.push({
         username: clientName,
         password: req.body.password,
-        role: req.body.accountType || 'USER',
-        points: Number(req.body.creditRef) || 0,
-        createdBy: createdBy || 'Soniexchange',
+        role: accountType || 'Client',
+        points: pointsToGive,
+        createdBy: createdBy,
+        mustChangePassword: true,
+        txnPassword: null,
         createdAt: new Date()
     });
+
     writeDB(db);
-    res.send(`<script>alert('Account created successfully!'); window.location='/dashboard?username=${encodeURIComponent(createdBy || 'Soniexchange')}';</script>`);
+    res.send(`<script>alert('Account created successfully and points deducted from your balance!'); window.location='/dashboard?username=${encodeURIComponent(createdBy)}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server running!'));
+app.listen(PORT, () => console.log('Server running on port 5000!'));
