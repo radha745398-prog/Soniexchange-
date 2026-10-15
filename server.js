@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -66,7 +66,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 </button>
                 <nav class="flex items-center space-x-2 font-medium">
                     <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">Dashboard</a>
-                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded">List of Clients</a>
+                    <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="hover:bg-black/20 px-2 py-1 rounded font-bold underline">List of Clients</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Assign Agent</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Market Analysis</a>
                     <a href="#" class="hover:bg-black/20 px-2 py-1 rounded">Live Market ▾</a>
@@ -350,7 +350,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ADD ACCOUNT FORM PAGE
+// 6. LIST OF CLIENTS PAGE (CLIENT TABLE FIRST + OPTIONAL ADD FORM BUTTON)
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -358,13 +358,30 @@ app.get('/insertuser', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { points: 100000000, role: 'ADMIN' };
 
+        // Fetch downline users from Firebase
+        const q = query(collection(db, 'users'), where('createdBy', '==', loggedInUser));
+        const querySnapshot = await getDocs(q);
+        let clientsList = [];
+        querySnapshot.forEach((doc) => {
+            clientsList.push(doc.data());
+        });
+
+        let tableRows = clientsList.map(c => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-2 border font-bold text-blue-600">${c.username}</td>
+                <td class="p-2 border">${c.role}</td>
+                <td class="p-2 border font-semibold">${c.points || 0}</td>
+                <td class="p-2 border text-gray-500">${new Date(c.createdAt).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Add Account</title>
+                <title>List of Clients</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
@@ -372,9 +389,43 @@ app.get('/insertuser', async (req, res) => {
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                <main class="flex-1 p-3 overflow-y-auto max-w-5xl mx-auto w-full">
-                    <div class="bg-white border rounded shadow-sm p-4">
-                        <h2 class="font-bold text-gray-800 text-base mb-3 border-b pb-1">Add Account (Upline Balance: ${currentUser.points || 0})</h2>
+                <main class="flex-1 p-3 overflow-y-auto max-w-6xl mx-auto w-full">
+                    
+                    <!-- CLIENTS LIST TABLE CARD -->
+                    <div class="bg-white border rounded shadow-sm p-4 mb-6">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <div>
+                                <h2 class="font-bold text-gray-800 text-base">List of Clients</h2>
+                                <p class="text-gray-500 text-[11px]">Upline Balance: <span class="font-bold text-green-600">${currentUser.points || 0}</span></p>
+                            </div>
+                            <button onclick="toggleAddForm()" class="bg-[#0077b6] hover:bg-[#005f9e] text-white font-bold px-3 py-1.5 rounded text-xs shadow flex items-center gap-1">
+                                <i class="fa-solid fa-user-plus"></i> + Add Account
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse border border-gray-200 text-xs">
+                                <thead>
+                                    <tr class="bg-[#2c3e50] text-white font-semibold">
+                                        <th class="p-2 border">Username</th>
+                                        <th class="p-2 border">Account Type</th>
+                                        <th class="p-2 border">Points / Balance</th>
+                                        <th class="p-2 border">Created Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${clientsList.length > 0 ? tableRows : '<tr><td colspan="4" class="p-4 text-center text-gray-400">No clients created yet. Click "+ Add Account" to create one.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ADD ACCOUNT FORM (HIDDEN BY DEFAULT) -->
+                    <div id="addAccountFormCard" class="bg-white border rounded shadow-sm p-4 hidden">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h2 class="font-bold text-gray-800 text-base">Create New Account</h2>
+                            <button onclick="toggleAddForm()" class="text-red-500 hover:text-red-700 font-bold text-sm">✕ Close</button>
+                        </div>
                         
                         <form action="/api/clients/create" method="POST" onsubmit="return validateForm()" class="space-y-4">
                             <input type="hidden" name="createdBy" value="${loggedInUser}">
@@ -439,6 +490,11 @@ app.get('/insertuser', async (req, res) => {
                 </main>
 
                 <script>
+                    function toggleAddForm() {
+                        const formCard = document.getElementById('addAccountFormCard');
+                        formCard.classList.toggle('hidden');
+                    }
+
                     function checkClientNameLive() {
                         let clientName = document.getElementById('clientName').value;
                         let nameError = document.getElementById('nameError');
@@ -563,7 +619,7 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        res.send(`<script>alert('Account created successfully and points saved in Firebase!'); window.location='/dashboard?username=${encodeURIComponent(createdBy)}';</script>`);
+        res.send(`<script>alert('Account created successfully and points saved in Firebase!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
