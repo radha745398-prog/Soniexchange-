@@ -1,5 +1,5 @@
 const express = require('express');
-const fs = require('fs');
+const admin = require('firebase-admin');
 const cors = require('cors');
 
 const app = express();
@@ -7,34 +7,65 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-const DB_FILE = './database.json';
-
-function readDB() {
-    if (!fs.existsSync(DB_FILE)) {
-        const initialData = {
-            users: [
-                {
-                    username: 'Soniexchange',
-                    password: 'Lyy@5656',
-                    role: 'ADMIN',
-                    points: 100000000,
-                    usedPoints: 0,
-                    createdBy: 'SYSTEM',
-                    mustChangePassword: false,
-                    txnPassword: '745398'
-                }
-            ]
-        };
-        fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
+// --- FIREBASE INITIALIZATION VIA ENVIRONMENT VARIABLE OR LOCAL FILE ---
+try {
+    let serviceAccount;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } else {
+        serviceAccount = require('./serviceAccountKey.json');
     }
-    return JSON.parse(fs.readFileSync(DB_FILE));
+
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase Connected Successfully!");
+} catch (error) {
+    console.error("Firebase Connection Error:", error.message);
 }
 
-function writeDB(data) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+const db = admin.firestore();
+const USERS_COLLECTION = 'users';
+
+// --- INITIALIZE ADMIN IN FIRESTORE IF NOT EXISTS ---
+async function initDB() {
+    try {
+        const adminRef = db.collection(USERS_COLLECTION).doc('Soniexchange');
+        const doc = await adminRef.get();
+        if (!doc.exists) {
+            await adminRef.set({
+                username: 'Soniexchange',
+                password: 'Lyy@5656',
+                role: 'ADMIN',
+                points: 100000000,
+                usedPoints: 0,
+                createdBy: 'SYSTEM',
+                mustChangePassword: false,
+                txnPassword: '745398',
+                createdAt: new Date().toISOString()
+            });
+            console.log("Master Admin 'Soniexchange' initialized in Firestore.");
+        }
+    } catch (e) {
+        console.error("Error initializing admin in Firestore:", e);
+    }
+}
+initDB();
+
+// Helper to get all users from Firestore
+async function getAllUsers() {
+    const snapshot = await db.collection(USERS_COLLECTION).get();
+    let users = [];
+    snapshot.forEach(doc => {
+        users.push(doc.data());
+    });
+    return users;
 }
 
-readDB();
+// Helper to save/update a user in Firestore
+async function saveUser(user) {
+    await db.collection(USERS_COLLECTION).doc(user.username).set(user);
+}
 
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
@@ -75,13 +106,13 @@ app.get('/', (req, res) => {
 });
 
 // 2. LOGIN PROCESS & FIRST-TIME PASSWORD CHECK
-app.post('/login-process', (req, res) => {
+app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
     password = password ? password.trim() : '';
 
-    const db = readDB();
-    let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    const users = await getAllUsers();
+    let user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
 
     if (!user || user.password !== password) {
         return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
@@ -128,14 +159,14 @@ app.get('/change-password', (req, res) => {
 });
 
 // 4. UPDATE PASSWORD API & 6-DIGIT TXN PASSWORD GENERATOR
-app.post('/api/update-password', (req, res) => {
+app.post('/api/update-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
         return res.send("<script>alert('Passwords do not match!'); window.history.back();</script>");
     }
 
-    const db = readDB();
-    let user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    const users = await getAllUsers();
+    let user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
     if (!user) {
         return res.send("<script>alert('User not found!'); window.location='/';</script>");
     }
@@ -145,7 +176,7 @@ app.post('/api/update-password', (req, res) => {
     user.password = newPassword;
     user.mustChangePassword = false;
     user.txnPassword = txnPass;
-    writeDB(db);
+    await saveUser(user);
 
     res.send(`
         <!DOCTYPE html>
@@ -157,14 +188,14 @@ app.post('/api/update-password', (req, res) => {
         </head>
         <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs font-sans">
             <div class="bg-white p-6 rounded shadow-lg max-w-lg w-full text-center space-y-4">
-                <h2 class="text-green-600 font-bold text-lg">Success! आपका password बदला जा चुका है।</h2>
+                <h2 class="text-green-600 font-bold text-lg">Success! Aapka password badla ja chuka hai.</h2>
                 <div class="bg-gray-100 p-4 rounded border">
                     <p class="font-semibold text-gray-700 mb-1">Your transaction password is:</p>
                     <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
                 </div>
                 <p class="text-gray-600 text-[11px] leading-relaxed">
                     Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
-                    लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण इसी से किए जा सकते हैं और इस पासवर्ड को किसी के साथ साझा न करें।
+                    Len-den ke password ko yaad rakhen, ab se website ke sabhi hastantaran isi se kiye ja sakte hain aur is password ko kisi ke sath sajha na karen.
                 </p>
                 <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
             </div>
@@ -284,10 +315,10 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 }
 
 // 5. DASHBOARD PAGE (100% BLANK SCREEN BY DEFAULT)
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const db = readDB();
-    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+    const users = await getAllUsers();
+    const currentUser = users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
 
     if (!currentUser) return res.redirect('/');
 
@@ -310,11 +341,11 @@ app.get('/dashboard', (req, res) => {
     `);
 });
 
-// 6. ADD ACCOUNT FORM PAGE (OPENS ONLY ON "List of Clients" CLICK)
-app.get('/insertuser', (req, res) => {
+// 6. ADD ACCOUNT FORM PAGE
+app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const db = readDB();
-    const currentUser = db.users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
+    const users = await getAllUsers();
+    const currentUser = users.find(u => u.username.toLowerCase() === loggedInUser.toLowerCase());
 
     if (!currentUser) return res.redirect('/');
 
@@ -490,7 +521,7 @@ app.get('/insertuser', (req, res) => {
 });
 
 // 7. CREATE ACCOUNT & BALANCE DEDUCTION API
-app.post('/api/clients/create', (req, res) => {
+app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
 
@@ -505,8 +536,8 @@ app.post('/api/clients/create', (req, res) => {
         return res.send(`<script>alert('Server Error: Password must start with a Capital letter and contain a special character!'); window.history.back();</script>`);
     }
 
-    const db = readDB();
-    const creator = db.users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
+    const users = await getAllUsers();
+    let creator = users.find(u => u.username.toLowerCase() === createdBy.toLowerCase());
 
     if (!creator) {
         return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
@@ -520,15 +551,16 @@ app.post('/api/clients/create', (req, res) => {
         return res.send(`<script>alert('Insufficient Points in your balance! You have only ${creator.points} points.'); window.history.back();</script>`);
     }
 
-    if (db.users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
+    if (users.find(u => u.username.toLowerCase() === clientName.toLowerCase())) {
         return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
     }
 
     if (creator.role !== 'ADMIN') {
         creator.points -= pointsToGive;
+        await saveUser(creator);
     }
 
-    db.users.push({
+    const newUser = {
         username: clientName,
         password: password,
         role: accountType || 'Client',
@@ -536,12 +568,12 @@ app.post('/api/clients/create', (req, res) => {
         createdBy: createdBy,
         mustChangePassword: true,
         txnPassword: null,
-        createdAt: new Date()
-    });
+        createdAt: new Date().toISOString()
+    };
+    await saveUser(newUser);
 
-    writeDB(db);
     res.send(`<script>alert('Account created successfully and points deducted from your balance!'); window.location='/dashboard?username=${encodeURIComponent(createdBy)}';</script>`);
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server running on port 5000!'));
+app.listen(PORT, () => console.log('Server running on port 5000 with Firebase!'));
