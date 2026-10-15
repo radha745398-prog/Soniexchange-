@@ -1,5 +1,6 @@
 const express = require('express');
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, getDoc, setDoc } = require('firebase/firestore');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
@@ -7,19 +8,21 @@ const bcrypt = require('bcryptjs');
 const app = express();
 
 // ==========================================
-// FIREBASE INITIALIZATION VIA RENDER SECRET FILE
+// FIREBASE INITIALIZATION (YOUR NEW CONFIG)
 // ==========================================
-try {
-  const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log("Firebase connected successfully via Secret File!");
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyC_qTjOTUx0BdW5qMajZauMvquItJXchVA",
+  authDomain: "soniexchange-eedf6.firebaseapp.com",
+  projectId: "soniexchange-eedf6",
+  storageBucket: "soniexchange-eedf6.firebasestorage.app",
+  messagingSenderId: "885491339460",
+  appId: "1:885491339460:web:611843ab509f023a397991"
+};
 
-const db = admin.firestore();
+// Initialize Firebase App & Firestore
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+console.log("Firebase connected successfully via Config!");
 
 // ==========================================
 // MIDDLEWARE & CONFIGURATION
@@ -42,12 +45,12 @@ app.use(session({
 // Master Admin Seeding Route
 app.post('/api/init-admin', async (req, res) => {
   try {
-    const adminRef = db.collection('users').doc('Soniexchange');
-    const doc = await adminRef.get();
+    const adminRef = doc(db, 'users', 'Soniexchange');
+    const docSnap = await getDoc(adminRef);
     
-    if (!doc.exists) {
+    if (!docSnap.exists()) {
       const hashedPassword = await bcrypt.hash('Lyy@5656', 10);
-      await adminRef.set({
+      await setDoc(adminRef, {
         username: 'Soniexchange',
         password: hashedPassword,
         role: 'Admin',
@@ -69,14 +72,14 @@ app.post('/api/init-admin', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const userRef = db.collection('users').doc(username);
-    const doc = await userRef.get();
+    const userRef = doc(db, 'users', username);
+    const docSnap = await getDoc(userRef);
 
-    if (!doc.exists) {
+    if (!docSnap.exists()) {
       return res.status(400).json({ success: false, message: 'Invalid username or password' });
     }
 
-    const userData = doc.data();
+    const userData = docSnap.data();
     const isMatch = await bcrypt.compare(password, userData.password);
 
     if (!isMatch) {
