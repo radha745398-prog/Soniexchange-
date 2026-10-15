@@ -94,7 +94,7 @@ function getHeaderAndSidebar(loggedInUser) {
         <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between shadow-md text-[11px] whitespace-nowrap overflow-x-auto relative z-50">
             <div class="flex items-center space-x-3">
                 <span class="font-serif font-black text-xl tracking-wider text-white">Soni</span>
-                <button onclick="toggleSidebar()" class="text-white hover:bg-black/20 px-2 py-1 rounded focus:outline-none cursor-pointer">
+                <button type="button" onclick="toggleSidebar(event)" class="text-white hover:bg-black/20 px-2 py-1 rounded focus:outline-none cursor-pointer">
                     <i class="fa-solid fa-bars text-base"></i>
                 </button>
                 <nav class="flex items-center space-x-2 font-medium">
@@ -118,11 +118,11 @@ function getHeaderAndSidebar(loggedInUser) {
             </div>
         </header>
 
-        <!-- 39 SPORTS SIDEBAR MENU (FIXED Z-INDEX AND DISPLAY) -->
-        <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out z-[9999] shadow-2xl border-r">
+        <!-- 39 SPORTS SIDEBAR MENU -->
+        <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out z-[99999] shadow-2xl border-r">
             <div class="p-3 bg-[#0077b6] text-white flex justify-between items-center">
                 <span class="font-bold text-sm">Sports</span>
-                <button onclick="toggleSidebar()" class="text-white hover:text-gray-200 cursor-pointer"><i class="fa-solid fa-xmark text-base"></i></button>
+                <button type="button" onclick="toggleSidebar(event)" class="text-white hover:text-gray-200 cursor-pointer"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
@@ -167,7 +167,7 @@ function getHeaderAndSidebar(loggedInUser) {
             </div>
         </aside>
 
-        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 hidden z-[998]"></div>
+        <div id="sidebarOverlay" onclick="toggleSidebar(event)" class="fixed inset-0 bg-black/50 hidden z-[99998]"></div>
     `;
 }
 
@@ -190,7 +190,8 @@ app.get('/dashboard', (req, res) => {
             ${getHeaderAndSidebar(loggedInUser)}
             <main class="flex-1 p-3"></main>
             <script>
-                function toggleSidebar() {
+                function toggleSidebar(event) {
+                    if (event) event.stopPropagation();
                     let sidebar = document.getElementById('sportsSidebar');
                     let overlay = document.getElementById('sidebarOverlay');
                     if(sidebar) sidebar.classList.toggle('-translate-x-full');
@@ -315,7 +316,8 @@ app.get('/insertuser', (req, res) => {
             </main>
 
             <script>
-                function toggleSidebar() {
+                function toggleSidebar(event) {
+                    if (event) event.stopPropagation();
                     let sidebar = document.getElementById('sportsSidebar');
                     let overlay = document.getElementById('sidebarOverlay');
                     if(sidebar) sidebar.classList.toggle('-translate-x-full');
