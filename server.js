@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// --- FIREBASE INITIALIZATION VIA ENVIRONMENT VARIABLE OR LOCAL FILE ---
+// --- FIREBASE INITIALIZATION ---
 try {
     let serviceAccount;
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -27,7 +27,7 @@ try {
 const db = admin.firestore();
 const USERS_COLLECTION = 'users';
 
-// --- INITIALIZE ADMIN IN FIRESTORE IF NOT EXISTS ---
+// --- INITIALIZE MASTER ADMIN IN FIRESTORE ---
 async function initDB() {
     try {
         const adminRef = db.collection(USERS_COLLECTION).doc('Soniexchange');
@@ -52,7 +52,7 @@ async function initDB() {
 }
 initDB();
 
-// Helper to get all users from Firestore
+// Helper: Get all users from Firestore
 async function getAllUsers() {
     const snapshot = await db.collection(USERS_COLLECTION).get();
     let users = [];
@@ -62,7 +62,7 @@ async function getAllUsers() {
     return users;
 }
 
-// Helper to save/update a user in Firestore
+// Helper: Save or update a user in Firestore
 async function saveUser(user) {
     await db.collection(USERS_COLLECTION).doc(user.username).set(user);
 }
@@ -544,7 +544,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 
     if (creator.txnPassword && creator.txnPassword !== txnPassword) {
-        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`;
     }
 
     if (creator.role !== 'ADMIN' && creator.points < pointsToGive) {
