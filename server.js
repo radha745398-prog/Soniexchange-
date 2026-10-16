@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -330,7 +330,7 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE (LOGIN KE BAAD YEHI KHULEGA - CLEAN)
+// 5. DASHBOARD ROUTE (CLEAN PAGE)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -360,7 +360,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users - ONLY OPENS WHEN "LIST OF CLIENTS" IS CLICKED)
+// 6. ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -368,7 +368,6 @@ app.get('/users', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        // Fetch ONLY actual created users from Firebase Firestore (No fake dummy data)
         const querySnapshot = await getDocs(collection(db, "users"));
         let usersList = [];
         querySnapshot.forEach((doc) => {
@@ -417,13 +416,11 @@ app.get('/users', async (req, res) => {
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
                 <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
-                    <!-- HEADER TITLE & ADD ACCOUNT BUTTON -->
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-base font-bold text-gray-800">Account List</h2>
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <!-- EXPORT BUTTONS: PDF & EXCEL -->
                     <div class="flex space-x-1 mb-3">
                         <button class="bg-[#dc3545] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
                             <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
@@ -433,7 +430,6 @@ app.get('/users', async (req, res) => {
                         </button>
                     </div>
 
-                    <!-- SHOW ENTRIES & SEARCH BAR -->
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
                         <div class="flex items-center space-x-1">
                             <span>Show</span>
@@ -454,7 +450,6 @@ app.get('/users', async (req, res) => {
                         </div>
                     </div>
 
-                    <!-- ACCOUNT LIST TABLE -->
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -484,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE (/insertuser)
+// 7. ADD ACCOUNT FORM PAGE (/insertuser) WITH STRICT CAPITAL LETTER & SPECIAL CHAR CAPITAL VALIDATION
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -518,6 +513,7 @@ app.get('/insertuser', async (req, res) => {
 
                         <!-- PERSONAL DETAIL & ACCOUNT DETAIL -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Personal Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -525,7 +521,7 @@ app.get('/insertuser', async (req, res) => {
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
                                             <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="29EMO" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">Username must start with a Capital letter!</p>
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">ID का पहला अक्षर Capital (बड़ा) होना चाहिए!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
@@ -536,7 +532,7 @@ app.get('/insertuser', async (req, res) => {
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
                                             <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password must start with Capital letter and contain special character!</p>
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password का पहला अक्षर Capital और उसमें special character (@#$¥€) होना चाहिए!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
@@ -556,6 +552,7 @@ app.get('/insertuser', async (req, res) => {
                                 </div>
                             </div>
 
+                            <!-- Account Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Account Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -647,7 +644,7 @@ app.get('/insertuser', async (req, res) => {
                         }
 
                         let firstChar = password.charAt(0);
-                        let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+                        let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
                             inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
@@ -665,15 +662,15 @@ app.get('/insertuser', async (req, res) => {
                         
                         let firstLetterName = clientName.charAt(0);
                         if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-                            alert('Username must start with a Capital letter!');
+                            alert('ID/Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!');
                             return false;
                         }
 
                         let firstLetterPass = password.charAt(0);
-                        let hasSpecialChar = /[$¢¥@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+                        let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
-                            alert('Password must start with Capital letter and contain special character ($ ¢ ¥ @ #)!');
+                            alert('Password का पहला अक्षर Capital होना चाहिए और उसमें Special character (@ # $ ¥ € आदि) होना ज़रूरी है!');
                             return false;
                         }
 
@@ -693,10 +690,22 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT & BALANCE DEDUCTION API
+// 8. CREATE ACCOUNT API (WITH BACKEND VALIDATION FOR SECURITY)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
+
+    // Backend Capital & Special Character Rules Verification
+    const firstLetterName = clientName.charAt(0);
+    if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
+        return res.send(`<script>alert('ID का पहला अक्षर Capital (बड़ा) होना चाहिए!'); window.history.back();</script>`);
+    }
+
+    const firstLetterPass = password.charAt(0);
+    const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
+    if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
+        return res.send(`<script>alert('Password का पहला अक्षर Capital होना चाहिए और special character (@#$¥€) होना अनिवार्य है!'); window.history.back();</script>`);
+    }
 
     try {
         const creatorRef = doc(db, 'users', createdBy);
@@ -750,5 +759,5 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
