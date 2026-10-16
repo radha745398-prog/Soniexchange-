@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 
@@ -358,7 +358,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users)
+// 6. ACCOUNT LIST PAGE (/users) - WITH HIERARCHICAL FILTERING
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -366,13 +366,24 @@ app.get('/users', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        const querySnapshot = await getDocs(collection(db, "users"));
         let usersList = [];
-        querySnapshot.forEach((doc) => {
-            if (doc.id !== 'Soniexchange') {
-                usersList.push({ id: doc.id, ...doc.data() });
-            }
-        });
+        
+        if (loggedInUser === 'Soniexchange') {
+            // Master Admin sees all users except himself
+            const querySnapshot = await getDocs(collection(db, "users"));
+            querySnapshot.forEach((docItem) => {
+                if (docItem.id !== 'Soniexchange') {
+                    usersList.push({ id: docItem.id, ...docItem.data() });
+                }
+            });
+        } else {
+            // Clients see ONLY users created by themselves
+            const q = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((docItem) => {
+                usersList.push({ id: docItem.id, ...docItem.data() });
+            });
+        }
 
         let tableRows = usersList.length === 0 ? `
             <tr><td colspan="8" class="text-center p-4 text-gray-500">No clients found. Click "Add Account" to create one.</td></tr>
@@ -773,7 +784,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API
+// 8. CREATE ACCOUNT API (WITH TRANSACTION PASSWORD VERIFICATION)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
