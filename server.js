@@ -55,7 +55,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR
+// TOP HEADER BAR (UNTOUCHED & EXACT AS REQUESTED)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -330,7 +330,7 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE (CLEAN PAGE)
+// 5. DASHBOARD ROUTE
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -479,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE WITH LIVE RED/GREEN BOX HIGHLIGHT
+// 7. ADD ACCOUNT FORM PAGE WITH LIVE RED / GREEN HIGHLIGHT
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -624,11 +624,11 @@ app.get('/insertuser', async (req, res) => {
 
                         let firstChar = clientName.charAt(0);
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
-                            // RED BOX FOR SMALL LETTER
+                            // SMALL LETTER HAS RED BORDER & RED BG
                             inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             nameError.classList.remove('hidden');
                         } else {
-                            // GREEN BOX FOR CAPITAL LETTER
+                            // CAPITAL LETTER HAS GREEN BORDER & GREEN BG
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             nameError.classList.add('hidden');
                         }
@@ -649,11 +649,11 @@ app.get('/insertuser', async (req, res) => {
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
-                            // RED BOX FOR INVALID PASSWORD
+                            // INVALID PASSWORD HAS RED BORDER & RED BG
                             inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             passError.classList.remove('hidden');
                         } else {
-                            // GREEN BOX FOR VALID PASSWORD
+                            // VALID PASSWORD HAS GREEN BORDER & GREEN BG
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             passError.classList.add('hidden');
                         }
