@@ -3,7 +3,6 @@ const cors = require('cors');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
 const session = require('express-session');
-const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(express.json());
@@ -37,11 +36,9 @@ async function initMasterAdmin() {
     const docSnap = await getDoc(adminRef);
 
     if (!docSnap.exists()) {
-      const hashedPassword = await bcrypt.hash('Lyy@5656', 10);
       await setDoc(adminRef, {
         username: 'Soniexchange',
-        password: hashedPassword,
-        plainPassword: 'Lyy@5656',
+        password: 'Lyy@5656',
         role: 'ADMIN',
         points: 100000000,
         mustChangePassword: false,
@@ -227,7 +224,7 @@ app.post('/login-process', async (req, res) => {
         }
 
         const user = docSnap.data();
-        const isMatch = await bcrypt.compare(password, user.password) || (password === user.password) || (password === user.plainPassword);
+        const isMatch = (password === user.password);
 
         if (!isMatch) {
             return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
@@ -292,12 +289,10 @@ app.post('/api/update-password', async (req, res) => {
             return res.send("<script>alert('User not found!'); window.location='/';</script>");
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
         const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
         await updateDoc(userRef, {
-            password: hashedPassword,
-            plainPassword: newPassword,
+            password: newPassword,
             mustChangePassword: false,
             txnPassword: txnPass
         });
@@ -777,7 +772,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API (SAVES REAL/PLAIN PASSWORD FOR FIREBASE CONSOLE VISIBILITY)
+// 8. CREATE ACCOUNT API (SAVES PLAIN TEXT PASSWORD DIRECTLY IN FIREBASE)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -815,8 +810,6 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
         if (creator.role !== 'ADMIN') {
             await updateDoc(creatorRef, {
                 points: (creator.points || 0) - pointsToGive
@@ -825,8 +818,7 @@ app.post('/api/clients/create', async (req, res) => {
 
         await setDoc(newClientRef, {
             username: clientName,
-            password: hashedPassword,
-            plainPassword: password, // Real Password Field for Firebase Console
+            password: password, // Plain text password directly saved in Firebase
             role: accountType || 'Client',
             points: pointsToGive,
             createdBy: createdBy,
