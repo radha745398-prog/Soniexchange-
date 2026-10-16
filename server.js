@@ -3,6 +3,7 @@ const cors = require('cors');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } = require('firebase/firestore');
 const session = require('express-session');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(express.json());
@@ -209,7 +210,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS
+// 2. LOGIN PROCESS (SUPPORTS BOTH PLAIN TEXT & OLD HASHED PASSWORDS)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -224,7 +225,7 @@ app.post('/login-process', async (req, res) => {
         }
 
         const user = docSnap.data();
-        const isMatch = (password === user.password);
+        const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password).catch(() => false));
 
         if (!isMatch) {
             return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
@@ -772,7 +773,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API (SAVES PLAIN TEXT PASSWORD DIRECTLY IN FIREBASE)
+// 8. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -818,7 +819,7 @@ app.post('/api/clients/create', async (req, res) => {
 
         await setDoc(newClientRef, {
             username: clientName,
-            password: password, // Plain text password directly saved in Firebase
+            password: password,
             role: accountType || 'Client',
             points: pointsToGive,
             createdBy: createdBy,
