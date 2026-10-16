@@ -55,7 +55,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR (UNTOUCHED & EXACT AS REQUESTED)
+// TOP HEADER BAR
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -479,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE WITH LIVE RED / GREEN HIGHLIGHT
+// 7. ADD ACCOUNT FORM PAGE MATCHING EXACT SCREENSHOT VALIDATION & STYLING
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -518,21 +518,31 @@ app.get('/insertuser', async (req, res) => {
                                 <div class="dark-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
                                     <div class="grid grid-cols-2 gap-2">
+                                        <!-- Client Name Input Container -->
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
-                                            <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="29EMO" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden font-semibold">ID का पहला अक्षर Capital (बड़ा) होना चाहिए!</p>
+                                            <div class="relative">
+                                                <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="Client Name" class="w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none">
+                                                <span id="nameCross" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none">✕</span>
+                                            </div>
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5">The clientname field is required</p>
                                         </div>
+
+                                        <!-- User Password Input Container -->
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
-                                            <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="••••••••••••" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
+                                            <div class="relative">
+                                                <input type="password" id="password" name="password" required oninput="checkPasswordLive()" placeholder="User Password" class="w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none">
+                                                <span id="passCross" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none">✕</span>
+                                            </div>
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5">The password field is required</p>
                                         </div>
                                     </div>
+
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
                                             <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden font-semibold">Password का पहला अक्षर Capital और special character (@#$¥€) होना चाहिए!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
@@ -615,22 +625,26 @@ app.get('/insertuser', async (req, res) => {
                         let clientName = document.getElementById('clientName').value;
                         let nameError = document.getElementById('nameError');
                         let inputField = document.getElementById('clientName');
+                        let nameCross = document.getElementById('nameCross');
 
                         if (clientName.length === 0) {
-                            inputField.className = "w-full border p-1 rounded bg-white text-xs focus:outline-none";
-                            nameError.classList.add('hidden');
+                            inputField.className = "w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none";
+                            nameError.classList.remove('hidden');
+                            nameCross.classList.remove('hidden');
                             return;
                         }
 
                         let firstChar = clientName.charAt(0);
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
-                            // SMALL LETTER HAS RED BORDER & RED BG
-                            inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
+                            // SMALL LETTER HAS RED BORDER & SHOWS ERROR TEXT + CROSS
+                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
                             nameError.classList.remove('hidden');
+                            nameCross.classList.remove('hidden');
                         } else {
-                            // CAPITAL LETTER HAS GREEN BORDER & GREEN BG
+                            // CAPITAL LETTER REMOVES ERROR TEXT AND TURNS BORDER GREEN
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             nameError.classList.add('hidden');
+                            nameCross.classList.add('hidden');
                         }
                     }
 
@@ -638,10 +652,12 @@ app.get('/insertuser', async (req, res) => {
                         let password = document.getElementById('password').value;
                         let passError = document.getElementById('passError');
                         let inputField = document.getElementById('password');
+                        let passCross = document.getElementById('passCross');
 
                         if (password.length === 0) {
-                            inputField.className = "w-full border p-1 rounded bg-white text-xs focus:outline-none";
-                            passError.classList.add('hidden');
+                            inputField.className = "w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none";
+                            passError.classList.remove('hidden');
+                            passCross.classList.remove('hidden');
                             return;
                         }
 
@@ -649,13 +665,15 @@ app.get('/insertuser', async (req, res) => {
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
-                            // INVALID PASSWORD HAS RED BORDER & RED BG
-                            inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
+                            // INVALID PASSWORD HAS RED BORDER & SHOWS ERROR TEXT + CROSS
+                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
                             passError.classList.remove('hidden');
+                            passCross.classList.remove('hidden');
                         } else {
-                            // VALID PASSWORD HAS GREEN BORDER & GREEN BG
+                            // VALID PASSWORD REMOVES ERROR TEXT AND TURNS BORDER GREEN
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             passError.classList.add('hidden');
+                            passCross.classList.add('hidden');
                         }
                     }
 
@@ -666,7 +684,7 @@ app.get('/insertuser', async (req, res) => {
                         
                         let firstLetterName = clientName.charAt(0);
                         if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-                            alert('ID/Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!');
+                            alert('Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!');
                             return false;
                         }
 
@@ -701,7 +719,7 @@ app.post('/api/clients/create', async (req, res) => {
 
     const firstLetterName = clientName.charAt(0);
     if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-        return res.send(`<script>alert('ID का पहला अक्षर Capital (बड़ा) होना चाहिए!'); window.history.back();</script>`);
+        return res.send(`<script>alert('Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!'); window.history.back();</script>`);
     }
 
     const firstLetterPass = password.charAt(0);
