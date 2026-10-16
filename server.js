@@ -55,7 +55,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR (UNTOUCHED & EXACT AS REQUESTED)
+// TOP HEADER BAR
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -479,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE (/insertuser) WITH CAPITAL LETTER & SPECIAL CHAR VALIDATION
+// 7. ADD ACCOUNT FORM PAGE WITH LIVE RED/GREEN BOX HIGHLIGHT
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -521,7 +521,7 @@ app.get('/insertuser', async (req, res) => {
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
                                             <input type="text" id="clientName" name="clientName" required oninput="checkClientNameLive()" placeholder="29EMO" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden">ID का पहला अक्षर Capital (बड़ा) होना चाहिए!</p>
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden font-semibold">ID का पहला अक्षर Capital (बड़ा) होना चाहिए!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
@@ -532,7 +532,7 @@ app.get('/insertuser', async (req, res) => {
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
                                             <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
-                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden">Password का पहला अक्षर Capital और उसमें special character (@#$¥€) होना चाहिए!</p>
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden font-semibold">Password का पहला अक्षर Capital और special character (@#$¥€) होना चाहिए!</p>
                                         </div>
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
@@ -624,9 +624,11 @@ app.get('/insertuser', async (req, res) => {
 
                         let firstChar = clientName.charAt(0);
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
+                            // RED BOX FOR SMALL LETTER
                             inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             nameError.classList.remove('hidden');
                         } else {
+                            // GREEN BOX FOR CAPITAL LETTER
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             nameError.classList.add('hidden');
                         }
@@ -647,9 +649,11 @@ app.get('/insertuser', async (req, res) => {
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
+                            // RED BOX FOR INVALID PASSWORD
                             inputField.className = "w-full border-2 border-red-500 p-1 rounded bg-red-50 text-xs focus:outline-none";
                             passError.classList.remove('hidden');
                         } else {
+                            // GREEN BOX FOR VALID PASSWORD
                             inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
                             passError.classList.add('hidden');
                         }
