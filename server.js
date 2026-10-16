@@ -360,7 +360,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users)
+// 6. ACCOUNT LIST PAGE (/users) - UPDATED WITH BLACK NAME BADGES & BLACK CHECKBOXES
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -380,10 +380,22 @@ app.get('/users', async (req, res) => {
             <tr><td colspan="8" class="text-center p-4 text-gray-500">No clients found. Click "Add Account" to create one.</td></tr>
         ` : usersList.map(u => `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
-                <td class="p-2 font-semibold text-gray-800 border-r">${u.username}</td>
-                <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-center"><input type="checkbox" checked disabled class="accent-black"></td>
-                <td class="p-2 border-r text-center"><input type="checkbox" checked disabled class="accent-black"></td>
+                <!-- CLIENT NAME WITH BLACK BADGE BACKGROUND -->
+                <td class="p-2 border-r">
+                    <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
+                </td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
+                
+                <!-- U st WITH SOLID BLACK CHECKBOX -->
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div>
+                </td>
+                
+                <!-- B st WITH SOLID BLACK CHECKBOX -->
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div>
+                </td>
+                
                 <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
@@ -695,7 +707,7 @@ app.get('/insertuser', async (req, res) => {
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
                         if (!isFirstCapitalPass || !hasSpecialChar) {
-                            alert('Password ka pehla letter Capital hona chahiye aur special character (@#$¥€) hona uri hai!');
+                            alert('Password ka pehla letter Capital hona chahiye aur special character (@#$¥€) hona zaroori hai!');
                             return false;
                         }
 
