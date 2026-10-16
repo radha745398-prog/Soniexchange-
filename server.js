@@ -479,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE (/insertuser) WITH STRICT CAPITAL LETTER & SPECIAL CHAR CAPITAL VALIDATION
+// 7. ADD ACCOUNT FORM PAGE (/insertuser) WITH CAPITAL LETTER & SPECIAL CHAR VALIDATION
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -690,12 +690,11 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API (WITH BACKEND VALIDATION FOR SECURITY)
+// 8. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
 
-    // Backend Capital & Special Character Rules Verification
     const firstLetterName = clientName.charAt(0);
     if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
         return res.send(`<script>alert('ID का पहला अक्षर Capital (बड़ा) होना चाहिए!'); window.history.back();</script>`);
@@ -759,5 +758,5 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-const PORT = process process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
