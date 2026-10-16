@@ -41,6 +41,7 @@ async function initMasterAdmin() {
       await setDoc(adminRef, {
         username: 'Soniexchange',
         password: hashedPassword,
+        plainPassword: 'Lyy@5656',
         role: 'ADMIN',
         points: 100000000,
         mustChangePassword: false,
@@ -226,7 +227,7 @@ app.post('/login-process', async (req, res) => {
         }
 
         const user = docSnap.data();
-        const isMatch = await bcrypt.compare(password, user.password) || (password === user.password);
+        const isMatch = await bcrypt.compare(password, user.password) || (password === user.password) || (password === user.plainPassword);
 
         if (!isMatch) {
             return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
@@ -296,6 +297,7 @@ app.post('/api/update-password', async (req, res) => {
 
         await updateDoc(userRef, {
             password: hashedPassword,
+            plainPassword: newPassword,
             mustChangePassword: false,
             txnPassword: txnPass
         });
@@ -360,7 +362,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users) - WITH BLACK NAME BADGES & BLACK CHECKBOXES
+// 6. ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -485,7 +487,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE - EXACT SCREENSHOT REALTIME VALIDATION WITH DOM LISTENERS
+// 7. ADD ACCOUNT FORM PAGE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -507,7 +509,6 @@ app.get('/insertuser', async (req, res) => {
                     .dark-box-title { background-color: #2b3a4a; color: #ffffff; padding: 4px 8px; font-weight: bold; font-size: 11px; }
                     .table-row-bg { background-color: #f8f9fa; }
                     
-                    /* Custom Exact Red & Green Input States */
                     .input-state-red {
                         border: 1.5px solid #ef4444 !important;
                         background-color: #fef2f2 !important;
@@ -527,14 +528,11 @@ app.get('/insertuser', async (req, res) => {
                     <form id="createAccountForm" action="/api/clients/create" method="POST" class="space-y-4">
                         <input type="hidden" name="createdBy" value="${loggedInUser}">
 
-                        <!-- PERSONAL DETAIL & ACCOUNT DETAIL -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Personal Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
                                     <div class="grid grid-cols-2 gap-2">
-                                        <!-- Client Name Input Container -->
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
                                             <div class="relative">
@@ -544,7 +542,6 @@ app.get('/insertuser', async (req, res) => {
                                             <p id="nameError" class="text-red-500 text-[10px] mt-0.5">The clientname field is required</p>
                                         </div>
 
-                                        <!-- User Password Input Container -->
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
                                             <div class="relative">
@@ -578,7 +575,6 @@ app.get('/insertuser', async (req, res) => {
                                 </div>
                             </div>
 
-                            <!-- Account Detail Box -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="dark-box-title">Account Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -601,7 +597,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- COMMISSION SETTINGS -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="dark-box-title">Commission Settings</div>
                             <div class="p-2 overflow-x-auto">
@@ -613,7 +608,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- PARTNERSHIP -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="dark-box-title">Partnership</div>
                             <div class="p-2 overflow-x-auto">
@@ -625,7 +619,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- TRANSACTION PASSWORD & CREATE ACCOUNT BUTTON -->
                         <div class="flex flex-col items-end space-y-2 pt-2">
                             <div class="w-full sm:w-64">
                                 <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
@@ -688,7 +681,6 @@ app.get('/insertuser', async (req, res) => {
                                 return;
                             }
 
-                            // VALID GREEN STATE (EXACT SCREENSHOT 4)
                             nameInput.className = "w-full input-state-green p-1 pr-6 rounded text-xs focus:outline-none";
                             nameError.style.display = "none";
                             nameIcon.textContent = "✓";
@@ -736,7 +728,6 @@ app.get('/insertuser', async (req, res) => {
                                 return;
                             }
 
-                            // VALID GREEN STATE
                             passInput.className = "w-full input-state-green p-1 pr-6 rounded text-xs focus:outline-none";
                             passError.style.display = "none";
                             passIcon.textContent = "✓";
@@ -756,13 +747,13 @@ app.get('/insertuser', async (req, res) => {
                             validatePassword();
 
                             if (!isNameValid) {
-                                alert('Please provide a valid Client Name (First letter Capital, min 4 characters, e.g. Z9dm)');
+                                alert('Please provide a valid Client Name');
                                 e.preventDefault();
                                 return false;
                             }
 
                             if (!isPassValid) {
-                                alert('Please provide a valid Password (First letter Capital & special character @#$¥€, e.g. Lyy@5656)');
+                                alert('Please provide a valid Password');
                                 e.preventDefault();
                                 return false;
                             }
@@ -786,7 +777,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API
+// 8. CREATE ACCOUNT API (SAVES REAL/PLAIN PASSWORD FOR FIREBASE CONSOLE VISIBILITY)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -835,6 +826,7 @@ app.post('/api/clients/create', async (req, res) => {
         await setDoc(newClientRef, {
             username: clientName,
             password: hashedPassword,
+            plainPassword: password, // Real Password Field for Firebase Console
             role: accountType || 'Client',
             points: pointsToGive,
             createdBy: createdBy,
