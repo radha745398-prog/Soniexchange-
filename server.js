@@ -479,7 +479,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE MATCHING EXACT SCREENSHOT VALIDATION & STYLING
+// 7. ADD ACCOUNT FORM PAGE WITH EXACT LIVE GREEN/RED TOGGLE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -629,22 +629,24 @@ app.get('/insertuser', async (req, res) => {
 
                         if (clientName.length === 0) {
                             inputField.className = "w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none";
-                            nameError.classList.remove('hidden');
-                            nameCross.classList.remove('hidden');
+                            nameError.style.display = "block";
+                            nameCross.style.display = "block";
                             return;
                         }
 
-                        let firstChar = clientName.charAt(0);
-                        if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase()) {
-                            // SMALL LETTER HAS RED BORDER & SHOWS ERROR TEXT + CROSS
-                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
-                            nameError.classList.remove('hidden');
-                            nameCross.classList.remove('hidden');
+                        // EXACT CHECK FOR FIRST CAPITAL LETTER (A-Z)
+                        let isFirstCapital = /^[A-Z]/.test(clientName);
+
+                        if (isFirstCapital) {
+                            // CAPITAL LETTER -> GREEN BORDER & HIDE ERROR TEXT/CROSS
+                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50/30 text-xs focus:outline-none";
+                            nameError.style.display = "none";
+                            nameCross.style.display = "none";
                         } else {
-                            // CAPITAL LETTER REMOVES ERROR TEXT AND TURNS BORDER GREEN
-                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
-                            nameError.classList.add('hidden');
-                            nameCross.classList.add('hidden');
+                            // NOT CAPITAL -> RED BORDER & SHOW ERROR TEXT/CROSS
+                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
+                            nameError.style.display = "block";
+                            nameCross.style.display = "block";
                         }
                     }
 
@@ -656,24 +658,25 @@ app.get('/insertuser', async (req, res) => {
 
                         if (password.length === 0) {
                             inputField.className = "w-full border border-red-300 p-1 pr-6 rounded bg-red-50/20 text-xs focus:outline-none";
-                            passError.classList.remove('hidden');
-                            passCross.classList.remove('hidden');
+                            passError.style.display = "block";
+                            passCross.style.display = "block";
                             return;
                         }
 
-                        let firstChar = password.charAt(0);
+                        // FIRST CAPITAL LETTER (A-Z) & AT LEAST ONE SPECIAL CHAR
+                        let isFirstCapital = /^[A-Z]/.test(password);
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
-                        if (firstChar !== firstChar.toUpperCase() || firstChar === firstChar.toLowerCase() || !hasSpecialChar) {
-                            // INVALID PASSWORD HAS RED BORDER & SHOWS ERROR TEXT + CROSS
-                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
-                            passError.classList.remove('hidden');
-                            passCross.classList.remove('hidden');
+                        if (isFirstCapital && hasSpecialChar) {
+                            // VALID -> GREEN BORDER & HIDE ERROR TEXT/CROSS
+                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50/30 text-xs focus:outline-none";
+                            passError.style.display = "none";
+                            passCross.style.display = "none";
                         } else {
-                            // VALID PASSWORD REMOVES ERROR TEXT AND TURNS BORDER GREEN
-                            inputField.className = "w-full border-2 border-green-500 p-1 rounded bg-green-50 text-xs focus:outline-none";
-                            passError.classList.add('hidden');
-                            passCross.classList.add('hidden');
+                            // INVALID -> RED BORDER & SHOW ERROR TEXT/CROSS
+                            inputField.className = "w-full border-2 border-red-500 p-1 pr-6 rounded bg-red-50 text-xs focus:outline-none";
+                            passError.style.display = "block";
+                            passCross.style.display = "block";
                         }
                     }
 
@@ -682,17 +685,17 @@ app.get('/insertuser', async (req, res) => {
                         let password = document.getElementById('password').value;
                         let retypePassword = document.getElementById('retypePassword').value;
                         
-                        let firstLetterName = clientName.charAt(0);
-                        if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-                            alert('Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!');
+                        let isFirstCapitalName = /^[A-Z]/.test(clientName);
+                        if (!isFirstCapitalName) {
+                            alert('Client Name ka pehla letter Capital (A-Z) hona chahiye!');
                             return false;
                         }
 
-                        let firstLetterPass = password.charAt(0);
+                        let isFirstCapitalPass = /^[A-Z]/.test(password);
                         let hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
 
-                        if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
-                            alert('Password का पहला अक्षर Capital होना चाहिए और उसमें Special character (@ # $ ¥ € आदि) होना ज़रूरी है!');
+                        if (!isFirstCapitalPass || !hasSpecialChar) {
+                            alert('Password ka pehla letter Capital hona chahiye aur special character (@#$¥€) hona uri hai!');
                             return false;
                         }
 
@@ -717,15 +720,15 @@ app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
 
-    const firstLetterName = clientName.charAt(0);
-    if (firstLetterName !== firstLetterName.toUpperCase() || firstLetterName === firstLetterName.toLowerCase()) {
-        return res.send(`<script>alert('Client Name का पहला अक्षर Capital (बड़ा) होना चाहिए!'); window.history.back();</script>`);
+    const isFirstCapitalName = /^[A-Z]/.test(clientName);
+    if (!isFirstCapitalName) {
+        return res.send(`<script>alert('Client Name ka pehla letter Capital होना चाहिए!'); window.history.back();</script>`);
     }
 
-    const firstLetterPass = password.charAt(0);
+    const isFirstCapitalPass = /^[A-Z]/.test(password);
     const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
-    if (firstLetterPass !== firstLetterPass.toUpperCase() || firstLetterPass === firstLetterPass.toLowerCase() || !hasSpecialChar) {
-        return res.send(`<script>alert('Password का पहला अक्षर Capital होना चाहिए और special character (@#$¥€) होना अनिवार्य है!'); window.history.back();</script>`);
+    if (!isFirstCapitalPass || !hasSpecialChar) {
+        return res.send(`<script>alert('Password ka pehla letter Capital aur special character होना आवश्यक है!'); window.history.back();</script>`);
     }
 
     try {
