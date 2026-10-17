@@ -980,7 +980,16 @@ app.get('/users', async (req, res) => {
                             styles: { fontSize: 8, cellPadding: 2 }
                         });
 
-                        doc.save("userlist-1.pdf");
+                        // Output Blob URL to trigger browser PDF bottom sheet preview
+                        const pdfBlob = doc.output('blob');
+                        const blobUrl = URL.createObjectURL(pdfBlob);
+                        
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = 'userlist-1.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                     }
                 </script>
             </body>
@@ -1178,7 +1187,16 @@ app.get('/soni-view', async (req, res) => {
                             styles: { fontSize: 8, cellPadding: 2 }
                         });
 
-                        doc.save("userlist-1.pdf");
+                        // Output Blob URL to trigger browser PDF bottom sheet preview
+                        const pdfBlob = doc.output('blob');
+                        const blobUrl = URL.createObjectURL(pdfBlob);
+                        
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = 'userlist-1.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                     }
                 </script>
             </body>
