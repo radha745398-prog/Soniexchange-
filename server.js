@@ -962,7 +962,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH ACTIVE / DEACTIVE TAB FILTERING (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH ACTIVE / DEACTIVE TAB FILTERING & EXACT BOX STYLING (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1071,6 +1071,25 @@ app.get('/soni-view', async (req, res) => {
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
+                    
+                    /* TULA111 EXACT TAB BOX STYLING */
+                    .tab-active-box {
+                        background-color: #ffffff;
+                        border-top: 1px solid #d1d5db;
+                        border-left: 1px solid #d1d5db;
+                        border-right: 1px solid #d1d5db;
+                        border-bottom: 1px solid #ffffff;
+                        color: #1f2937;
+                        font-weight: 600;
+                        margin-bottom: -1px;
+                        z-index: 10;
+                    }
+                    .tab-inactive-link {
+                        background-color: transparent;
+                        border: 1px solid transparent;
+                        color: #0077b6;
+                        font-weight: 600;
+                    }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
@@ -1105,10 +1124,14 @@ app.get('/soni-view', async (req, res) => {
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <!-- ACTIVE & DEACTIVE USERS TABS -->
-                    <div class="flex space-x-3 mb-2 text-[11px] font-bold">
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="pb-0.5 cursor-pointer ${tab === 'active' ? 'text-[#0077b6] border-b-2 border-[#0077b6]' : 'text-gray-500 hover:text-gray-700'}">Active Users</a>
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="pb-0.5 cursor-pointer ${tab === 'deactive' ? 'text-[#0077b6] border-b-2 border-[#0077b6]' : 'text-gray-500 hover:text-gray-700'}">Deactive Users</a>
+                    <!-- ACTIVE & DEACTIVE USERS EXACT SCREENSHOT TABS WITH BOTTOM DIVIDER LINE -->
+                    <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
+                            Active Users
+                        </a>
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'deactive' ? 'tab-active-box' : 'tab-inactive-link'}">
+                            Deactive Users
+                        </a>
                     </div>
 
                     <div class="flex space-x-1 mb-3">
