@@ -1034,7 +1034,7 @@ app.get('/soni-view', async (req, res) => {
         usersList.forEach(u => {
             const cr = Number(u.creditRef || u.points || 0);
             const bal = Number(u.points || 0);
-            const pl = 0; // or calculated P/L
+            const pl = 0;
             const exp = Number(u.exposure || 0);
             const avail = bal;
             const limit = Number(u.exposureLimit || 0);
@@ -1163,8 +1163,8 @@ app.get('/soni-view', async (req, res) => {
                                     <th class="p-2 border-r text-center">Account Type</th>
                                     <th class="p-2 text-center">Action</th>
                                 </tr>
-                                <!-- TOTAL SUMMARY ROW JUST BELOW HEADER -->
-                                <tr class="bg-gray-100 text-gray-800 text-[11px] font-bold border-b">
+                                <!-- TOTAL SUMMARY ROW WITH GREY BACKGROUND -->
+                                <tr class="bg-gray-200 text-gray-900 text-[11px] font-bold border-b border-gray-300">
                                     <td class="p-2 border-r">Total</td>
                                     <td class="p-2 border-r text-right">${totalCR.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalBalance.toLocaleString()}</td>
