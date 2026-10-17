@@ -217,12 +217,12 @@ function getModalsHTML(loggedInUser) {
                     <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                     <input type="hidden" name="clientUsername" id="modalClientUsername">
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
                         <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
                         <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
@@ -261,12 +261,12 @@ function getModalsHTML(loggedInUser) {
                     <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                     <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
                         <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
                         <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
@@ -886,7 +886,6 @@ app.get('/users', async (req, res) => {
                 <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <!-- JSPDF LIBRARIES -->
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
@@ -955,54 +954,6 @@ app.get('/users', async (req, res) => {
 
                 ${getModalsHTML(loggedInUser)}
                 ${getModalScriptsJS()}
-
-                <script>
-                    function downloadPDF() {
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
-
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(14);
-                        doc.text("User List", 105, 15, { align: "center" });
-
-                        const data = [];
-                        const rows = document.querySelectorAll("#accountTable tbody tr");
-
-                        rows.forEach(row => {
-                            const cells = row.querySelectorAll("td");
-                            if (cells.length >= 7) {
-                                const username = cells[0].innerText.trim();
-                                const cr = cells[1].innerText.trim();
-                                const ust = cells[2].innerText.includes('✓') ? 'Active' : 'Deactive';
-                                const bst = cells[3].innerText.includes('✓') ? 'Active' : 'Deactive';
-                                const expLimit = cells[4].innerText.trim();
-                                const defPct = cells[5].innerText.trim();
-                                const accType = cells[6].innerText.trim();
-
-                                data.push([username, cr, ust, bst, expLimit, defPct, accType]);
-                            }
-                        });
-
-                        doc.autoTable({
-                            startY: 20,
-                            head: [['User Name', 'CR', 'U st', 'B st', 'Exposure Limit', 'Default %', 'Account type']],
-                            body: data,
-                            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-                            alternateRowStyles: { fillColor: [245, 245, 245] },
-                            styles: { fontSize: 8, cellPadding: 2 }
-                        });
-
-                        const pdfBlob = doc.output('blob');
-                        const blobUrl = URL.createObjectURL(pdfBlob);
-                        
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = 'userlist-1.pdf';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
-                </script>
             </body>
             </html>
         `);
@@ -1011,31 +962,39 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH MATCHING BLUE SUMMARY BANNER (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH ACTIVE / DEACTIVE TAB FILTERING (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
+    const tab = req.query.tab || 'active'; // 'active' or 'deactive'
+
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN', points: 100000000 };
 
-        let usersList = [];
+        let allUsersList = [];
         if (loggedInUser === 'Soniexchange') {
             const querySnapshot = await getDocs(collection(db, "users"));
             querySnapshot.forEach((docItem) => {
                 if (docItem.id !== 'Soniexchange') {
-                    usersList.push({ id: docItem.id, ...docItem.data() });
+                    allUsersList.push({ id: docItem.id, ...docItem.data() });
                 }
             });
         } else {
             const q = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((docItem) => {
-                usersList.push({ id: docItem.id, ...docItem.data() });
+                allUsersList.push({ id: docItem.id, ...docItem.data() });
             });
         }
 
-        // Calculate Totals
+        // Filter based on tab
+        const usersList = allUsersList.filter(u => {
+            const isActive = u.userActive !== false;
+            return tab === 'active' ? isActive : !isActive;
+        });
+
+        // Calculate Totals for filtered list
         let totalCR = 0;
         let totalBalance = 0;
         let totalPL = 0;
@@ -1060,7 +1019,7 @@ app.get('/soni-view', async (req, res) => {
         });
 
         let tableRows = usersList.length === 0 ? `
-            <tr><td colspan="12" class="text-center p-4 text-gray-500">No clients found.</td></tr>
+            <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
         ` : usersList.map(u => `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
                 <td class="p-2 border-r">
@@ -1107,7 +1066,6 @@ app.get('/soni-view', async (req, res) => {
                 <title>Account List - Soni View</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <!-- JSPDF LIBRARIES -->
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
@@ -1118,55 +1076,26 @@ app.get('/soni-view', async (req, res) => {
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                <!-- EXPANDABLE BLUE SUMMARY BANNER (MATCHED WITH TOP NAVBAR) -->
+                <!-- EXPANDABLE BLUE SUMMARY BANNER -->
                 <div class="bg-[#0077b6] text-white shadow-md">
-                    <!-- Toggle Arrow Button Bar -->
                     <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
                         <button type="button" id="summaryToggleBtn" class="text-white text-xs focus:outline-none cursor-pointer">
                             <i id="summaryArrowIcon" class="fa-solid fa-chevron-down text-xs pointer-events-none"></i>
                         </button>
                     </div>
 
-                    <!-- Collapsible Content Panel -->
                     <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Upper Level Credit Reference:</span>
-                            <span class="font-semibold">0</span>
-                        </div>
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Down level Occupy Balance:</span>
-                            <span class="font-semibold">0</span>
-                        </div>
-                        <div class="flex justify-between py-0.5">
-                            <span class="text-white/90">Down Level Credit Reference:</span>
-                            <span class="font-semibold">100</span>
-                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
 
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Total Master Balance:</span>
-                            <span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Upper Level:</span>
-                            <span class="font-semibold">-1000</span>
-                        </div>
-                        <div class="flex justify-between py-0.5">
-                            <span class="text-white/90">Down Level Profit/Loss:</span>
-                            <span class="font-semibold">-100</span>
-                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level:</span><span class="font-semibold">-1000</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
 
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Available Balance:</span>
-                            <span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
-                            <span class="text-white/90">Available Balance With Profit/Loss:</span>
-                            <span class="font-semibold">1000</span>
-                        </div>
-                        <div class="flex justify-between py-0.5">
-                            <span class="text-white/90">My Profit/Loss:</span>
-                            <span class="font-semibold">0</span>
-                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">My Profit/Loss:</span><span class="font-semibold">0</span></div>
                     </div>
                 </div>
 
@@ -1176,9 +1105,10 @@ app.get('/soni-view', async (req, res) => {
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <div class="flex space-x-2 mb-2 text-[11px] font-bold">
-                        <span class="text-[#0077b6] border-b-2 border-[#0077b6] pb-0.5 cursor-pointer">Active Users</span>
-                        <span class="text-gray-500 cursor-pointer hover:text-gray-700">Deactive Users</span>
+                    <!-- ACTIVE & DEACTIVE USERS TABS -->
+                    <div class="flex space-x-3 mb-2 text-[11px] font-bold">
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="pb-0.5 cursor-pointer ${tab === 'active' ? 'text-[#0077b6] border-b-2 border-[#0077b6]' : 'text-gray-500 hover:text-gray-700'}">Active Users</a>
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="pb-0.5 cursor-pointer ${tab === 'deactive' ? 'text-[#0077b6] border-b-2 border-[#0077b6]' : 'text-gray-500 hover:text-gray-700'}">Deactive Users</a>
                     </div>
 
                     <div class="flex space-x-1 mb-3">
@@ -1227,7 +1157,6 @@ app.get('/soni-view', async (req, res) => {
                                     <th class="p-2 border-r text-center">Account Type</th>
                                     <th class="p-2 text-center">Action</th>
                                 </tr>
-                                <!-- TOTAL SUMMARY ROW WITH GREY BACKGROUND -->
                                 <tr class="bg-gray-200 text-gray-900 text-[11px] font-bold border-b border-gray-300">
                                     <td class="p-2 border-r">Total</td>
                                     <td class="p-2 border-r text-right">${totalCR.toLocaleString()}</td>
@@ -1249,7 +1178,6 @@ app.get('/soni-view', async (req, res) => {
                         </table>
                     </div>
 
-                    <!-- PAGINATION BAR -->
                     <div class="flex justify-end items-center mt-3 space-x-1 text-xs">
                         <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">«</button>
                         <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">‹</button>
@@ -1266,10 +1194,9 @@ app.get('/soni-view', async (req, res) => {
                     function downloadPDF() {
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
-
                         doc.setFont("helvetica", "bold");
                         doc.setFontSize(14);
-                        doc.text("User List", 105, 15, { align: "center" });
+                        doc.text("User List (${tab})", 105, 15, { align: "center" });
 
                         const data = [];
                         const rows = document.querySelectorAll("#soniAccountTable tbody tr");
@@ -1284,7 +1211,6 @@ app.get('/soni-view', async (req, res) => {
                                 const expLimit = cells[8].innerText.trim();
                                 const defPct = cells[9].innerText.trim();
                                 const accType = cells[10].innerText.trim();
-
                                 data.push([username, cr, ust, bst, expLimit, defPct, accType]);
                             }
                         });
@@ -1300,10 +1226,9 @@ app.get('/soni-view', async (req, res) => {
 
                         const pdfBlob = doc.output('blob');
                         const blobUrl = URL.createObjectURL(pdfBlob);
-                        
                         const link = document.createElement('a');
                         link.href = blobUrl;
-                        link.download = 'userlist-1.pdf';
+                        link.download = 'userlist-${tab}.pdf';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -1418,28 +1343,6 @@ app.get('/insertuser', async (req, res) => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="border bg-white rounded-xs shadow-xs">
-                            <div class="dark-box-title">Commission Settings</div>
-                            <div class="p-2 overflow-x-auto">
-                                <table class="w-full text-left text-[11px] border border-gray-200">
-                                    <tr class="table-row-bg border-b"><td class="p-1.5 font-semibold w-32 border-r">Upline</td><td class="p-1.5">0</td></tr>
-                                    <tr class="border-b"><td class="p-1.5 font-semibold border-r">Downline</td><td class="p-1.5">0</td></tr>
-                                    <tr class="table-row-bg"><td class="p-1.5 font-semibold border-r">Our</td><td class="p-1.5">0</td></tr>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="border bg-white rounded-xs shadow-xs">
-                            <div class="dark-box-title">Partnership</div>
-                            <div class="p-2 overflow-x-auto">
-                                <table class="w-full text-left text-[11px] border border-gray-200">
-                                    <tr class="table-row-bg border-b"><td class="p-1.5 font-semibold w-32 border-r">Upline</td><td class="p-1.5">0</td></tr>
-                                    <tr class="border-b"><td class="p-1.5 font-semibold border-r">Downline</td><td class="p-1.5">0</td></tr>
-                                    <tr class="table-row-bg"><td class="p-1.5 font-semibold border-r">Our</td><td class="p-1.5">0</td></tr>
-                                </table>
                             </div>
                         </div>
 
@@ -1638,7 +1541,7 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        res.send(`<script>alert('Account created successfully!'); window.location='/users?username=${encodeURIComponent(createdBy)}';</script>`);
+        res.send(`<script>alert('Account created successfully!'); window.location='/soni-view?username=${encodeURIComponent(createdBy)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
