@@ -604,6 +604,18 @@ function getModalScriptsJS() {
                 setBetActiveState(!isBetActive);
             }
 
+            function toggleSummaryBanner() {
+                const banner = document.getElementById('summaryBannerContent');
+                const arrowIcon = document.getElementById('summaryArrowIcon');
+                if (banner.classList.contains('hidden')) {
+                    banner.classList.remove('hidden');
+                    arrowIcon.className = "fa-solid fa-chevron-up text-xs";
+                } else {
+                    banner.classList.add('hidden');
+                    arrowIcon.className = "fa-solid fa-chevron-down text-xs";
+                }
+            }
+
             window.addEventListener('popstate', function() {
                 closeDepositModal();
                 closeWithdrawModal();
@@ -999,7 +1011,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH EXPANDABLE GREEN SUMMARY BANNER (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1105,6 +1117,58 @@ app.get('/soni-view', async (req, res) => {
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                <!-- EXPANDABLE GREEN SUMMARY BANNER -->
+                <div class="bg-[#20988b] text-white shadow-md">
+                    <!-- Toggle Arrow Button Bar -->
+                    <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
+                        <button type="button" id="summaryToggleBtn" class="text-white text-xs focus:outline-none cursor-pointer">
+                            <i id="summaryArrowIcon" class="fa-solid fa-chevron-down text-xs pointer-events-none"></i>
+                        </button>
+                    </div>
+
+                    <!-- Collapsible Content Panel -->
+                    <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Upper Level Credit Reference:</span>
+                            <span class="font-semibold">0</span>
+                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Down level Occupy Balance:</span>
+                            <span class="font-semibold">0</span>
+                        </div>
+                        <div class="flex justify-between py-0.5">
+                            <span class="text-white/90">Down Level Credit Reference:</span>
+                            <span class="font-semibold">100</span>
+                        </div>
+
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Total Master Balance:</span>
+                            <span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Upper Level:</span>
+                            <span class="font-semibold">-1000</span>
+                        </div>
+                        <div class="flex justify-between py-0.5">
+                            <span class="text-white/90">Down Level Profit/Loss:</span>
+                            <span class="font-semibold">-100</span>
+                        </div>
+
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Available Balance:</span>
+                            <span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0">
+                            <span class="text-white/90">Available Balance With Profit/Loss:</span>
+                            <span class="font-semibold">1000</span>
+                        </div>
+                        <div class="flex justify-between py-0.5">
+                            <span class="text-white/90">My Profit/Loss:</span>
+                            <span class="font-semibold">0</span>
+                        </div>
+                    </div>
+                </div>
 
                 <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
                     <div class="flex justify-between items-center mb-2">
