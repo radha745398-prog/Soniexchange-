@@ -517,7 +517,7 @@ app.get('/users', async (req, res) => {
                 </main>
 
                 <!-- DEPOSIT POPUP MODAL -->
-                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Deposit</span>
@@ -561,7 +561,7 @@ app.get('/users', async (req, res) => {
                 </div>
 
                 <!-- WITHDRAW POPUP MODAL -->
-                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'withdrawModal')">
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Withdraw</span>
@@ -605,6 +605,13 @@ app.get('/users', async (req, res) => {
                 </div>
 
                 <script>
+                    function handleOverlayClick(event, modalId) {
+                        if (event.target.id === modalId) {
+                            if (modalId === 'depositModal') closeDepositModal();
+                            if (modalId === 'withdrawModal') closeWithdrawModal();
+                        }
+                    }
+
                     function openDepositModal(clientName, clientPts, uplinePts) {
                         document.getElementById('modalClientUsername').value = clientName;
                         document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
@@ -638,6 +645,12 @@ app.get('/users', async (req, res) => {
                         modal.classList.remove('flex');
                         modal.classList.add('hidden');
                     }
+
+                    // Hardware back button support
+                    window.addEventListener('popstate', function() {
+                        closeDepositModal();
+                        closeWithdrawModal();
+                    });
                 </script>
             </body>
             </html>
@@ -786,7 +799,7 @@ app.get('/soni-view', async (req, res) => {
                 </main>
 
                 <!-- DEPOSIT POPUP MODAL -->
-                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Deposit</span>
@@ -830,7 +843,7 @@ app.get('/soni-view', async (req, res) => {
                 </div>
 
                 <!-- WITHDRAW POPUP MODAL -->
-                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'withdrawModal')">
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Withdraw</span>
@@ -874,6 +887,13 @@ app.get('/soni-view', async (req, res) => {
                 </div>
 
                 <script>
+                    function handleOverlayClick(event, modalId) {
+                        if (event.target.id === modalId) {
+                            if (modalId === 'depositModal') closeDepositModal();
+                            if (modalId === 'withdrawModal') closeWithdrawModal();
+                        }
+                    }
+
                     function openDepositModal(clientName, clientPts, uplinePts) {
                         document.getElementById('modalClientUsername').value = clientName;
                         document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
@@ -907,6 +927,11 @@ app.get('/soni-view', async (req, res) => {
                         modal.classList.remove('flex');
                         modal.classList.add('hidden');
                     }
+
+                    window.addEventListener('popstate', function() {
+                        closeDepositModal();
+                        closeWithdrawModal();
+                    });
                 </script>
             </body>
             </html>
