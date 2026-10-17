@@ -45,6 +45,8 @@ async function initMasterAdmin() {
         creditRef: 100000000,
         mustChangePassword: false,
         txnPassword: '745398',
+        userActive: true,
+        betActive: true,
         createdAt: new Date().toISOString()
       });
       console.log('Master Admin Soniexchange created in Firebase!');
@@ -425,8 +427,16 @@ app.get('/users', async (req, res) => {
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
-                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
+                        ${u.userActive !== false ? '✓' : '✕'}
+                    </div>
+                </td>
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 ${u.betActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
+                        ${u.betActive !== false ? '✓' : '✕'}
+                    </div>
+                </td>
                 <td class="p-2 border-r text-right">${Number(u.exposureLimit || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
@@ -437,7 +447,7 @@ app.get('/users', async (req, res) => {
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                        <button type="button" onclick="openStatusModal('${u.username}', ${u.userActive !== false}, ${u.betActive !== false})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
                     </div>
                 </td>
@@ -707,6 +717,55 @@ app.get('/users', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- CHANGE STATUS POPUP MODAL (S BUTTON) -->
+                <div id="statusModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'statusModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Change Status</span>
+                            <button type="button" onclick="closeStatusModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/change-status" method="POST" class="p-5 space-y-4 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalStatusClientUsername">
+                            
+                            <div class="text-[#e67e22] font-semibold text-xs mb-2" id="modalStatusDisplayClient">ClientName</div>
+
+                            <div class="grid grid-cols-2 gap-4 my-2 text-center">
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">User Active</label>
+                                    <button type="button" id="btnUserActive" onclick="toggleUserStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                        <span id="textUserActive" class="absolute left-2.5 top-1">ON</span>
+                                        <div id="dotUserActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                                    </button>
+                                    <input type="hidden" name="userActive" id="inputUserActive" value="true">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Bet Active</label>
+                                    <button type="button" id="btnBetActive" onclick="toggleBetStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                        <span id="textBetActive" class="absolute left-2.5 top-1">ON</span>
+                                        <div id="dotBetActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                                    </button>
+                                    <input type="hidden" name="betActive" id="inputBetActive" value="true">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeStatusModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
@@ -715,6 +774,7 @@ app.get('/users', async (req, res) => {
                             if (modalId === 'exposureModal') closeExposureModal();
                             if (modalId === 'creditModal') closeCreditModal();
                             if (modalId === 'passwordModal') closePasswordModal();
+                            if (modalId === 'statusModal') closeStatusModal();
                         }
                     }
 
@@ -792,12 +852,85 @@ app.get('/users', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openStatusModal(clientName, userActive, betActive) {
+                        document.getElementById('modalStatusClientUsername').value = clientName;
+                        document.getElementById('modalStatusDisplayClient').textContent = clientName;
+                        
+                        setUserActiveState(userActive);
+                        setBetActiveState(betActive);
+
+                        const modal = document.getElementById('statusModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeStatusModal() {
+                        const modal = document.getElementById('statusModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
+                    let isUserActive = true;
+                    let isBetActive = true;
+
+                    function setUserActiveState(state) {
+                        isUserActive = state;
+                        document.getElementById('inputUserActive').value = state ? "true" : "false";
+                        const btn = document.getElementById('btnUserActive');
+                        const txt = document.getElementById('textUserActive');
+                        const dot = document.getElementById('dotUserActive');
+
+                        if (state) {
+                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "ON";
+                            txt.className = "absolute left-2.5 top-1";
+                            dot.style.right = "4px";
+                            dot.style.left = "auto";
+                        } else {
+                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "OFF";
+                            txt.className = "absolute right-2.5 top-1";
+                            dot.style.left = "4px";
+                            dot.style.right = "auto";
+                        }
+                    }
+
+                    function setBetActiveState(state) {
+                        isBetActive = state;
+                        document.getElementById('inputBetActive').value = state ? "true" : "false";
+                        const btn = document.getElementById('btnBetActive');
+                        const txt = document.getElementById('textBetActive');
+                        const dot = document.getElementById('dotBetActive');
+
+                        if (state) {
+                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "ON";
+                            txt.className = "absolute left-2.5 top-1";
+                            dot.style.right = "4px";
+                            dot.style.left = "auto";
+                        } else {
+                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "OFF";
+                            txt.className = "absolute right-2.5 top-1";
+                            dot.style.left = "4px";
+                            dot.style.right = "auto";
+                        }
+                    }
+
+                    function toggleUserStatus() {
+                        setUserActiveState(!isUserActive);
+                    }
+
+                    function toggleBetStatus() {
+                        setBetActiveState(!isBetActive);
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
                         closeCreditModal();
                         closePasswordModal();
+                        closeStatusModal();
                     });
                 </script>
             </body>
@@ -845,8 +978,16 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r text-right">0</td>
                 <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
-                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
+                        ${u.userActive !== false ? '✓' : '✕'}
+                    </div>
+                </td>
+                <td class="p-2 border-r text-center">
+                    <div class="inline-flex items-center justify-center w-4 h-4 ${u.betActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
+                        ${u.betActive !== false ? '✓' : '✕'}
+                    </div>
+                </td>
                 <td class="p-2 border-r text-right">${Number(u.exposureLimit || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
@@ -857,7 +998,7 @@ app.get('/soni-view', async (req, res) => {
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                        <button type="button" onclick="openStatusModal('${u.username}', ${u.userActive !== false}, ${u.betActive !== false})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
                     </div>
                 </td>
@@ -1136,6 +1277,55 @@ app.get('/soni-view', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- CHANGE STATUS POPUP MODAL (S BUTTON) -->
+                <div id="statusModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'statusModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Change Status</span>
+                            <button type="button" onclick="closeStatusModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/change-status" method="POST" class="p-5 space-y-4 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalStatusClientUsername">
+                            
+                            <div class="text-[#e67e22] font-semibold text-xs mb-2" id="modalStatusDisplayClient">ClientName</div>
+
+                            <div class="grid grid-cols-2 gap-4 my-2 text-center">
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">User Active</label>
+                                    <button type="button" id="btnUserActive" onclick="toggleUserStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                        <span id="textUserActive" class="absolute left-2.5 top-1">ON</span>
+                                        <div id="dotUserActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                                    </button>
+                                    <input type="hidden" name="userActive" id="inputUserActive" value="true">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Bet Active</label>
+                                    <button type="button" id="btnBetActive" onclick="toggleBetStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                        <span id="textBetActive" class="absolute left-2.5 top-1">ON</span>
+                                        <div id="dotBetActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                                    </button>
+                                    <input type="hidden" name="betActive" id="inputBetActive" value="true">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeStatusModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
@@ -1144,6 +1334,7 @@ app.get('/soni-view', async (req, res) => {
                             if (modalId === 'exposureModal') closeExposureModal();
                             if (modalId === 'creditModal') closeCreditModal();
                             if (modalId === 'passwordModal') closePasswordModal();
+                            if (modalId === 'statusModal') closeStatusModal();
                         }
                     }
 
@@ -1221,12 +1412,85 @@ app.get('/soni-view', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openStatusModal(clientName, userActive, betActive) {
+                        document.getElementById('modalStatusClientUsername').value = clientName;
+                        document.getElementById('modalStatusDisplayClient').textContent = clientName;
+                        
+                        setUserActiveState(userActive);
+                        setBetActiveState(betActive);
+
+                        const modal = document.getElementById('statusModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeStatusModal() {
+                        const modal = document.getElementById('statusModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
+                    let isUserActive = true;
+                    let isBetActive = true;
+
+                    function setUserActiveState(state) {
+                        isUserActive = state;
+                        document.getElementById('inputUserActive').value = state ? "true" : "false";
+                        const btn = document.getElementById('btnUserActive');
+                        const txt = document.getElementById('textUserActive');
+                        const dot = document.getElementById('dotUserActive');
+
+                        if (state) {
+                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "ON";
+                            txt.className = "absolute left-2.5 top-1";
+                            dot.style.right = "4px";
+                            dot.style.left = "auto";
+                        } else {
+                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "OFF";
+                            txt.className = "absolute right-2.5 top-1";
+                            dot.style.left = "4px";
+                            dot.style.right = "auto";
+                        }
+                    }
+
+                    function setBetActiveState(state) {
+                        isBetActive = state;
+                        document.getElementById('inputBetActive').value = state ? "true" : "false";
+                        const btn = document.getElementById('btnBetActive');
+                        const txt = document.getElementById('textBetActive');
+                        const dot = document.getElementById('dotBetActive');
+
+                        if (state) {
+                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "ON";
+                            txt.className = "absolute left-2.5 top-1";
+                            dot.style.right = "4px";
+                            dot.style.left = "auto";
+                        } else {
+                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                            txt.textContent = "OFF";
+                            txt.className = "absolute right-2.5 top-1";
+                            dot.style.left = "4px";
+                            dot.style.right = "auto";
+                        }
+                    }
+
+                    function toggleUserStatus() {
+                        setUserActiveState(!isUserActive);
+                    }
+
+                    function toggleBetStatus() {
+                        setBetActiveState(!isBetActive);
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
                         closeCreditModal();
                         closePasswordModal();
+                        closeStatusModal();
                     });
                 </script>
             </body>
@@ -1562,6 +1826,8 @@ app.post('/api/clients/create', async (req, res) => {
             points: pointsToGive,
             creditRef: pointsToGive,
             exposureLimit: 0,
+            userActive: true,
+            betActive: true,
             createdBy: createdBy,
             mustChangePassword: true,
             txnPassword: null,
@@ -1756,7 +2022,7 @@ app.post('/api/credit-update', async (req, res) => {
     }
 });
 
-// 14. CLIENT PASSWORD UPDATE API (P BUTTON)
+// 14. CLIENT PASSWORD UPDATE API
 app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
@@ -1794,6 +2060,43 @@ app.post('/api/client-password-update', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error updating password'); window.history.back();</script>`);
+    }
+});
+
+// 15. CHANGE STATUS API (S BUTTON)
+app.post('/api/change-status', async (req, res) => {
+    const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
+
+    try {
+        const uploaderRef = doc(db, 'users', loggedInUser);
+        const uploaderSnap = await getDoc(uploaderRef);
+
+        if (!uploaderSnap.exists()) {
+            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
+        }
+
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
+            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        }
+
+        const clientRef = doc(db, 'users', clientUsername);
+        const clientSnap = await getDoc(clientRef);
+
+        if (!clientSnap.exists()) {
+            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        }
+
+        await updateDoc(clientRef, {
+            userActive: userActive === 'true',
+            betActive: betActive === 'true'
+        });
+
+        res.send(`<script>alert('Status updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+    } catch(err) {
+        console.error(err);
+        res.send(`<script>alert('Error updating status'); window.history.back();</script>`);
     }
 });
 
