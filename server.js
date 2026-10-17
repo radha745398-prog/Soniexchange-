@@ -519,10 +519,9 @@ app.get('/users', async (req, res) => {
                     </div>
                 </main>
 
-                <!-- HUBHU MATCHED DEPOSIT POPUP MODAL -->
+                <!-- DEPOSIT POPUP MODAL -->
                 <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <!-- HEADER WITH CYAN ROUNDED CLOSE BUTTON -->
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Deposit</span>
                             <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">
@@ -534,9 +533,9 @@ app.get('/users', async (req, res) => {
                             <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                             <input type="hidden" name="clientUsername" id="modalClientUsername">
 
-                            <!-- UPLINE ROW WITH 2 BOXES -->
+                            <!-- UPLINE ROW -->
                             <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Z9dmo</span>
+                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
                                 <div class="col-span-4">
                                     <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
                                 </div>
@@ -545,9 +544,9 @@ app.get('/users', async (req, res) => {
                                 </div>
                             </div>
 
-                            <!-- DOWNLINE ROW WITH 2 BOXES -->
+                            <!-- DOWNLINE ROW -->
                             <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Karan7260</span>
+                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
                                 <div class="col-span-4">
                                     <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
                                 </div>
@@ -598,8 +597,8 @@ app.get('/users', async (req, res) => {
                         document.getElementById('modalClientUsername').value = clientName;
                         document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
                         document.getElementById('labelClient').textContent = clientName;
-                        document.getElementById('modalLoggedInPoints').value = uplinePts;
-                        document.getElementById('modalClientPoints').value = clientPts;
+                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
+                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
                         
                         const modal = document.getElementById('depositModal');
                         modal.classList.remove('hidden');
@@ -941,11 +940,10 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        if (creator.role !== 'ADMIN') {
-            await updateDoc(creatorRef, {
-                points: (creator.points || 0) - pointsToGive
-            });
-        }
+        // Deduct points from creator when giving credit during creation
+        await updateDoc(creatorRef, {
+            points: (creator.points || 0) - pointsToGive
+        });
 
         await setDoc(newClientRef, {
             username: clientName,
@@ -965,7 +963,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// 9. DEPOSIT API (D BUTTON FUNCTIONALITY)
+// 9. DEPOSIT API WITH EXACT HIERARCHICAL DEDUCTION Mechanics
 app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
@@ -984,12 +982,15 @@ app.post('/api/deposit', async (req, res) => {
 
         const uploader = uploaderSnap.data();
 
+        // 1. Transaction Password Validation
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
 
-        if (uploader.role !== 'ADMIN' && (uploader.points || 0) < depositAmount) {
-            return res.send(`<script>alert('Aapke paas पर्याप्त points nahi hain!'); window.history.back();</script>`);
+        // 2. Check if Uploader has sufficient balance
+        const currentUploaderPoints = Number(uploader.points || 0);
+        if (currentUploaderPoints < depositAmount) {
+            return res.send(`<script>alert('Paryapt points nahi hain! Aapka balance: ${currentUploaderPoints}'); window.history.back();</script>`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
@@ -1000,20 +1001,18 @@ app.post('/api/deposit', async (req, res) => {
         }
 
         const clientData = clientSnap.data();
+        const currentClientPoints = Number(clientData.points || 0);
 
-        // Update Uploader points if not admin
-        if (uploader.role !== 'ADMIN') {
-            await updateDoc(uploaderRef, {
-                points: (uploader.points || 0) - depositAmount
-            });
-        }
-
-        // Update Client points
-        await updateDoc(clientRef, {
-            points: (clientData.points || 0) + depositAmount
+        // 3. Deduct from Uploader (-) and Add to Downline Client (+)
+        await updateDoc(uploaderRef, {
+            points: currentUploaderPoints - depositAmount
         });
 
-        res.send(`<script>alert('Deposit successful!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        await updateDoc(clientRef, {
+            points: currentClientPoints + depositAmount
+        });
+
+        res.send(`<script>alert('Deposit successful! ${depositAmount} points transferred.'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
