@@ -210,7 +210,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS (SUPPORTS BOTH PLAIN TEXT & OLD HASHED PASSWORDS)
+// 2. LOGIN PROCESS
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -358,7 +358,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users) - WITH HIERARCHICAL FILTERING
+// 6. ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -369,7 +369,6 @@ app.get('/users', async (req, res) => {
         let usersList = [];
         
         if (loggedInUser === 'Soniexchange') {
-            // Master Admin sees all users except himself
             const querySnapshot = await getDocs(collection(db, "users"));
             querySnapshot.forEach((docItem) => {
                 if (docItem.id !== 'Soniexchange') {
@@ -377,7 +376,6 @@ app.get('/users', async (req, res) => {
                 }
             });
         } else {
-            // Clients see ONLY users created by themselves
             const q = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((docItem) => {
@@ -649,50 +647,48 @@ app.get('/insertuser', async (req, res) => {
                         let isNameValid = false;
                         let isPassValid = false;
 
+                        function setFieldState(input, errorElement, iconElement, isValid, errorMessage) {
+                            if (isValid) {
+                                input.classList.remove('input-state-red');
+                                input.classList.add('input-state-green');
+                                errorElement.style.display = 'none';
+                                iconElement.textContent = '✓';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none';
+                                iconElement.style.display = 'block';
+                            } else {
+                                input.classList.remove('input-state-green');
+                                input.classList.add('input-state-red');
+                                errorElement.textContent = errorMessage;
+                                errorElement.style.display = 'block';
+                                iconElement.textContent = '✕';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none';
+                                iconElement.style.display = 'block';
+                            }
+                        }
+
                         function validateClientName() {
-                            const val = nameInput.value;
+                            const val = nameInput.value.trim();
 
-                            if (!val || val.trim().length === 0) {
-                                nameInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                nameError.textContent = "The clientname field is required";
-                                nameError.style.display = "block";
-                                nameIcon.textContent = "✕";
-                                nameIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                nameIcon.style.display = "block";
+                            if (val === '') {
+                                setFieldState(nameInput, nameError, nameIcon, false, "The clientname field is required");
                                 isNameValid = false;
                                 return;
                             }
-
                             if (val.length < 4) {
-                                nameInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                nameError.textContent = "The clientname field must be at least 4 characters";
-                                nameError.style.display = "block";
-                                nameIcon.textContent = "✕";
-                                nameIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                nameIcon.style.display = "block";
+                                setFieldState(nameInput, nameError, nameIcon, false, "The clientname field must be at least 4 characters");
                                 isNameValid = false;
                                 return;
                             }
-
                             const isFirstCapital = /^[A-Z]/.test(val);
                             const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(val);
 
                             if (!isFirstCapital || !isAlphanumeric) {
-                                nameInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                nameError.textContent = "The clientname field may only contain alpha-numeric characters";
-                                nameError.style.display = "block";
-                                nameIcon.textContent = "✕";
-                                nameIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                nameIcon.style.display = "block";
+                                setFieldState(nameInput, nameError, nameIcon, false, "Must start with Capital and be alphanumeric");
                                 isNameValid = false;
                                 return;
                             }
 
-                            nameInput.className = "w-full input-state-green p-1 pr-6 rounded text-xs focus:outline-none";
-                            nameError.style.display = "none";
-                            nameIcon.textContent = "✓";
-                            nameIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none";
-                            nameIcon.style.display = "block";
+                            setFieldState(nameInput, nameError, nameIcon, true, "");
                             isNameValid = true;
                         }
 
@@ -700,53 +696,29 @@ app.get('/insertuser', async (req, res) => {
                             const val = passInput.value;
 
                             if (!val || val.trim().length === 0) {
-                                passInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                passError.textContent = "The password field is required";
-                                passError.style.display = "block";
-                                passIcon.textContent = "✕";
-                                passIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                passIcon.style.display = "block";
+                                setFieldState(passInput, passError, passIcon, false, "The password field is required");
                                 isPassValid = false;
                                 return;
                             }
-
                             if (val.length < 4) {
-                                passInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                passError.textContent = "The password field must be at least 4 characters";
-                                passError.style.display = "block";
-                                passIcon.textContent = "✕";
-                                passIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                passIcon.style.display = "block";
+                                setFieldState(passInput, passError, passIcon, false, "The password field must be at least 4 characters");
                                 isPassValid = false;
                                 return;
                             }
-
                             const isFirstCapital = /^[A-Z]/.test(val);
                             const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(val);
 
                             if (!isFirstCapital || !hasSpecialChar) {
-                                passInput.className = "w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none";
-                                passError.textContent = "The password field must start with Capital and contain special character";
-                                passError.style.display = "block";
-                                passIcon.textContent = "✕";
-                                passIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none";
-                                passIcon.style.display = "block";
+                                setFieldState(passInput, passError, passIcon, false, "Must start with Capital and contain special character");
                                 isPassValid = false;
                                 return;
                             }
 
-                            passInput.className = "w-full input-state-green p-1 pr-6 rounded text-xs focus:outline-none";
-                            passError.style.display = "none";
-                            passIcon.textContent = "✓";
-                            passIcon.className = "absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none";
-                            passIcon.style.display = "block";
+                            setFieldState(passInput, passError, passIcon, true, "");
                             isPassValid = true;
                         }
 
-                        nameInput.addEventListener('keyup', validateClientName);
                         nameInput.addEventListener('input', validateClientName);
-
-                        passInput.addEventListener('keyup', validatePassword);
                         passInput.addEventListener('input', validatePassword);
 
                         document.getElementById('createAccountForm').onsubmit = function(e) {
@@ -784,7 +756,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API (WITH TRANSACTION PASSWORD VERIFICATION)
+// 8. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
