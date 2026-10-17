@@ -934,7 +934,7 @@ app.get('/users', async (req, res) => {
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
                         <table id="accountTable" class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-700 text-[11px] border-b font-bold">
+                                <tr class="bg-gray-100 text-gray-700 text-[11px] border-b-2 border-gray-400 font-bold">
                                     <th class="p-2 border-r">User Name</th>
                                     <th class="p-2 border-r text-right">CR</th>
                                     <th class="p-2 border-r text-center">U st</th>
@@ -962,7 +962,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH ACTIVE / DEACTIVE TAB FILTERING & EXACT BOX STYLING (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH GEHRI HEADER LINE (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1124,7 +1124,7 @@ app.get('/soni-view', async (req, res) => {
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <!-- ACTIVE & DEACTIVE USERS EXACT SCREENSHOT TABS WITH BOTTOM DIVIDER LINE -->
+                    <!-- ACTIVE & DEACTIVE USERS TABS -->
                     <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
                         <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
                             Active Users
@@ -1166,7 +1166,8 @@ app.get('/soni-view', async (req, res) => {
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
                         <table id="soniAccountTable" class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-700 text-[10px] border-b font-bold">
+                                <!-- GEHRI DIVIDER LINE (border-b-2 border-gray-400) -->
+                                <tr class="bg-gray-100 text-gray-700 text-[10px] border-b-2 border-gray-400 font-bold">
                                     <th class="p-2 border-r">User Name</th>
                                     <th class="p-2 border-r text-right">CR</th>
                                     <th class="p-2 border-r text-right">Balance</th>
