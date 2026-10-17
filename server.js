@@ -663,7 +663,18 @@ app.get('/insertuser', async (req, res) => {
                             }
                         }
 
+                        function autoCapitalizeFirstLetter(input) {
+                            let val = input.value;
+                            if (val.length > 0) {
+                                const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+                                if (val !== formatted) {
+                                    input.value = formatted;
+                                }
+                            }
+                        }
+
                         function validateClientName() {
+                            autoCapitalizeFirstLetter(nameInput);
                             const val = nameInput.value.trim();
 
                             if (val === '') {
@@ -692,6 +703,7 @@ app.get('/insertuser', async (req, res) => {
                         }
 
                         function validatePassword() {
+                            autoCapitalizeFirstLetter(passInput);
                             const val = passInput.value;
 
                             if (!val || val.trim().length === 0) {
