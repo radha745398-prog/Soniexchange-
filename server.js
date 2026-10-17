@@ -453,7 +453,12 @@ app.get('/users', async (req, res) => {
                 <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
+                    .modal-bg-overlay {
+                        background-color: rgba(0, 0, 0, 0.45);
+                    }
+                </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
@@ -514,48 +519,74 @@ app.get('/users', async (req, res) => {
                     </div>
                 </main>
 
-                <!-- DEPOSIT POPUP MODAL -->
-                <div id="depositModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center" style="z-index: 999999;">
-                    <div class="bg-white rounded shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800">
-                        <div class="bg-[#0077b6] text-white px-4 py-2.5 flex justify-between items-center font-bold text-sm">
-                            <span>Deposit</span>
-                            <button type="button" onclick="closeDepositModal()" class="text-white hover:text-gray-200 cursor-pointer text-base"><i class="fa-solid fa-xmark"></i></button>
+                <!-- HUBHU MATCHED DEPOSIT POPUP MODAL -->
+                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <!-- HEADER WITH CYAN ROUNDED CLOSE BUTTON -->
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Deposit</span>
+                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">
+                                ✕
+                            </button>
                         </div>
-                        <form action="/api/deposit" method="POST" class="p-4 space-y-3 text-xs">
+
+                        <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
                             <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                             <input type="hidden" name="clientUsername" id="modalClientUsername">
 
-                            <div class="grid grid-cols-2 gap-3 items-center border-b pb-2">
-                                <span id="labelLoggedIn" class="font-semibold text-gray-700">Upline</span>
-                                <input type="text" id="modalLoggedInPoints" readonly class="w-full border bg-gray-100 p-1.5 rounded text-right font-bold text-gray-700" value="0">
+                            <!-- UPLINE ROW WITH 2 BOXES -->
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Z9dmo</span>
+                                <div class="col-span-4">
+                                    <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
+                                </div>
+                                <div class="col-span-4">
+                                    <input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0">
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 items-center border-b pb-2">
-                                <span id="labelClient" class="font-semibold text-gray-700">Client</span>
-                                <input type="text" id="modalClientPoints" readonly class="w-full border bg-gray-100 p-1.5 rounded text-right font-bold text-gray-700" value="0">
+                            <!-- DOWNLINE ROW WITH 2 BOXES -->
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Karan7260</span>
+                                <div class="col-span-4">
+                                    <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
+                                </div>
+                                <div class="col-span-4">
+                                    <input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0">
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 items-center">
-                                <label class="font-semibold text-gray-700">Amount</label>
-                                <input type="number" name="amount" required placeholder="0" class="w-full border p-1.5 rounded text-right bg-white focus:outline-none focus:border-cyan-500">
+                            <!-- AMOUNT INPUT -->
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                                <div class="col-span-8">
+                                    <input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right">
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 items-center">
-                                <label class="font-semibold text-gray-700">Remark</label>
-                                <input type="text" name="remark" placeholder="Remark" class="w-full border p-1.5 rounded bg-white focus:outline-none focus:border-cyan-500">
+                            <!-- REMARK INPUT -->
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                                <div class="col-span-8">
+                                    <input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none">
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 items-center">
-                                <label class="font-semibold text-gray-700">Transaction Password</label>
-                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white focus:outline-none focus:border-cyan-500">
+                            <!-- TRANSACTION PASSWORD INPUT -->
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8">
+                                    <input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none">
+                                </div>
                             </div>
 
-                            <div class="flex justify-end space-x-2 pt-3 border-t">
-                                <button type="button" onclick="closeDepositModal()" class="bg-[#343a40] hover:bg-black text-white px-4 py-2 rounded font-bold flex items-center space-x-1 cursor-pointer">
-                                    <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            <!-- ACTION BUTTONS -->
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
                                 </button>
-                                <button type="submit" class="bg-[#0077b6] hover:bg-[#005f93] text-white px-4 py-2 rounded font-bold flex items-center space-x-1 cursor-pointer">
-                                    <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
                                 </button>
                             </div>
                         </form>
@@ -567,15 +598,18 @@ app.get('/users', async (req, res) => {
                         document.getElementById('modalClientUsername').value = clientName;
                         document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
                         document.getElementById('labelClient').textContent = clientName;
-                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
-                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
-                        document.getElementById('depositModal').classList.remove('hidden');
-                        document.getElementById('depositModal').classList.add('flex');
+                        document.getElementById('modalLoggedInPoints').value = uplinePts;
+                        document.getElementById('modalClientPoints').value = clientPts;
+                        
+                        const modal = document.getElementById('depositModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
                     }
 
                     function closeDepositModal() {
-                        document.getElementById('depositModal').classList.remove('flex');
-                        document.getElementById('depositModal').classList.add('hidden');
+                        const modal = document.getElementById('depositModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
                     }
                 </script>
             </body>
