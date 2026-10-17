@@ -436,7 +436,7 @@ app.get('/users', async (req, res) => {
                         <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                        <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
                     </div>
@@ -673,6 +673,40 @@ app.get('/users', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- PASSWORD POPUP MODAL -->
+                <div id="passwordModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'passwordModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Password</span>
+                            <button type="button" onclick="closePasswordModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/client-password-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalPasswordClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Password</label>
+                                <div class="col-span-8"><input type="password" name="newPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Confirm Password</label>
+                                <div class="col-span-8"><input type="password" name="confirmPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closePasswordModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
@@ -680,6 +714,7 @@ app.get('/users', async (req, res) => {
                             if (modalId === 'withdrawModal') closeWithdrawModal();
                             if (modalId === 'exposureModal') closeExposureModal();
                             if (modalId === 'creditModal') closeCreditModal();
+                            if (modalId === 'passwordModal') closePasswordModal();
                         }
                     }
 
@@ -745,11 +780,24 @@ app.get('/users', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openPasswordModal(clientName) {
+                        document.getElementById('modalPasswordClientUsername').value = clientName;
+                        const modal = document.getElementById('passwordModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closePasswordModal() {
+                        const modal = document.getElementById('passwordModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
                         closeCreditModal();
+                        closePasswordModal();
                     });
                 </script>
             </body>
@@ -808,7 +856,7 @@ app.get('/soni-view', async (req, res) => {
                         <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                        <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
                     </div>
@@ -1054,6 +1102,40 @@ app.get('/soni-view', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- PASSWORD POPUP MODAL -->
+                <div id="passwordModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'passwordModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Password</span>
+                            <button type="button" onclick="closePasswordModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/client-password-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalPasswordClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Password</label>
+                                <div class="col-span-8"><input type="password" name="newPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Confirm Password</label>
+                                <div class="col-span-8"><input type="password" name="confirmPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closePasswordModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
@@ -1061,6 +1143,7 @@ app.get('/soni-view', async (req, res) => {
                             if (modalId === 'withdrawModal') closeWithdrawModal();
                             if (modalId === 'exposureModal') closeExposureModal();
                             if (modalId === 'creditModal') closeCreditModal();
+                            if (modalId === 'passwordModal') closePasswordModal();
                         }
                     }
 
@@ -1126,11 +1209,24 @@ app.get('/soni-view', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openPasswordModal(clientName) {
+                        document.getElementById('modalPasswordClientUsername').value = clientName;
+                        const modal = document.getElementById('passwordModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closePasswordModal() {
+                        const modal = document.getElementById('passwordModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
                         closeCreditModal();
+                        closePasswordModal();
                     });
                 </script>
             </body>
@@ -1657,6 +1753,47 @@ app.post('/api/credit-update', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
+    }
+});
+
+// 14. CLIENT PASSWORD UPDATE API (P BUTTON)
+app.post('/api/client-password-update', async (req, res) => {
+    const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
+
+    if (newPassword !== confirmPassword) {
+        return res.send(`<script>alert('New password and Confirm password do not match!'); window.history.back();</script>`);
+    }
+
+    try {
+        const uploaderRef = doc(db, 'users', loggedInUser);
+        const uploaderSnap = await getDoc(uploaderRef);
+
+        if (!uploaderSnap.exists()) {
+            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
+        }
+
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
+            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        }
+
+        const clientRef = doc(db, 'users', clientUsername);
+        const clientSnap = await getDoc(clientRef);
+
+        if (!clientSnap.exists()) {
+            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        }
+
+        await updateDoc(clientRef, {
+            password: newPassword,
+            mustChangePassword: false
+        });
+
+        res.send(`<script>alert('Client password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+    } catch(err) {
+        console.error(err);
+        res.send(`<script>alert('Error updating password'); window.history.back();</script>`);
     }
 });
 
