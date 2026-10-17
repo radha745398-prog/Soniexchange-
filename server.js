@@ -1243,7 +1243,7 @@ app.get('/soni-view', async (req, res) => {
     }
 });
 
-// 8. ADD ACCOUNT FORM PAGE (MATCHING TEAL GREEN LAYOUT)
+// 8. ADD ACCOUNT FORM PAGE (MATCHING BLUE PANEL LAYOUT)
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1262,7 +1262,7 @@ app.get('/insertuser', async (req, res) => {
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
-                    .teal-box-title { background-color: #20988b; color: #ffffff; padding: 5px 10px; font-weight: bold; font-size: 12px; }
+                    .blue-box-title { background-color: #0077b6; color: #ffffff; padding: 5px 10px; font-weight: bold; font-size: 12px; }
                     .table-row-bg { background-color: #f8f9fa; }
                     .input-state-red { border: 1.5px solid #ef4444 !important; background-color: #fef2f2 !important; }
                     .input-state-green { border: 1.5px solid #10b981 !important; background-color: #ffffff !important; }
@@ -1280,7 +1280,7 @@ app.get('/insertuser', async (req, res) => {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- PERSONAL DETAIL BOX -->
                             <div class="border bg-white rounded-xs shadow-xs">
-                                <div class="teal-box-title">Personal Detail</div>
+                                <div class="blue-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
@@ -1327,7 +1327,7 @@ app.get('/insertuser', async (req, res) => {
 
                             <!-- ACCOUNT DETAIL BOX -->
                             <div class="border bg-white rounded-xs shadow-xs">
-                                <div class="teal-box-title">Account Detail</div>
+                                <div class="blue-box-title">Account Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
@@ -1350,7 +1350,7 @@ app.get('/insertuser', async (req, res) => {
 
                         <!-- COMMISSION SETTINGS TABLE BOX -->
                         <div class="border bg-white rounded-xs shadow-xs">
-                            <div class="teal-box-title">Commission Settings</div>
+                            <div class="blue-box-title">Commission Settings</div>
                             <div class="p-2 overflow-x-auto">
                                 <table class="w-full text-left text-[11px] border border-gray-200">
                                     <tr class="table-row-bg border-b"><td class="p-2 font-semibold w-36 border-r text-gray-700">Upline</td><td class="p-2 text-gray-700">0</td></tr>
@@ -1362,7 +1362,7 @@ app.get('/insertuser', async (req, res) => {
 
                         <!-- PARTNERSHIP TABLE BOX -->
                         <div class="border bg-white rounded-xs shadow-xs">
-                            <div class="teal-box-title">Partnership</div>
+                            <div class="blue-box-title">Partnership</div>
                             <div class="p-2 overflow-x-auto">
                                 <table class="w-full text-left text-[11px] border border-gray-200">
                                     <tr class="table-row-bg border-b"><td class="p-2 font-semibold w-36 border-r text-gray-700">Upline</td><td class="p-2 text-gray-700">0</td></tr>
@@ -1378,7 +1378,7 @@ app.get('/insertuser', async (req, res) => {
                                 <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
                                 <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white text-xs focus:outline-none">
                             </div>
-                            <button type="submit" class="bg-[#1f2d3d] hover:bg-[#111923] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition cursor-pointer">Create Account</button>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005b8e] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition cursor-pointer">Create Account</button>
                         </div>
                     </form>
                 </main>
@@ -1675,7 +1675,7 @@ app.post('/api/credit-update', async (req, res) => {
         const clientRef = doc(db, 'users', clientUsername);
         await updateDoc(clientRef, { creditRef: Number(newCredit) || 0 });
 
-        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(createdBy)}';</script>`);
     } catch(err) {
         res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
     }
