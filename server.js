@@ -401,7 +401,6 @@ app.get('/users', async (req, res) => {
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN', points: 100000000 };
 
         let usersList = [];
-        
         if (loggedInUser === 'Soniexchange') {
             const querySnapshot = await getDocs(collection(db, "users"));
             querySnapshot.forEach((docItem) => {
@@ -433,7 +432,7 @@ app.get('/users', async (req, res) => {
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
                         <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
@@ -522,44 +521,79 @@ app.get('/users', async (req, res) => {
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Deposit</span>
-                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">
-                                ✕
-                            </button>
+                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
                         </div>
-
                         <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
                             <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                             <input type="hidden" name="clientUsername" id="modalClientUsername">
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
                                 <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                                 <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
                                 <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                                 <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
                                 <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
                                 <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
                                 <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
-
                             <div class="flex justify-end space-x-2 pt-3">
                                 <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- WITHDRAW POPUP MODAL -->
+                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Withdraw</span>
+                            <button type="button" onclick="closeWithdrawModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/withdraw" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
                                     <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
                                 </button>
                                 <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
@@ -582,9 +616,25 @@ app.get('/users', async (req, res) => {
                         modal.classList.remove('hidden');
                         modal.classList.add('flex');
                     }
-
                     function closeDepositModal() {
                         const modal = document.getElementById('depositModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
+                    function openWithdrawModal(clientName, clientPts, uplinePts) {
+                        document.getElementById('modalWithdrawClientUsername').value = clientName;
+                        document.getElementById('labelWithdrawLoggedIn').textContent = "${loggedInUser}";
+                        document.getElementById('labelWithdrawClient').textContent = clientName;
+                        document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
+                        document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
+                        
+                        const modal = document.getElementById('withdrawModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeWithdrawModal() {
+                        const modal = document.getElementById('withdrawModal');
                         modal.classList.remove('flex');
                         modal.classList.add('hidden');
                     }
@@ -642,7 +692,7 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
                         <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
@@ -740,44 +790,79 @@ app.get('/soni-view', async (req, res) => {
                     <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
                         <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
                             <span class="font-bold text-gray-800 text-sm">Deposit</span>
-                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">
-                                ✕
-                            </button>
+                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
                         </div>
-
                         <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
                             <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                             <input type="hidden" name="clientUsername" id="modalClientUsername">
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
                                 <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                                 <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
                                 <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                                 <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
                                 <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
                                 <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
-
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
                                 <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
-
                             <div class="flex justify-end space-x-2 pt-3">
                                 <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- WITHDRAW POPUP MODAL -->
+                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Withdraw</span>
+                            <button type="button" onclick="closeWithdrawModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/withdraw" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
                                     <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
                                 </button>
                                 <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
@@ -800,9 +885,25 @@ app.get('/soni-view', async (req, res) => {
                         modal.classList.remove('hidden');
                         modal.classList.add('flex');
                     }
-
                     function closeDepositModal() {
                         const modal = document.getElementById('depositModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
+                    function openWithdrawModal(clientName, clientPts, uplinePts) {
+                        document.getElementById('modalWithdrawClientUsername').value = clientName;
+                        document.getElementById('labelWithdrawLoggedIn').textContent = "${loggedInUser}";
+                        document.getElementById('labelWithdrawClient').textContent = clientName;
+                        document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
+                        document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
+                        
+                        const modal = document.getElementById('withdrawModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeWithdrawModal() {
+                        const modal = document.getElementById('withdrawModal');
                         modal.classList.remove('flex');
                         modal.classList.add('hidden');
                     }
@@ -1201,6 +1302,60 @@ app.post('/api/deposit', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
+    }
+});
+
+// 11. WITHDRAW API
+app.post('/api/withdraw', async (req, res) => {
+    const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
+    const withdrawAmount = Number(amount) || 0;
+
+    if (withdrawAmount <= 0) {
+        return res.send(`<script>alert('Kripya valid withdraw amount daalein!'); window.history.back();</script>`);
+    }
+
+    try {
+        const uploaderRef = doc(db, 'users', loggedInUser);
+        const uploaderSnap = await getDoc(uploaderRef);
+
+        if (!uploaderSnap.exists()) {
+            return res.send(`<script>alert('Uploader session error!'); window.location='/';</script>`);
+        }
+
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
+            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        }
+
+        const clientRef = doc(db, 'users', clientUsername);
+        const clientSnap = await getDoc(clientRef);
+
+        if (!clientSnap.exists()) {
+            return res.send(`<script>alert('Client nahi mila!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        }
+
+        const clientData = clientSnap.data();
+        const currentClientPoints = Number(clientData.points || 0);
+
+        if (currentClientPoints < withdrawAmount) {
+            return res.send(`<script>alert('Client ke paas paryapt points nahi hain! Client balance: ${currentClientPoints}'); window.history.back();</script>`);
+        }
+
+        const currentUploaderPoints = Number(uploader.points || 0);
+
+        await updateDoc(clientRef, {
+            points: currentClientPoints - withdrawAmount
+        });
+
+        await updateDoc(uploaderRef, {
+            points: currentUploaderPoints + withdrawAmount
+        });
+
+        res.send(`<script>alert('Withdraw successful! ${withdrawAmount} points withdrawn.'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+    } catch(err) {
+        console.error(err);
+        res.send(`<script>alert('Withdraw error occurred'); window.history.back();</script>`);
     }
 });
 
