@@ -54,15 +54,15 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR (With User Dropdown Menu)
+// TOP HEADER BAR (Clicking 'Soni' Opens Account List)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
-        <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 40px;">
-            <div class="flex items-center space-x-3">
-                <span class="font-bold text-sm tracking-wide text-white">Soni</span>
-                <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1.5 py-0.5 rounded focus:outline-none cursor-pointer">
-                    <i class="fa-solid fa-bars text-sm pointer-events-none"></i>
+        <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
+            <div class="flex items-center space-x-2">
+                <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="font-bold text-white text-[12px] pr-1 cursor-pointer hover:text-gray-200">Soni</a>
+                <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1 py-0.5 rounded focus:outline-none cursor-pointer">
+                    <i class="fa-solid fa-bars text-xs pointer-events-none"></i>
                 </button>
                 <nav class="flex items-center space-x-2 font-normal text-[11px]">
                     <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
@@ -75,7 +75,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 </nav>
             </div>
 
-            <div class="flex items-center space-x-3 ml-4">
+            <div class="flex items-center space-x-2 ml-4">
                 <!-- USER DROPDOWN CONTAINER -->
                 <div class="relative inline-block text-left" id="userMenuDropdown">
                     <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
@@ -358,34 +358,10 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE
+// 5. DASHBOARD ROUTE (Redirects to Account List)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    try {
-        const userRef = doc(db, 'users', loggedInUser);
-        const docSnap = await getDoc(userRef);
-        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
-
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Dashboard</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
-            </head>
-            <body class="min-h-screen flex flex-col text-xs">
-                ${getHeaderAndSidebar(loggedInUser, role)}
-                <main class="flex-1 p-3"></main>
-            </body>
-            </html>
-        `);
-    } catch(err) {
-        res.redirect('/');
-    }
+    res.redirect(`/users?username=${encodeURIComponent(loggedInUser)}`);
 });
 
 // 6. ACCOUNT LIST PAGE (/users)
