@@ -54,7 +54,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR ('Soni' opens exact new screenshot view, 'List of Clients' opens original view)
+// TOP HEADER BAR
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -174,7 +174,6 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 if (closeBtn) closeBtn.onclick = closeSidebar;
                 if (overlay) overlay.onclick = closeSidebar;
 
-                // USER MENU DROPDOWN TOGGLE LOGIC
                 const userBtn = document.getElementById('userMenuBtn');
                 const userContent = document.getElementById('userMenuContent');
 
@@ -358,7 +357,7 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE (Default Dashboard upon Login)
+// 5. DASHBOARD ROUTE
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -382,7 +381,7 @@ app.get('/dashboard', async (req, res) => {
                 <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
                     <div class="bg-white p-4 rounded border shadow-xs">
                         <h2 class="text-sm font-bold text-gray-800 mb-2">Welcome, ${loggedInUser}</h2>
-                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in the top header to view the exact Account List screenshot view, or <strong>List of Clients</strong> for standard view.</p>
+                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in top header for exact Account List view, or <strong>List of Clients</strong> for standard view.</p>
                     </div>
                 </main>
             </body>
@@ -393,7 +392,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ORIGINAL ACCOUNT LIST PAGE (/users) for 'List of Clients'
+// 6. ORIGINAL ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -426,12 +425,8 @@ app.get('/users', async (req, res) => {
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-center">
-                    <div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div>
-                </td>
-                <td class="p-2 border-r text-center">
-                    <div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div>
-                </td>
+                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
+                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
                 <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
@@ -719,18 +714,18 @@ app.get('/soni-view', async (req, res) => {
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 text-[10px] border-b font-bold">
-                                    <th class="p-2 border-r">User Name[span_1](start_span)[span_1](end_span)</th>
-                                    <th class="p-2 border-r text-right">CR[span_2](start_span)[span_2](end_span)</th>
-                                    <th class="p-2 border-r text-right">Balance[span_3](start_span)[span_3](end_span)</th>
-                                    <th class="p-2 border-r text-right">Client(P/L)[span_4](start_span)[span_4](end_span)</th>
-                                    <th class="p-2 border-r text-right">Exposure[span_5](start_span)[span_5](end_span)</th>
-                                    <th class="p-2 border-r text-right">Available Balance[span_6](start_span)[span_6](end_span)</th>
-                                    <th class="p-2 border-r text-center">U st[span_7](start_span)[span_7](end_span)</th>
-                                    <th class="p-2 border-r text-center">B st[span_8](start_span)[span_8](end_span)</th>
-                                    <th class="p-2 border-r text-right">Exposure Limit[span_9](start_span)[span_9](end_span)</th>
-                                    <th class="p-2 border-r text-center">Default(%)[span_10](start_span)[span_10](end_span)</th>
-                                    <th class="p-2 border-r text-center">Account Type[span_11](start_span)[span_11](end_span)</th>
-                                    <th class="p-2 text-center">Action[span_12](start_span)[span_12](end_span)</th>
+                                    <th class="p-2 border-r">User Name</th>
+                                    <th class="p-2 border-r text-right">CR</th>
+                                    <th class="p-2 border-r text-right">Balance</th>
+                                    <th class="p-2 border-r text-right">Client(P/L)</th>
+                                    <th class="p-2 border-r text-right">Exposure</th>
+                                    <th class="p-2 border-r text-right">Available Balance</th>
+                                    <th class="p-2 border-r text-center">U st</th>
+                                    <th class="p-2 border-r text-center">B st</th>
+                                    <th class="p-2 border-r text-right">Exposure Limit</th>
+                                    <th class="p-2 border-r text-center">Default(%)</th>
+                                    <th class="p-2 border-r text-center">Account Type</th>
+                                    <th class="p-2 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1156,7 +1151,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// 10. DEPOSIT API WITH EXACT HIERARCHICAL DEDUCTION Mechanics
+// 10. DEPOSIT API
 app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
@@ -1202,7 +1197,7 @@ app.post('/api/deposit', async (req, res) => {
             points: currentClientPoints + depositAmount
         });
 
-        res.send(`<script>alert('Deposit successful! ${depositAmount} points transferred.'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.send(`<script>alert('Deposit successful! ${depositAmount} points transferred.'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
