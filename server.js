@@ -663,18 +663,21 @@ app.get('/insertuser', async (req, res) => {
                             }
                         }
 
-                        function autoCapitalizeFirstLetter(input) {
+                        function autoCapitalize(input) {
                             let val = input.value;
                             if (val.length > 0) {
                                 const formatted = val.charAt(0).toUpperCase() + val.slice(1);
                                 if (val !== formatted) {
+                                    const start = input.selectionStart;
+                                    const end = input.selectionEnd;
                                     input.value = formatted;
+                                    input.setSelectionRange(start, end);
                                 }
                             }
                         }
 
                         function validateClientName() {
-                            autoCapitalizeFirstLetter(nameInput);
+                            autoCapitalize(nameInput);
                             const val = nameInput.value.trim();
 
                             if (val === '') {
@@ -703,7 +706,7 @@ app.get('/insertuser', async (req, res) => {
                         }
 
                         function validatePassword() {
-                            autoCapitalizeFirstLetter(passInput);
+                            autoCapitalize(passInput);
                             const val = passInput.value;
 
                             if (!val || val.trim().length === 0) {
@@ -731,11 +734,10 @@ app.get('/insertuser', async (req, res) => {
                             isPassValid = true;
                         }
 
-                        nameInput.addEventListener('input', validateClientName);
-                        nameInput.addEventListener('keyup', validateClientName);
-
-                        passInput.addEventListener('input', validatePassword);
-                        passInput.addEventListener('keyup', validatePassword);
+                        ['input', 'keyup', 'change', 'blur'].forEach(eventType => {
+                            nameInput.addEventListener(eventType, validateClientName);
+                            passInput.addEventListener(eventType, validatePassword);
+                        });
 
                         document.getElementById('createAccountForm').onsubmit = function(e) {
                             validateClientName();
