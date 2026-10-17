@@ -54,11 +54,11 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR
+// TOP HEADER BAR (With User Dropdown Menu)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
-        <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between text-[11px] whitespace-nowrap overflow-x-auto relative shadow-sm" style="z-index: 50; min-height: 40px;">
+        <header class="bg-[#0077b6] text-white px-3 py-1.5 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 40px;">
             <div class="flex items-center space-x-3">
                 <span class="font-bold text-sm tracking-wide text-white">Soni</span>
                 <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1.5 py-0.5 rounded focus:outline-none cursor-pointer">
@@ -76,8 +76,21 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
             </div>
 
             <div class="flex items-center space-x-3 ml-4">
-                <span class="font-normal text-white text-[11px]">${loggedInUser} ▾</span>
+                <!-- USER DROPDOWN CONTAINER -->
+                <div class="relative inline-block text-left" id="userMenuDropdown">
+                    <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
+                        <span>${loggedInUser} ▾</span>
+                    </button>
+                    <!-- DROPDOWN MENU BOX -->
+                    <div id="userMenuContent" class="hidden absolute right-0 mt-1 w-44 bg-[#1e3a4c] text-white rounded-xs shadow-xl border border-gray-600 py-1 text-[11px] z-50">
+                        <a href="#" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Secure Auth Verification</a>
+                        <a href="/change-password?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Change Password</a>
+                        <a href="/logout" class="block px-3 py-1.5 hover:bg-red-600 font-semibold">Logout</a>
+                    </div>
+                </div>
+
                 <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
+
                 <form onsubmit="return handleClientSearch(event)" class="relative ml-1 flex items-center">
                     <input type="text" id="headerSearchInput" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
                     <button type="submit" class="absolute right-1.5 text-gray-600 text-[11px]">
@@ -160,6 +173,23 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 if (toggleBtn) toggleBtn.onclick = openSidebar;
                 if (closeBtn) closeBtn.onclick = closeSidebar;
                 if (overlay) overlay.onclick = closeSidebar;
+
+                // USER MENU DROPDOWN TOGGLE LOGIC
+                const userBtn = document.getElementById('userMenuBtn');
+                const userContent = document.getElementById('userMenuContent');
+
+                if (userBtn && userContent) {
+                    userBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        userContent.classList.toggle('hidden');
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        if (!userContent.contains(e.target) && !userBtn.contains(e.target)) {
+                            userContent.classList.add('hidden');
+                        }
+                    });
+                }
             });
 
             function handleClientSearch(e) {
