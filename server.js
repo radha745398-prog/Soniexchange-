@@ -57,7 +57,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR
+// TOP HEADER BAR & SIDEBAR FUNCTION
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -79,12 +79,10 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
             </div>
 
             <div class="flex items-center space-x-2 ml-4">
-                <!-- USER DROPDOWN CONTAINER -->
                 <div class="relative inline-block text-left" id="userMenuDropdown">
                     <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
                         <span>${loggedInUser} ▾</span>
                     </button>
-                    <!-- DROPDOWN MENU BOX -->
                     <div id="userMenuContent" class="hidden absolute right-0 mt-1 w-44 bg-[#1e3a4c] text-white rounded-xs shadow-xl border border-gray-600 py-1 text-[11px] z-50">
                         <a href="#" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Secure Auth Verification</a>
                         <a href="/change-password?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Change Password</a>
@@ -201,6 +199,419 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                     alert('Searching: ' + q);
                 }
             }
+        </script>
+    `;
+}
+
+// ALL MODALS HTML FUNCTION
+function getModalsHTML(loggedInUser) {
+    return `
+        <!-- DEPOSIT POPUP MODAL -->
+        <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Deposit</span>
+                    <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalClientUsername">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                        <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                        <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- WITHDRAW POPUP MODAL -->
+        <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'withdrawModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Withdraw</span>
+                    <button type="button" onclick="closeWithdrawModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/withdraw" method="POST" class="p-5 space-y-3.5 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                        <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                        <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- EXPOSURE LIMIT POPUP MODAL -->
+        <div id="exposureModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'exposureModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Exposure Limit</span>
+                    <button type="button" onclick="closeExposureModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/exposure-limit" method="POST" class="p-5 space-y-3.5 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalExposureClientUsername">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Limit</label>
+                        <div class="col-span-8"><input type="text" id="modalOldExposureLimit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Limit</label>
+                        <div class="col-span-8"><input type="number" name="newLimit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closeExposureModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CREDIT POPUP MODAL -->
+        <div id="creditModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'creditModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Credit</span>
+                    <button type="button" onclick="closeCreditModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/credit-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalCreditClientUsername">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Credit</label>
+                        <div class="col-span-8"><input type="text" id="modalOldCredit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Credit</label>
+                        <div class="col-span-8"><input type="number" name="newCredit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closeCreditModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PASSWORD POPUP MODAL -->
+        <div id="passwordModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'passwordModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Password</span>
+                    <button type="button" onclick="closePasswordModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/client-password-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalPasswordClientUsername">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Password</label>
+                        <div class="col-span-8"><input type="password" name="newPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Confirm Password</label>
+                        <div class="col-span-8"><input type="password" name="confirmPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closePasswordModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CHANGE STATUS POPUP MODAL (S BUTTON) -->
+        <div id="statusModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'statusModal')">
+            <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                    <span class="font-bold text-gray-800 text-sm">Change Status</span>
+                    <button type="button" onclick="closeStatusModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                <form action="/api/change-status" method="POST" class="p-5 space-y-4 text-xs">
+                    <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                    <input type="hidden" name="clientUsername" id="modalStatusClientUsername">
+                    
+                    <div class="text-[#e67e22] font-semibold text-xs mb-2" id="modalStatusDisplayClient">ClientName</div>
+
+                    <div class="grid grid-cols-2 gap-4 my-2 text-center">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1 text-[11px]">User Active</label>
+                            <button type="button" id="btnUserActive" onclick="toggleUserStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                <span id="textUserActive" class="absolute left-2.5 top-1">ON</span>
+                                <div id="dotUserActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                            </button>
+                            <input type="hidden" name="userActive" id="inputUserActive" value="true">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Bet Active</label>
+                            <button type="button" id="btnBetActive" onclick="toggleBetStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
+                                <span id="textBetActive" class="absolute left-2.5 top-1">ON</span>
+                                <div id="dotBetActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
+                            </button>
+                            <input type="hidden" name="betActive" id="inputBetActive" value="true">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="button" onclick="closeStatusModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                        </button>
+                        <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                            <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+}
+
+// MODAL SCRIPTS FUNCTION
+function getModalScriptsJS() {
+    return `
+        <script>
+            function handleOverlayClick(event, modalId) {
+                if (event.target.id === modalId) {
+                    if (modalId === 'depositModal') closeDepositModal();
+                    if (modalId === 'withdrawModal') closeWithdrawModal();
+                    if (modalId === 'exposureModal') closeExposureModal();
+                    if (modalId === 'creditModal') closeCreditModal();
+                    if (modalId === 'passwordModal') closePasswordModal();
+                    if (modalId === 'statusModal') closeStatusModal();
+                }
+            }
+
+            function openDepositModal(clientName, clientPts, uplinePts) {
+                document.getElementById('modalClientUsername').value = clientName;
+                document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
+                document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
+                
+                const modal = document.getElementById('depositModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeDepositModal() {
+                const modal = document.getElementById('depositModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            function openWithdrawModal(clientName, clientPts, uplinePts) {
+                document.getElementById('modalWithdrawClientUsername').value = clientName;
+                document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
+                document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
+                
+                const modal = document.getElementById('withdrawModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeWithdrawModal() {
+                const modal = document.getElementById('withdrawModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            function openExposureModal(clientName, oldLimit) {
+                document.getElementById('modalExposureClientUsername').value = clientName;
+                document.getElementById('modalOldExposureLimit').value = Number(oldLimit || 0).toFixed(2);
+                
+                const modal = document.getElementById('exposureModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeExposureModal() {
+                const modal = document.getElementById('exposureModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            function openCreditModal(clientName, oldCredit) {
+                document.getElementById('modalCreditClientUsername').value = clientName;
+                document.getElementById('modalOldCredit').value = Number(oldCredit || 0).toFixed(2);
+                
+                const modal = document.getElementById('creditModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeCreditModal() {
+                const modal = document.getElementById('creditModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            function openPasswordModal(clientName) {
+                document.getElementById('modalPasswordClientUsername').value = clientName;
+                const modal = document.getElementById('passwordModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closePasswordModal() {
+                const modal = document.getElementById('passwordModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            function openStatusModal(clientName, userActive, betActive) {
+                document.getElementById('modalStatusClientUsername').value = clientName;
+                document.getElementById('modalStatusDisplayClient').textContent = clientName;
+                
+                setUserActiveState(userActive);
+                setBetActiveState(betActive);
+
+                const modal = document.getElementById('statusModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeStatusModal() {
+                const modal = document.getElementById('statusModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            let isUserActive = true;
+            let isBetActive = true;
+
+            function setUserActiveState(state) {
+                isUserActive = state;
+                document.getElementById('inputUserActive').value = state ? "true" : "false";
+                const btn = document.getElementById('btnUserActive');
+                const txt = document.getElementById('textUserActive');
+                const dot = document.getElementById('dotUserActive');
+
+                if (state) {
+                    btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                    txt.textContent = "ON";
+                    txt.className = "absolute left-2.5 top-1";
+                    dot.style.right = "4px";
+                    dot.style.left = "auto";
+                } else {
+                    btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                    txt.textContent = "OFF";
+                    txt.className = "absolute right-2.5 top-1";
+                    dot.style.left = "4px";
+                    dot.style.right = "auto";
+                }
+            }
+
+            function setBetActiveState(state) {
+                isBetActive = state;
+                document.getElementById('inputBetActive').value = state ? "true" : "false";
+                const btn = document.getElementById('btnBetActive');
+                const txt = document.getElementById('textBetActive');
+                const dot = document.getElementById('dotBetActive');
+
+                if (state) {
+                    btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                    txt.textContent = "ON";
+                    txt.className = "absolute left-2.5 top-1";
+                    dot.style.right = "4px";
+                    dot.style.left = "auto";
+                } else {
+                    btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
+                    txt.textContent = "OFF";
+                    txt.className = "absolute right-2.5 top-1";
+                    dot.style.left = "4px";
+                    dot.style.right = "auto";
+                }
+            }
+
+            function toggleUserStatus() {
+                setUserActiveState(!isUserActive);
+            }
+
+            function toggleBetStatus() {
+                setBetActiveState(!isBetActive);
+            }
+
+            window.addEventListener('popstate', function() {
+                closeDepositModal();
+                closeWithdrawModal();
+                closeExposureModal();
+                closeCreditModal();
+                closePasswordModal();
+                closeStatusModal();
+            });
         </script>
     `;
 }
@@ -463,6 +874,9 @@ app.get('/users', async (req, res) => {
                 <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <!-- JSPDF LIBRARIES -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
@@ -478,10 +892,10 @@ app.get('/users', async (req, res) => {
                     </div>
 
                     <div class="flex space-x-1 mb-3">
-                        <button class="bg-[#dc3545] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                        <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
                             <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
                         </button>
-                        <button class="bg-[#28a745] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
                             <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
                         </button>
                     </div>
@@ -507,7 +921,7 @@ app.get('/users', async (req, res) => {
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table id="accountTable" class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 text-[11px] border-b font-bold">
                                     <th class="p-2 border-r">User Name</th>
@@ -527,422 +941,57 @@ app.get('/users', async (req, res) => {
                     </div>
                 </main>
 
-                <!-- DEPOSIT POPUP MODAL -->
-                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Deposit</span>
-                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- WITHDRAW POPUP MODAL -->
-                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'withdrawModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Withdraw</span>
-                            <button type="button" onclick="closeWithdrawModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/withdraw" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- EXPOSURE LIMIT POPUP MODAL -->
-                <div id="exposureModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'exposureModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Exposure Limit</span>
-                            <button type="button" onclick="closeExposureModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/exposure-limit" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalExposureClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Limit</label>
-                                <div class="col-span-8"><input type="text" id="modalOldExposureLimit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Limit</label>
-                                <div class="col-span-8"><input type="number" name="newLimit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeExposureModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- CREDIT POPUP MODAL -->
-                <div id="creditModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'creditModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Credit</span>
-                            <button type="button" onclick="closeCreditModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/credit-update" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalCreditClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Credit</label>
-                                <div class="col-span-8"><input type="text" id="modalOldCredit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Credit</label>
-                                <div class="col-span-8"><input type="number" name="newCredit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeCreditModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- PASSWORD POPUP MODAL -->
-                <div id="passwordModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'passwordModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Password</span>
-                            <button type="button" onclick="closePasswordModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/client-password-update" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalPasswordClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Password</label>
-                                <div class="col-span-8"><input type="password" name="newPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Confirm Password</label>
-                                <div class="col-span-8"><input type="password" name="confirmPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closePasswordModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- CHANGE STATUS POPUP MODAL (S BUTTON) -->
-                <div id="statusModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'statusModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Change Status</span>
-                            <button type="button" onclick="closeStatusModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/change-status" method="POST" class="p-5 space-y-4 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalStatusClientUsername">
-                            
-                            <div class="text-[#e67e22] font-semibold text-xs mb-2" id="modalStatusDisplayClient">ClientName</div>
-
-                            <div class="grid grid-cols-2 gap-4 my-2 text-center">
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">User Active</label>
-                                    <button type="button" id="btnUserActive" onclick="toggleUserStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
-                                        <span id="textUserActive" class="absolute left-2.5 top-1">ON</span>
-                                        <div id="dotUserActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
-                                    </button>
-                                    <input type="hidden" name="userActive" id="inputUserActive" value="true">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Bet Active</label>
-                                    <button type="button" id="btnBetActive" onclick="toggleBetStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
-                                        <span id="textBetActive" class="absolute left-2.5 top-1">ON</span>
-                                        <div id="dotBetActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
-                                    </button>
-                                    <input type="hidden" name="betActive" id="inputBetActive" value="true">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeStatusModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
 
                 <script>
-                    function handleOverlayClick(event, modalId) {
-                        if (event.target.id === modalId) {
-                            if (modalId === 'depositModal') closeDepositModal();
-                            if (modalId === 'withdrawModal') closeWithdrawModal();
-                            if (modalId === 'exposureModal') closeExposureModal();
-                            if (modalId === 'creditModal') closeCreditModal();
-                            if (modalId === 'passwordModal') closePasswordModal();
-                            if (modalId === 'statusModal') closeStatusModal();
-                        }
-                    }
+                    function downloadPDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
 
-                    function openDepositModal(clientName, clientPts, uplinePts) {
-                        document.getElementById('modalClientUsername').value = clientName;
-                        document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
-                        document.getElementById('labelClient').textContent = clientName;
-                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
-                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
-                        
-                        const modal = document.getElementById('depositModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeDepositModal() {
-                        const modal = document.getElementById('depositModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(14);
+                        doc.text("User List", 105, 15, { align: "center" });
 
-                    function openWithdrawModal(clientName, clientPts, uplinePts) {
-                        document.getElementById('modalWithdrawClientUsername').value = clientName;
-                        document.getElementById('labelWithdrawLoggedIn').textContent = "${loggedInUser}";
-                        document.getElementById('labelWithdrawClient').textContent = clientName;
-                        document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
-                        document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
-                        
-                        const modal = document.getElementById('withdrawModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeWithdrawModal() {
-                        const modal = document.getElementById('withdrawModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        const data = [];
+                        const rows = document.querySelectorAll("#accountTable tbody tr");
 
-                    function openExposureModal(clientName, oldLimit) {
-                        document.getElementById('modalExposureClientUsername').value = clientName;
-                        document.getElementById('modalOldExposureLimit').value = Number(oldLimit || 0).toFixed(2);
-                        
-                        const modal = document.getElementById('exposureModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeExposureModal() {
-                        const modal = document.getElementById('exposureModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll("td");
+                            if (cells.length >= 7) {
+                                const username = cells[0].innerText.trim();
+                                const cr = cells[1].innerText.trim();
+                                const ust = cells[2].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const bst = cells[3].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const expLimit = cells[4].innerText.trim();
+                                const defPct = cells[5].innerText.trim();
+                                const accType = cells[6].innerText.trim();
 
-                    function openCreditModal(clientName, oldCredit) {
-                        document.getElementById('modalCreditClientUsername').value = clientName;
-                        document.getElementById('modalOldCredit').value = Number(oldCredit || 0).toFixed(2);
-                        
-                        const modal = document.getElementById('creditModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
+                                data.push([username, cr, ust, bst, expLimit, defPct, accType]);
+                            }
+                        });
+
+                        doc.autoTable({
+                            startY: 20,
+                            head: [['User Name', 'CR', 'U st', 'B st', 'Exposure Limit', 'Default %', 'Account type']],
+                            body: data,
+                            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+                            alternateRowStyles: { fillColor: [245, 245, 245] },
+                            styles: { fontSize: 8, cellPadding: 2 }
+                        });
+
+                        doc.save("userlist-1.pdf");
                     }
-                    function closeCreditModal() {
-                        const modal = document.getElementById('creditModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    function openPasswordModal(clientName) {
-                        document.getElementById('modalPasswordClientUsername').value = clientName;
-                        const modal = document.getElementById('passwordModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closePasswordModal() {
-                        const modal = document.getElementById('passwordModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    function openStatusModal(clientName, userActive, betActive) {
-                        document.getElementById('modalStatusClientUsername').value = clientName;
-                        document.getElementById('modalStatusDisplayClient').textContent = clientName;
-                        
-                        setUserActiveState(userActive);
-                        setBetActiveState(betActive);
-
-                        const modal = document.getElementById('statusModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeStatusModal() {
-                        const modal = document.getElementById('statusModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    let isUserActive = true;
-                    let isBetActive = true;
-
-                    function setUserActiveState(state) {
-                        isUserActive = state;
-                        document.getElementById('inputUserActive').value = state ? "true" : "false";
-                        const btn = document.getElementById('btnUserActive');
-                        const txt = document.getElementById('textUserActive');
-                        const dot = document.getElementById('dotUserActive');
-
-                        if (state) {
-                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "ON";
-                            txt.className = "absolute left-2.5 top-1";
-                            dot.style.right = "4px";
-                            dot.style.left = "auto";
-                        } else {
-                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "OFF";
-                            txt.className = "absolute right-2.5 top-1";
-                            dot.style.left = "4px";
-                            dot.style.right = "auto";
-                        }
-                    }
-
-                    function setBetActiveState(state) {
-                        isBetActive = state;
-                        document.getElementById('inputBetActive').value = state ? "true" : "false";
-                        const btn = document.getElementById('btnBetActive');
-                        const txt = document.getElementById('textBetActive');
-                        const dot = document.getElementById('dotBetActive');
-
-                        if (state) {
-                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "ON";
-                            txt.className = "absolute left-2.5 top-1";
-                            dot.style.right = "4px";
-                            dot.style.left = "auto";
-                        } else {
-                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "OFF";
-                            txt.className = "absolute right-2.5 top-1";
-                            dot.style.left = "4px";
-                            dot.style.right = "auto";
-                        }
-                    }
-
-                    function toggleUserStatus() {
-                        setUserActiveState(!isUserActive);
-                    }
-
-                    function toggleBetStatus() {
-                        setBetActiveState(!isBetActive);
-                    }
-
-                    window.addEventListener('popstate', function() {
-                        closeDepositModal();
-                        closeWithdrawModal();
-                        closeExposureModal();
-                        closeCreditModal();
-                        closePasswordModal();
-                        closeStatusModal();
-                    });
                 </script>
             </body>
             </html>
         `);
     } catch(err) {
-        console.error(err);
         res.redirect('/');
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW (/soni-view) for when 'Soni' is clicked
+// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1014,6 +1063,9 @@ app.get('/soni-view', async (req, res) => {
                 <title>Account List - Soni View</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <!-- JSPDF LIBRARIES -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
@@ -1034,10 +1086,10 @@ app.get('/soni-view', async (req, res) => {
                     </div>
 
                     <div class="flex space-x-1 mb-3">
-                        <button class="bg-[#dc3545] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                        <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
                             <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
                         </button>
-                        <button class="bg-[#28a745] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
                             <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
                         </button>
                     </div>
@@ -1063,7 +1115,7 @@ app.get('/soni-view', async (req, res) => {
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table id="soniAccountTable" class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 text-[10px] border-b font-bold">
                                     <th class="p-2 border-r">User Name</th>
@@ -1087,411 +1139,47 @@ app.get('/soni-view', async (req, res) => {
                     </div>
                 </main>
 
-                <!-- DEPOSIT POPUP MODAL -->
-                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Deposit</span>
-                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- WITHDRAW POPUP MODAL -->
-                <div id="withdrawModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'withdrawModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Withdraw</span>
-                            <button type="button" onclick="closeWithdrawModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/withdraw" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelWithdrawLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <span id="labelWithdrawClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
-                                <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- EXPOSURE LIMIT POPUP MODAL -->
-                <div id="exposureModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'exposureModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Exposure Limit</span>
-                            <button type="button" onclick="closeExposureModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/exposure-limit" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalExposureClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Limit</label>
-                                <div class="col-span-8"><input type="text" id="modalOldExposureLimit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Limit</label>
-                                <div class="col-span-8"><input type="number" name="newLimit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeExposureModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- CREDIT POPUP MODAL -->
-                <div id="creditModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'creditModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Credit</span>
-                            <button type="button" onclick="closeCreditModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/credit-update" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalCreditClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Credit</label>
-                                <div class="col-span-8"><input type="text" id="modalOldCredit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Credit</label>
-                                <div class="col-span-8"><input type="number" name="newCredit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeCreditModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- PASSWORD POPUP MODAL -->
-                <div id="passwordModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'passwordModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Password</span>
-                            <button type="button" onclick="closePasswordModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/client-password-update" method="POST" class="p-5 space-y-3.5 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalPasswordClientUsername">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Password</label>
-                                <div class="col-span-8"><input type="password" name="newPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Confirm Password</label>
-                                <div class="col-span-8"><input type="password" name="confirmPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closePasswordModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- CHANGE STATUS POPUP MODAL (S BUTTON) -->
-                <div id="statusModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'statusModal')">
-                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
-                            <span class="font-bold text-gray-800 text-sm">Change Status</span>
-                            <button type="button" onclick="closeStatusModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                        </div>
-                        <form action="/api/change-status" method="POST" class="p-5 space-y-4 text-xs">
-                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
-                            <input type="hidden" name="clientUsername" id="modalStatusClientUsername">
-                            
-                            <div class="text-[#e67e22] font-semibold text-xs mb-2" id="modalStatusDisplayClient">ClientName</div>
-
-                            <div class="grid grid-cols-2 gap-4 my-2 text-center">
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">User Active</label>
-                                    <button type="button" id="btnUserActive" onclick="toggleUserStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
-                                        <span id="textUserActive" class="absolute left-2.5 top-1">ON</span>
-                                        <div id="dotUserActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
-                                    </button>
-                                    <input type="hidden" name="userActive" id="inputUserActive" value="true">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Bet Active</label>
-                                    <button type="button" id="btnBetActive" onclick="toggleBetStatus()" class="w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner">
-                                        <span id="textBetActive" class="absolute left-2.5 top-1">ON</span>
-                                        <div id="dotBetActive" class="w-5 h-5 bg-[#1b2a38] rounded-full absolute top-1 right-1 transition-all"></div>
-                                    </button>
-                                    <input type="hidden" name="betActive" id="inputBetActive" value="true">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
-                            </div>
-
-                            <div class="flex justify-end space-x-2 pt-3">
-                                <button type="button" onclick="closeStatusModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
-                                </button>
-                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
-                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
 
                 <script>
-                    function handleOverlayClick(event, modalId) {
-                        if (event.target.id === modalId) {
-                            if (modalId === 'depositModal') closeDepositModal();
-                            if (modalId === 'withdrawModal') closeWithdrawModal();
-                            if (modalId === 'exposureModal') closeExposureModal();
-                            if (modalId === 'creditModal') closeCreditModal();
-                            if (modalId === 'passwordModal') closePasswordModal();
-                            if (modalId === 'statusModal') closeStatusModal();
-                        }
-                    }
+                    function downloadPDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
 
-                    function openDepositModal(clientName, clientPts, uplinePts) {
-                        document.getElementById('modalClientUsername').value = clientName;
-                        document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
-                        document.getElementById('labelClient').textContent = clientName;
-                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
-                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
-                        
-                        const modal = document.getElementById('depositModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeDepositModal() {
-                        const modal = document.getElementById('depositModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(14);
+                        doc.text("User List", 105, 15, { align: "center" });
 
-                    function openWithdrawModal(clientName, clientPts, uplinePts) {
-                        document.getElementById('modalWithdrawClientUsername').value = clientName;
-                        document.getElementById('labelWithdrawLoggedIn').textContent = "${loggedInUser}";
-                        document.getElementById('labelWithdrawClient').textContent = clientName;
-                        document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
-                        document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
-                        
-                        const modal = document.getElementById('withdrawModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeWithdrawModal() {
-                        const modal = document.getElementById('withdrawModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        const data = [];
+                        const rows = document.querySelectorAll("#soniAccountTable tbody tr");
 
-                    function openExposureModal(clientName, oldLimit) {
-                        document.getElementById('modalExposureClientUsername').value = clientName;
-                        document.getElementById('modalOldExposureLimit').value = Number(oldLimit || 0).toFixed(2);
-                        
-                        const modal = document.getElementById('exposureModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeExposureModal() {
-                        const modal = document.getElementById('exposureModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll("td");
+                            if (cells.length >= 11) {
+                                const username = cells[0].innerText.trim();
+                                const cr = cells[1].innerText.trim();
+                                const ust = cells[6].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const bst = cells[7].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const expLimit = cells[8].innerText.trim();
+                                const defPct = cells[9].innerText.trim();
+                                const accType = cells[10].innerText.trim();
 
-                    function openCreditModal(clientName, oldCredit) {
-                        document.getElementById('modalCreditClientUsername').value = clientName;
-                        document.getElementById('modalOldCredit').value = Number(oldCredit || 0).toFixed(2);
-                        
-                        const modal = document.getElementById('creditModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
+                                data.push([username, cr, ust, bst, expLimit, defPct, accType]);
+                            }
+                        });
+
+                        doc.autoTable({
+                            startY: 20,
+                            head: [['User Name', 'CR', 'U st', 'B st', 'Exposure Limit', 'Default %', 'Account type']],
+                            body: data,
+                            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+                            alternateRowStyles: { fillColor: [245, 245, 245] },
+                            styles: { fontSize: 8, cellPadding: 2 }
+                        });
+
+                        doc.save("userlist-1.pdf");
                     }
-                    function closeCreditModal() {
-                        const modal = document.getElementById('creditModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    function openPasswordModal(clientName) {
-                        document.getElementById('modalPasswordClientUsername').value = clientName;
-                        const modal = document.getElementById('passwordModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closePasswordModal() {
-                        const modal = document.getElementById('passwordModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    function openStatusModal(clientName, userActive, betActive) {
-                        document.getElementById('modalStatusClientUsername').value = clientName;
-                        document.getElementById('modalStatusDisplayClient').textContent = clientName;
-                        
-                        setUserActiveState(userActive);
-                        setBetActiveState(betActive);
-
-                        const modal = document.getElementById('statusModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                    function closeStatusModal() {
-                        const modal = document.getElementById('statusModal');
-                        modal.classList.remove('flex');
-                        modal.classList.add('hidden');
-                    }
-
-                    let isUserActive = true;
-                    let isBetActive = true;
-
-                    function setUserActiveState(state) {
-                        isUserActive = state;
-                        document.getElementById('inputUserActive').value = state ? "true" : "false";
-                        const btn = document.getElementById('btnUserActive');
-                        const txt = document.getElementById('textUserActive');
-                        const dot = document.getElementById('dotUserActive');
-
-                        if (state) {
-                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "ON";
-                            txt.className = "absolute left-2.5 top-1";
-                            dot.style.right = "4px";
-                            dot.style.left = "auto";
-                        } else {
-                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "OFF";
-                            txt.className = "absolute right-2.5 top-1";
-                            dot.style.left = "4px";
-                            dot.style.right = "auto";
-                        }
-                    }
-
-                    function setBetActiveState(state) {
-                        isBetActive = state;
-                        document.getElementById('inputBetActive').value = state ? "true" : "false";
-                        const btn = document.getElementById('btnBetActive');
-                        const txt = document.getElementById('textBetActive');
-                        const dot = document.getElementById('dotBetActive');
-
-                        if (state) {
-                            btn.className = "w-16 h-7 bg-[#0088cc] text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "ON";
-                            txt.className = "absolute left-2.5 top-1";
-                            dot.style.right = "4px";
-                            dot.style.left = "auto";
-                        } else {
-                            btn.className = "w-16 h-7 bg-gray-400 text-white rounded-full font-bold text-[10px] relative transition-colors cursor-pointer shadow-inner";
-                            txt.textContent = "OFF";
-                            txt.className = "absolute right-2.5 top-1";
-                            dot.style.left = "4px";
-                            dot.style.right = "auto";
-                        }
-                    }
-
-                    function toggleUserStatus() {
-                        setUserActiveState(!isUserActive);
-                    }
-
-                    function toggleBetStatus() {
-                        setBetActiveState(!isBetActive);
-                    }
-
-                    window.addEventListener('popstate', function() {
-                        closeDepositModal();
-                        closeWithdrawModal();
-                        closeExposureModal();
-                        closeCreditModal();
-                        closePasswordModal();
-                        closeStatusModal();
-                    });
                 </script>
             </body>
             </html>
@@ -1782,18 +1470,6 @@ app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
 
-    const isFirstCapitalName = /^[A-Z]/.test(clientName);
-    const isAlphanumericName = /^[a-zA-Z0-9]+$/.test(clientName);
-    if (clientName.length < 4 || !isFirstCapitalName || !isAlphanumericName) {
-        return res.send(`<script>alert('Client Name kam se kam 4 characters, pehla letter Capital aur alphanumeric hona chahiye!'); window.history.back();</script>`);
-    }
-
-    const isFirstCapitalPass = /^[A-Z]/.test(password);
-    const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(password);
-    if (password.length < 4 || !isFirstCapitalPass || !hasSpecialChar) {
-        return res.send(`<script>alert('Password ka pehla letter Capital aur special character hona aavashyak hai!'); window.history.back();</script>`);
-    }
-
     try {
         const creatorRef = doc(db, 'users', createdBy);
         const creatorSnap = await getDoc(creatorRef);
@@ -1834,7 +1510,7 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        res.send(`<script>alert('Account created successfully and saved in Firebase!'); window.location='/users?username=${encodeURIComponent(createdBy)}';</script>`);
+        res.send(`<script>alert('Account created successfully!'); window.location='/users?username=${encodeURIComponent(createdBy)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
@@ -1846,18 +1522,9 @@ app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
 
-    if (depositAmount <= 0) {
-        return res.send(`<script>alert('Kripya valid deposit amount daalein!'); window.history.back();</script>`);
-    }
-
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Uploader session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -1866,30 +1533,18 @@ app.post('/api/deposit', async (req, res) => {
 
         const currentUploaderPoints = Number(uploader.points || 0);
         if (currentUploaderPoints < depositAmount) {
-            return res.send(`<script>alert('Paryapt points nahi hain! Aapka balance: ${currentUploaderPoints}'); window.history.back();</script>`);
+            return res.send(`<script>alert('Insufficient balance!'); window.history.back();</script>`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
         const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
         const clientData = clientSnap.data();
-        const currentClientPoints = Number(clientData.points || 0);
 
-        await updateDoc(uploaderRef, {
-            points: currentUploaderPoints - depositAmount
-        });
+        await updateDoc(uploaderRef, { points: currentUploaderPoints - depositAmount });
+        await updateDoc(clientRef, { points: Number(clientData.points || 0) + depositAmount });
 
-        await updateDoc(clientRef, {
-            points: currentClientPoints + depositAmount
-        });
-
-        res.send(`<script>alert('Deposit successful! ${depositAmount} points transferred.'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.send(`<script>alert('Deposit successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
     }
 });
@@ -1899,18 +1554,9 @@ app.post('/api/withdraw', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const withdrawAmount = Number(amount) || 0;
 
-    if (withdrawAmount <= 0) {
-        return res.send(`<script>alert('Kripya valid withdraw amount daalein!'); window.history.back();</script>`);
-    }
-
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Uploader session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -1919,31 +1565,18 @@ app.post('/api/withdraw', async (req, res) => {
 
         const clientRef = doc(db, 'users', clientUsername);
         const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
         const clientData = clientSnap.data();
         const currentClientPoints = Number(clientData.points || 0);
 
         if (currentClientPoints < withdrawAmount) {
-            return res.send(`<script>alert('Client ke paas paryapt points nahi hain! Client balance: ${currentClientPoints}'); window.history.back();</script>`);
+            return res.send(`<script>alert('Client has insufficient balance!'); window.history.back();</script>`);
         }
 
-        const currentUploaderPoints = Number(uploader.points || 0);
+        await updateDoc(clientRef, { points: currentClientPoints - withdrawAmount });
+        await updateDoc(uploaderRef, { points: Number(uploader.points || 0) + withdrawAmount });
 
-        await updateDoc(clientRef, {
-            points: currentClientPoints - withdrawAmount
-        });
-
-        await updateDoc(uploaderRef, {
-            points: currentUploaderPoints + withdrawAmount
-        });
-
-        res.send(`<script>alert('Withdraw successful! ${withdrawAmount} points withdrawn.'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.send(`<script>alert('Withdraw successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Withdraw error occurred'); window.history.back();</script>`);
     }
 });
@@ -1951,16 +1584,9 @@ app.post('/api/withdraw', async (req, res) => {
 // 12. EXPOSURE LIMIT API
 app.post('/api/exposure-limit', async (req, res) => {
     const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
-    const limitVal = Number(newLimit) || 0;
-
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -1968,19 +1594,10 @@ app.post('/api/exposure-limit', async (req, res) => {
         }
 
         const clientRef = doc(db, 'users', clientUsername);
-        const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
-        await updateDoc(clientRef, {
-            exposureLimit: limitVal
-        });
+        await updateDoc(clientRef, { exposureLimit: Number(newLimit) || 0 });
 
         res.send(`<script>alert('Exposure limit updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Error updating exposure limit'); window.history.back();</script>`);
     }
 });
@@ -1988,16 +1605,9 @@ app.post('/api/exposure-limit', async (req, res) => {
 // 13. CREDIT UPDATE API
 app.post('/api/credit-update', async (req, res) => {
     const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
-    const creditVal = Number(newCredit) || 0;
-
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -2005,19 +1615,10 @@ app.post('/api/credit-update', async (req, res) => {
         }
 
         const clientRef = doc(db, 'users', clientUsername);
-        const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
-        await updateDoc(clientRef, {
-            creditRef: creditVal
-        });
+        await updateDoc(clientRef, { creditRef: Number(newCredit) || 0 });
 
         res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
     }
 });
@@ -2027,17 +1628,12 @@ app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
-        return res.send(`<script>alert('New password and Confirm password do not match!'); window.history.back();</script>`);
+        return res.send(`<script>alert('Passwords do not match!'); window.history.back();</script>`);
     }
 
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -2045,20 +1641,10 @@ app.post('/api/client-password-update', async (req, res) => {
         }
 
         const clientRef = doc(db, 'users', clientUsername);
-        const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
-        await updateDoc(clientRef, {
-            password: newPassword,
-            mustChangePassword: false
-        });
+        await updateDoc(clientRef, { password: newPassword, mustChangePassword: false });
 
         res.send(`<script>alert('Client password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Error updating password'); window.history.back();</script>`);
     }
 });
@@ -2066,15 +1652,9 @@ app.post('/api/client-password-update', async (req, res) => {
 // 15. CHANGE STATUS API (S BUTTON)
 app.post('/api/change-status', async (req, res) => {
     const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
-
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-
-        if (!uploaderSnap.exists()) {
-            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
-        }
-
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
@@ -2082,12 +1662,6 @@ app.post('/api/change-status', async (req, res) => {
         }
 
         const clientRef = doc(db, 'users', clientUsername);
-        const clientSnap = await getDoc(clientRef);
-
-        if (!clientSnap.exists()) {
-            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
-        }
-
         await updateDoc(clientRef, {
             userActive: userActive === 'true',
             betActive: betActive === 'true'
@@ -2095,15 +1669,11 @@ app.post('/api/change-status', async (req, res) => {
 
         res.send(`<script>alert('Status updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        console.error(err);
         res.send(`<script>alert('Error updating status'); window.history.back();</script>`);
     }
 });
 
-// LOGOUT ROUTE
-app.get('/logout', (req, res) => {
-    res.redirect('/');
-});
+app.get('/logout', (req, res) => res.redirect('/'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
