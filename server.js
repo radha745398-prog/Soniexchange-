@@ -541,19 +541,19 @@ app.get('/insertuser', async (req, res) => {
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
                                             <div class="relative">
-                                                <input type="text" id="clientName" name="clientName" required placeholder="Client Name" class="w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none">
-                                                <span id="nameIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none">✕</span>
+                                                <input type="text" id="clientName" name="clientName" required placeholder="Client Name" class="w-full border p-1 pr-6 rounded text-xs focus:outline-none">
+                                                <span id="nameIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 font-bold text-xs pointer-events-none hidden"></span>
                                             </div>
-                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5">The clientname field is required</p>
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden"></p>
                                         </div>
 
                                         <div>
                                             <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
                                             <div class="relative">
-                                                <input type="password" id="password" name="password" required placeholder="User Password" class="w-full input-state-red p-1 pr-6 rounded text-xs focus:outline-none">
-                                                <span id="passIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none">✕</span>
+                                                <input type="password" id="password" name="password" required placeholder="User Password" class="w-full border p-1 pr-6 rounded text-xs focus:outline-none">
+                                                <span id="passIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 font-bold text-xs pointer-events-none hidden"></span>
                                             </div>
-                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5">The password field is required</p>
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden"></p>
                                         </div>
                                     </div>
 
@@ -648,21 +648,18 @@ app.get('/insertuser', async (req, res) => {
                         let isPassValid = false;
 
                         function setFieldState(input, errorElement, iconElement, isValid, errorMessage) {
+                            input.classList.remove('input-state-red', 'input-state-green');
                             if (isValid) {
-                                input.classList.remove('input-state-red');
                                 input.classList.add('input-state-green');
                                 errorElement.style.display = 'none';
                                 iconElement.textContent = '✓';
-                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none';
-                                iconElement.style.display = 'block';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none block';
                             } else {
-                                input.classList.remove('input-state-green');
                                 input.classList.add('input-state-red');
                                 errorElement.textContent = errorMessage;
                                 errorElement.style.display = 'block';
                                 iconElement.textContent = '✕';
-                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none';
-                                iconElement.style.display = 'block';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none block';
                             }
                         }
 
@@ -670,7 +667,9 @@ app.get('/insertuser', async (req, res) => {
                             const val = nameInput.value.trim();
 
                             if (val === '') {
-                                setFieldState(nameInput, nameError, nameIcon, false, "The clientname field is required");
+                                nameInput.classList.remove('input-state-red', 'input-state-green');
+                                nameError.style.display = 'none';
+                                nameIcon.style.display = 'none';
                                 isNameValid = false;
                                 return;
                             }
@@ -683,7 +682,7 @@ app.get('/insertuser', async (req, res) => {
                             const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(val);
 
                             if (!isFirstCapital || !isAlphanumeric) {
-                                setFieldState(nameInput, nameError, nameIcon, false, "Must start with Capital and be alphanumeric");
+                                setFieldState(nameInput, nameError, nameIcon, false, "Must start with Capital letter & contain alpha-numeric characters");
                                 isNameValid = false;
                                 return;
                             }
@@ -696,7 +695,9 @@ app.get('/insertuser', async (req, res) => {
                             const val = passInput.value;
 
                             if (!val || val.trim().length === 0) {
-                                setFieldState(passInput, passError, passIcon, false, "The password field is required");
+                                passInput.classList.remove('input-state-red', 'input-state-green');
+                                passError.style.display = 'none';
+                                passIcon.style.display = 'none';
                                 isPassValid = false;
                                 return;
                             }
@@ -709,7 +710,7 @@ app.get('/insertuser', async (req, res) => {
                             const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(val);
 
                             if (!isFirstCapital || !hasSpecialChar) {
-                                setFieldState(passInput, passError, passIcon, false, "Must start with Capital and contain special character");
+                                setFieldState(passInput, passError, passIcon, false, "Must start with Capital letter and contain special character");
                                 isPassValid = false;
                                 return;
                             }
@@ -719,7 +720,10 @@ app.get('/insertuser', async (req, res) => {
                         }
 
                         nameInput.addEventListener('input', validateClientName);
+                        nameInput.addEventListener('keyup', validateClientName);
+
                         passInput.addEventListener('input', validatePassword);
+                        passInput.addEventListener('keyup', validatePassword);
 
                         document.getElementById('createAccountForm').onsubmit = function(e) {
                             validateClientName();
