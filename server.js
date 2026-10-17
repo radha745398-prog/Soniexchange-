@@ -54,7 +54,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR (Clicking 'Soni' Opens Account List)
+// TOP HEADER BAR ('Soni' and 'List of Clients' both open Account List)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -358,10 +358,39 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE (Redirects to Account List)
+// 5. DASHBOARD ROUTE (Lands on Dashboard after Login)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    res.redirect(`/users?username=${encodeURIComponent(loggedInUser)}`);
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Dashboard</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, role)}
+                <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
+                    <div class="bg-white p-4 rounded border shadow-xs">
+                        <h2 class="text-sm font-bold text-gray-800 mb-2">Welcome, ${loggedInUser}</h2>
+                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> or <strong>List of Clients</strong> in the top header to view the Account List table.</p>
+                    </div>
+                </main>
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        res.redirect('/');
+    }
 });
 
 // 6. ACCOUNT LIST PAGE (/users)
