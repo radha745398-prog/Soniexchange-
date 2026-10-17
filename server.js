@@ -1011,7 +1011,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH EXPANDABLE GREEN SUMMARY BANNER (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH MATCHING BLUE SUMMARY BANNER (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1118,8 +1118,8 @@ app.get('/soni-view', async (req, res) => {
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                <!-- EXPANDABLE GREEN SUMMARY BANNER -->
-                <div class="bg-[#20988b] text-white shadow-md">
+                <!-- EXPANDABLE BLUE SUMMARY BANNER (MATCHED WITH TOP NAVBAR) -->
+                <div class="bg-[#0077b6] text-white shadow-md">
                     <!-- Toggle Arrow Button Bar -->
                     <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
                         <button type="button" id="summaryToggleBtn" class="text-white text-xs focus:outline-none cursor-pointer">
