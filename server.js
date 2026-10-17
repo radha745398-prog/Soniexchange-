@@ -980,7 +980,6 @@ app.get('/users', async (req, res) => {
                             styles: { fontSize: 8, cellPadding: 2 }
                         });
 
-                        // Output Blob URL to trigger browser PDF bottom sheet preview
                         const pdfBlob = doc.output('blob');
                         const blobUrl = URL.createObjectURL(pdfBlob);
                         
@@ -1023,6 +1022,30 @@ app.get('/soni-view', async (req, res) => {
                 usersList.push({ id: docItem.id, ...docItem.data() });
             });
         }
+
+        // Calculate Totals
+        let totalCR = 0;
+        let totalBalance = 0;
+        let totalPL = 0;
+        let totalExposure = 0;
+        let totalAvailBal = 0;
+        let totalExpLimit = 0;
+
+        usersList.forEach(u => {
+            const cr = Number(u.creditRef || u.points || 0);
+            const bal = Number(u.points || 0);
+            const pl = 0; // or calculated P/L
+            const exp = Number(u.exposure || 0);
+            const avail = bal;
+            const limit = Number(u.exposureLimit || 0);
+
+            totalCR += cr;
+            totalBalance += bal;
+            totalPL += pl;
+            totalExposure += exp;
+            totalAvailBal += avail;
+            totalExpLimit += limit;
+        });
 
         let tableRows = usersList.length === 0 ? `
             <tr><td colspan="12" class="text-center p-4 text-gray-500">No clients found.</td></tr>
@@ -1140,11 +1163,35 @@ app.get('/soni-view', async (req, res) => {
                                     <th class="p-2 border-r text-center">Account Type</th>
                                     <th class="p-2 text-center">Action</th>
                                 </tr>
+                                <!-- TOTAL SUMMARY ROW JUST BELOW HEADER -->
+                                <tr class="bg-gray-100 text-gray-800 text-[11px] font-bold border-b">
+                                    <td class="p-2 border-r">Total</td>
+                                    <td class="p-2 border-r text-right">${totalCR.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right">${totalBalance.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right">${totalPL.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right">${totalAvailBal.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-center"></td>
+                                    <td class="p-2 border-r text-center"></td>
+                                    <td class="p-2 border-r text-right">${totalExpLimit.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-center"></td>
+                                    <td class="p-2 border-r text-center"></td>
+                                    <td class="p-2 text-center"></td>
+                                </tr>
                             </thead>
                             <tbody>
                                 ${tableRows}
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- PAGINATION BAR -->
+                    <div class="flex justify-end items-center mt-3 space-x-1 text-xs">
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">«</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">‹</button>
+                        <button class="px-2.5 py-1 bg-[#0088cc] text-white font-bold rounded">1</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">›</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">»</button>
                     </div>
                 </main>
 
@@ -1187,7 +1234,6 @@ app.get('/soni-view', async (req, res) => {
                             styles: { fontSize: 8, cellPadding: 2 }
                         });
 
-                        // Output Blob URL to trigger browser PDF bottom sheet preview
                         const pdfBlob = doc.output('blob');
                         const blobUrl = URL.createObjectURL(pdfBlob);
                         
