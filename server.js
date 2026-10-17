@@ -42,6 +42,7 @@ async function initMasterAdmin() {
         password: 'Lyy@5656',
         role: 'ADMIN',
         points: 100000000,
+        creditRef: 100000000,
         mustChangePassword: false,
         txnPassword: '745398',
         createdAt: new Date().toISOString()
@@ -423,7 +424,7 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
                 <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
                 <td class="p-2 border-r text-right">${Number(u.exposureLimit || 0).toLocaleString()}</td>
@@ -434,7 +435,7 @@ app.get('/users', async (req, res) => {
                         <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                         <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
@@ -638,12 +639,47 @@ app.get('/users', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- CREDIT POPUP MODAL -->
+                <div id="creditModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'creditModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Credit</span>
+                            <button type="button" onclick="closeCreditModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/credit-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalCreditClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Credit</label>
+                                <div class="col-span-8"><input type="text" id="modalOldCredit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Credit</label>
+                                <div class="col-span-8"><input type="number" name="newCredit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeCreditModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
                             if (modalId === 'depositModal') closeDepositModal();
                             if (modalId === 'withdrawModal') closeWithdrawModal();
                             if (modalId === 'exposureModal') closeExposureModal();
+                            if (modalId === 'creditModal') closeCreditModal();
                         }
                     }
 
@@ -695,10 +731,25 @@ app.get('/users', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openCreditModal(clientName, oldCredit) {
+                        document.getElementById('modalCreditClientUsername').value = clientName;
+                        document.getElementById('modalOldCredit').value = Number(oldCredit || 0).toFixed(2);
+                        
+                        const modal = document.getElementById('creditModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeCreditModal() {
+                        const modal = document.getElementById('creditModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
+                        closeCreditModal();
                     });
                 </script>
             </body>
@@ -741,7 +792,7 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-right">0</td>
                 <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
@@ -756,7 +807,7 @@ app.get('/soni-view', async (req, res) => {
                         <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                         <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
@@ -969,12 +1020,47 @@ app.get('/soni-view', async (req, res) => {
                     </div>
                 </div>
 
+                <!-- CREDIT POPUP MODAL -->
+                <div id="creditModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'creditModal')">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Credit</span>
+                            <button type="button" onclick="closeCreditModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                        </div>
+                        <form action="/api/credit-update" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalCreditClientUsername">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Old Credit</label>
+                                <div class="col-span-8"><input type="text" id="modalOldCredit" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0.00"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">New Credit</label>
+                                <div class="col-span-8"><input type="number" name="newCredit" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeCreditModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <script>
                     function handleOverlayClick(event, modalId) {
                         if (event.target.id === modalId) {
                             if (modalId === 'depositModal') closeDepositModal();
                             if (modalId === 'withdrawModal') closeWithdrawModal();
                             if (modalId === 'exposureModal') closeExposureModal();
+                            if (modalId === 'creditModal') closeCreditModal();
                         }
                     }
 
@@ -1026,10 +1112,25 @@ app.get('/soni-view', async (req, res) => {
                         modal.classList.add('hidden');
                     }
 
+                    function openCreditModal(clientName, oldCredit) {
+                        document.getElementById('modalCreditClientUsername').value = clientName;
+                        document.getElementById('modalOldCredit').value = Number(oldCredit || 0).toFixed(2);
+                        
+                        const modal = document.getElementById('creditModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                    function closeCreditModal() {
+                        const modal = document.getElementById('creditModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+
                     window.addEventListener('popstate', function() {
                         closeDepositModal();
                         closeWithdrawModal();
                         closeExposureModal();
+                        closeCreditModal();
                     });
                 </script>
             </body>
@@ -1363,6 +1464,7 @@ app.post('/api/clients/create', async (req, res) => {
             password: password,
             role: accountType || 'Client',
             points: pointsToGive,
+            creditRef: pointsToGive,
             exposureLimit: 0,
             createdBy: createdBy,
             mustChangePassword: true,
@@ -1518,6 +1620,43 @@ app.post('/api/exposure-limit', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error updating exposure limit'); window.history.back();</script>`);
+    }
+});
+
+// 13. CREDIT UPDATE API
+app.post('/api/credit-update', async (req, res) => {
+    const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
+    const creditVal = Number(newCredit) || 0;
+
+    try {
+        const uploaderRef = doc(db, 'users', loggedInUser);
+        const uploaderSnap = await getDoc(uploaderRef);
+
+        if (!uploaderSnap.exists()) {
+            return res.send(`<script>alert('Session error!'); window.location='/';</script>`);
+        }
+
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
+            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        }
+
+        const clientRef = doc(db, 'users', clientUsername);
+        const clientSnap = await getDoc(clientRef);
+
+        if (!clientSnap.exists()) {
+            return res.send(`<script>alert('Client nahi mila!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        }
+
+        await updateDoc(clientRef, {
+            creditRef: creditVal
+        });
+
+        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+    } catch(err) {
+        console.error(err);
+        res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
     }
 });
 
