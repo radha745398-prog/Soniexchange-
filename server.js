@@ -54,13 +54,13 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR ('Soni' and 'List of Clients' both open Account List)
+// TOP HEADER BAR ('Soni' opens exact new screenshot view, 'List of Clients' opens original view)
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
         <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
             <div class="flex items-center space-x-2">
-                <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="font-bold text-white text-[12px] pr-1 cursor-pointer hover:text-gray-200">Soni</a>
+                <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="font-bold text-white text-[12px] pr-1 cursor-pointer hover:text-gray-200">Soni</a>
                 <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1 py-0.5 rounded focus:outline-none cursor-pointer">
                     <i class="fa-solid fa-bars text-xs pointer-events-none"></i>
                 </button>
@@ -358,7 +358,7 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE (Lands on Dashboard after Login)
+// 5. DASHBOARD ROUTE (Default Dashboard upon Login)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -382,7 +382,7 @@ app.get('/dashboard', async (req, res) => {
                 <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
                     <div class="bg-white p-4 rounded border shadow-xs">
                         <h2 class="text-sm font-bold text-gray-800 mb-2">Welcome, ${loggedInUser}</h2>
-                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> or <strong>List of Clients</strong> in the top header to view the Account List table.</p>
+                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in the top header to view the exact Account List screenshot view, or <strong>List of Clients</strong> for standard view.</p>
                     </div>
                 </main>
             </body>
@@ -393,7 +393,7 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// 6. ACCOUNT LIST PAGE (/users)
+// 6. ORIGINAL ACCOUNT LIST PAGE (/users) for 'List of Clients'
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -460,9 +460,7 @@ app.get('/users', async (req, res) => {
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
-                    .modal-bg-overlay {
-                        background-color: rgba(0, 0, 0, 0.45);
-                    }
+                    .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
@@ -538,53 +536,33 @@ app.get('/users', async (req, res) => {
                             <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                             <input type="hidden" name="clientUsername" id="modalClientUsername">
 
-                            <!-- UPLINE ROW -->
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                                <div class="col-span-4">
-                                    <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
-                                </div>
-                                <div class="col-span-4">
-                                    <input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0">
-                                </div>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
 
-                            <!-- DOWNLINE ROW -->
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                                <div class="col-span-4">
-                                    <input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none">
-                                </div>
-                                <div class="col-span-4">
-                                    <input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0">
-                                </div>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                             </div>
 
-                            <!-- AMOUNT INPUT -->
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                                <div class="col-span-8">
-                                    <input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right">
-                                </div>
+                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
                             </div>
 
-                            <!-- REMARK INPUT -->
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                                <div class="col-span-8">
-                                    <input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none">
-                                </div>
+                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
 
-                            <!-- TRANSACTION PASSWORD INPUT -->
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                                <div class="col-span-8">
-                                    <input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none">
-                                </div>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                             </div>
 
-                            <!-- ACTION BUTTONS -->
                             <div class="flex justify-end space-x-2 pt-3">
                                 <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
                                     <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
@@ -625,7 +603,225 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. ADD ACCOUNT FORM PAGE
+// 7. EXACT NEW SCREENSHOT VIEW (/soni-view) for when 'Soni' is clicked
+app.get('/soni-view', async (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN', points: 100000000 };
+
+        let usersList = [];
+        if (loggedInUser === 'Soniexchange') {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            querySnapshot.forEach((docItem) => {
+                if (docItem.id !== 'Soniexchange') {
+                    usersList.push({ id: docItem.id, ...docItem.data() });
+                }
+            });
+        } else {
+            const q = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((docItem) => {
+                usersList.push({ id: docItem.id, ...docItem.data() });
+            });
+        }
+
+        let tableRows = usersList.length === 0 ? `
+            <tr><td colspan="12" class="text-center p-4 text-gray-500">No clients found.</td></tr>
+        ` : usersList.map(u => `
+            <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
+                <td class="p-2 border-r">
+                    <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
+                </td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right">0</td>
+                <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
+                <td class="p-2 border-r text-center"><div class="inline-flex items-center justify-center w-4 h-4 bg-black text-white rounded-xs text-[10px] font-bold">✓</div></td>
+                <td class="p-2 border-r text-right">0</td>
+                <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
+                <td class="p-2 border-r text-center">${u.role || 'User'}</td>
+                <td class="p-1.5 text-center">
+                    <div class="flex items-center justify-center space-x-1">
+                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                        <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Account List - Soni View</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
+                    .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
+                </style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-base font-bold text-gray-800">Account List</h2>
+                        <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
+                    </div>
+
+                    <div class="flex space-x-2 mb-2 text-[11px] font-bold">
+                        <span class="text-[#0077b6] border-b-2 border-[#0077b6] pb-0.5 cursor-pointer">Active Users</span>
+                        <span class="text-gray-500 cursor-pointer hover:text-gray-700">Deactive Users</span>
+                    </div>
+
+                    <div class="flex space-x-1 mb-3">
+                        <button class="bg-[#dc3545] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                        </button>
+                        <button class="bg-[#28a745] text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1">
+                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
+                        <div class="flex items-center space-x-1">
+                            <span>Show</span>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
+                                <option>10</option>
+                                <option>25</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold">Search:</span>
+                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border rounded shadow-xs overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700 text-[10px] border-b font-bold">
+                                    <th class="p-2 border-r">User Name[span_1](start_span)[span_1](end_span)</th>
+                                    <th class="p-2 border-r text-right">CR[span_2](start_span)[span_2](end_span)</th>
+                                    <th class="p-2 border-r text-right">Balance[span_3](start_span)[span_3](end_span)</th>
+                                    <th class="p-2 border-r text-right">Client(P/L)[span_4](start_span)[span_4](end_span)</th>
+                                    <th class="p-2 border-r text-right">Exposure[span_5](start_span)[span_5](end_span)</th>
+                                    <th class="p-2 border-r text-right">Available Balance[span_6](start_span)[span_6](end_span)</th>
+                                    <th class="p-2 border-r text-center">U st[span_7](start_span)[span_7](end_span)</th>
+                                    <th class="p-2 border-r text-center">B st[span_8](start_span)[span_8](end_span)</th>
+                                    <th class="p-2 border-r text-right">Exposure Limit[span_9](start_span)[span_9](end_span)</th>
+                                    <th class="p-2 border-r text-center">Default(%)[span_10](start_span)[span_10](end_span)</th>
+                                    <th class="p-2 border-r text-center">Account Type[span_11](start_span)[span_11](end_span)</th>
+                                    <th class="p-2 text-center">Action[span_12](start_span)[span_12](end_span)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+
+                <!-- DEPOSIT POPUP MODAL -->
+                <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50">
+                    <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                        <div class="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-200">
+                            <span class="font-bold text-gray-800 text-sm">Deposit</span>
+                            <button type="button" onclick="closeDepositModal()" class="w-6 h-6 rounded-full bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">
+                                ✕
+                            </button>
+                        </div>
+
+                        <form action="/api/deposit" method="POST" class="p-5 space-y-3.5 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalClientUsername">
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelLoggedIn" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <span id="labelClient" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                                <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                                <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
+                                <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
+                                <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
+                                <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                            </div>
+
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <i class="fa-solid fa-rotate-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
+                                    <span>submit</span> <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <script>
+                    function openDepositModal(clientName, clientPts, uplinePts) {
+                        document.getElementById('modalClientUsername').value = clientName;
+                        document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
+                        document.getElementById('labelClient').textContent = clientName;
+                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
+                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
+                        
+                        const modal = document.getElementById('depositModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+
+                    function closeDepositModal() {
+                        const modal = document.getElementById('depositModal');
+                        modal.classList.remove('flex');
+                        modal.classList.add('hidden');
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        console.error(err);
+        res.redirect('/');
+    }
+});
+
+// 8. ADD ACCOUNT FORM PAGE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -646,15 +842,8 @@ app.get('/insertuser', async (req, res) => {
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .dark-box-title { background-color: #2b3a4a; color: #ffffff; padding: 4px 8px; font-weight: bold; font-size: 11px; }
                     .table-row-bg { background-color: #f8f9fa; }
-                    
-                    .input-state-red {
-                        border: 1.5px solid #ef4444 !important;
-                        background-color: #fef2f2 !important;
-                    }
-                    .input-state-green {
-                        border: 1.5px solid #10b981 !important;
-                        background-color: #ffffff !important;
-                    }
+                    .input-state-red { border: 1.5px solid #ef4444 !important; background-color: #fef2f2 !important; }
+                    .input-state-green { border: 1.5px solid #10b981 !important; background-color: #ffffff !important; }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
@@ -907,7 +1096,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 8. CREATE ACCOUNT API
+// 9. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -945,7 +1134,6 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        // Deduct points from creator when giving credit during creation
         await updateDoc(creatorRef, {
             points: (creator.points || 0) - pointsToGive
         });
@@ -968,7 +1156,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// 9. DEPOSIT API WITH EXACT HIERARCHICAL DEDUCTION Mechanics
+// 10. DEPOSIT API WITH EXACT HIERARCHICAL DEDUCTION Mechanics
 app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
@@ -987,12 +1175,10 @@ app.post('/api/deposit', async (req, res) => {
 
         const uploader = uploaderSnap.data();
 
-        // 1. Transaction Password Validation
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
 
-        // 2. Check if Uploader has sufficient balance
         const currentUploaderPoints = Number(uploader.points || 0);
         if (currentUploaderPoints < depositAmount) {
             return res.send(`<script>alert('Paryapt points nahi hain! Aapka balance: ${currentUploaderPoints}'); window.history.back();</script>`);
@@ -1008,7 +1194,6 @@ app.post('/api/deposit', async (req, res) => {
         const clientData = clientSnap.data();
         const currentClientPoints = Number(clientData.points || 0);
 
-        // 3. Deduct from Uploader (-) and Add to Downline Client (+)
         await updateDoc(uploaderRef, {
             points: currentUploaderPoints - depositAmount
         });
