@@ -394,7 +394,7 @@ app.get('/users', async (req, res) => {
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
-        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN', points: 100000000 };
 
         let usersList = [];
         
@@ -432,7 +432,7 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">D</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
@@ -513,6 +513,71 @@ app.get('/users', async (req, res) => {
                         </table>
                     </div>
                 </main>
+
+                <!-- DEPOSIT POPUP MODAL -->
+                <div id="depositModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center" style="z-index: 999999;">
+                    <div class="bg-white rounded shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800">
+                        <div class="bg-[#0077b6] text-white px-4 py-2.5 flex justify-between items-center font-bold text-sm">
+                            <span>Deposit</span>
+                            <button type="button" onclick="closeDepositModal()" class="text-white hover:text-gray-200 cursor-pointer text-base"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form action="/api/deposit" method="POST" class="p-4 space-y-3 text-xs">
+                            <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                            <input type="hidden" name="clientUsername" id="modalClientUsername">
+
+                            <div class="grid grid-cols-2 gap-3 items-center border-b pb-2">
+                                <span id="labelLoggedIn" class="font-semibold text-gray-700">Upline</span>
+                                <input type="text" id="modalLoggedInPoints" readonly class="w-full border bg-gray-100 p-1.5 rounded text-right font-bold text-gray-700" value="0">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 items-center border-b pb-2">
+                                <span id="labelClient" class="font-semibold text-gray-700">Client</span>
+                                <input type="text" id="modalClientPoints" readonly class="w-full border bg-gray-100 p-1.5 rounded text-right font-bold text-gray-700" value="0">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 items-center">
+                                <label class="font-semibold text-gray-700">Amount</label>
+                                <input type="number" name="amount" required placeholder="0" class="w-full border p-1.5 rounded text-right bg-white focus:outline-none focus:border-cyan-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 items-center">
+                                <label class="font-semibold text-gray-700">Remark</label>
+                                <input type="text" name="remark" placeholder="Remark" class="w-full border p-1.5 rounded bg-white focus:outline-none focus:border-cyan-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 items-center">
+                                <label class="font-semibold text-gray-700">Transaction Password</label>
+                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white focus:outline-none focus:border-cyan-500">
+                            </div>
+
+                            <div class="flex justify-end space-x-2 pt-3 border-t">
+                                <button type="button" onclick="closeDepositModal()" class="bg-[#343a40] hover:bg-black text-white px-4 py-2 rounded font-bold flex items-center space-x-1 cursor-pointer">
+                                    <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                                </button>
+                                <button type="submit" class="bg-[#0077b6] hover:bg-[#005f93] text-white px-4 py-2 rounded font-bold flex items-center space-x-1 cursor-pointer">
+                                    <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <script>
+                    function openDepositModal(clientName, clientPts, uplinePts) {
+                        document.getElementById('modalClientUsername').value = clientName;
+                        document.getElementById('labelLoggedIn').textContent = "${loggedInUser}";
+                        document.getElementById('labelClient').textContent = clientName;
+                        document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
+                        document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
+                        document.getElementById('depositModal').classList.remove('hidden');
+                        document.getElementById('depositModal').classList.add('flex');
+                    }
+
+                    function closeDepositModal() {
+                        document.getElementById('depositModal').classList.remove('flex');
+                        document.getElementById('depositModal').classList.add('hidden');
+                    }
+                </script>
             </body>
             </html>
         `);
@@ -659,7 +724,7 @@ app.get('/insertuser', async (req, res) => {
                                 <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
                                 <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white text-xs focus:outline-none">
                             </div>
-                            <button type="submit" class="bg-[#0088cc] hover:bg-[#006699] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition">Create Account</button>
+                            <button type="submit" class="bg-[#0088cc] hover:bg-[#006699] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition cursor-pointer">Create Account</button>
                         </div>
                     </form>
                 </main>
@@ -863,6 +928,61 @@ app.post('/api/clients/create', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
+    }
+});
+
+// 9. DEPOSIT API (D BUTTON FUNCTIONALITY)
+app.post('/api/deposit', async (req, res) => {
+    const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
+    const depositAmount = Number(amount) || 0;
+
+    if (depositAmount <= 0) {
+        return res.send(`<script>alert('Kripya valid deposit amount daalein!'); window.history.back();</script>`);
+    }
+
+    try {
+        const uploaderRef = doc(db, 'users', loggedInUser);
+        const uploaderSnap = await getDoc(uploaderRef);
+
+        if (!uploaderSnap.exists()) {
+            return res.send(`<script>alert('Uploader session error!'); window.location='/';</script>`);
+        }
+
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
+            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+        }
+
+        if (uploader.role !== 'ADMIN' && (uploader.points || 0) < depositAmount) {
+            return res.send(`<script>alert('Aapke paas पर्याप्त points nahi hain!'); window.history.back();</script>`);
+        }
+
+        const clientRef = doc(db, 'users', clientUsername);
+        const clientSnap = await getDoc(clientRef);
+
+        if (!clientSnap.exists()) {
+            return res.send(`<script>alert('Client nahi mila!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        }
+
+        const clientData = clientSnap.data();
+
+        // Update Uploader points if not admin
+        if (uploader.role !== 'ADMIN') {
+            await updateDoc(uploaderRef, {
+                points: (uploader.points || 0) - depositAmount
+            });
+        }
+
+        // Update Client points
+        await updateDoc(clientRef, {
+            points: (clientData.points || 0) + depositAmount
+        });
+
+        res.send(`<script>alert('Deposit successful!'); window.location='/users?username=${encodeURIComponent(loggedInUser)}';</script>`);
+    } catch(err) {
+        console.error(err);
+        res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
     }
 });
 
