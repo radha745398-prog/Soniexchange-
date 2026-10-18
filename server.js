@@ -43,6 +43,9 @@ async function initMasterAdmin() {
         role: 'ADMIN',
         points: 100000000,
         creditRef: 100000000,
+        balance: 100000000,
+        exposure: 0,
+        exposureLimit: 0,
         mustChangePassword: false,
         txnPassword: '745398',
         userActive: true,
@@ -214,11 +217,11 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                         const data = await res.json();
                         
                         if (data && data.length > 0) {
-                            dropdown.innerHTML = data.map(u => \`
+                            dropdown.innerHTML = data.map(u => `
                                 <div onclick="openMarketAnalysisModal('\${u.username}')" class="px-2.5 py-1.5 hover:bg-[#3b5cb8] cursor-pointer font-semibold border-b border-white/10 last:border-b-0">
                                     \${u.username}
                                 </div>
-                            \`).join('');
+                            `).join('');
                             dropdown.classList.remove('hidden');
                         } else {
                             dropdown.innerHTML = '<div class="px-2 py-1.5 text-white/80 text-[10px]">No user found</div>';
@@ -576,7 +579,7 @@ function getModalScriptsJS() {
                         const u = data.user;
                         document.getElementById('maUsername').textContent = u.username || '-';
                         document.getElementById('maRole').textContent = u.role || 'User';
-                        document.getElementById('maGeneral').textContent = Number(u.points || 0).toFixed(2);
+                        document.getElementById('maGeneral').textContent = Number(u.balance || 0).toFixed(2);
                         document.getElementById('maExposure').textContent = Number(u.exposure || 0).toFixed(2);
                         document.getElementById('maCreditRef').textContent = Number(u.creditRef || 0).toFixed(2);
                         document.getElementById('maMasterName').textContent = u.createdBy || 'Soniexchange';
@@ -598,10 +601,10 @@ function getModalScriptsJS() {
                 modal.classList.add('hidden');
             }
 
-            function openDepositModal(clientName, clientPts, uplinePts) {
+            function openDepositModal(clientName, clientBal, uplinePts) {
                 document.getElementById('modalClientUsername').value = clientName;
                 document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
-                document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
+                document.getElementById('modalClientPoints').value = clientBal.toLocaleString();
                 
                 const modal = document.getElementById('depositModal');
                 modal.classList.remove('hidden');
@@ -613,10 +616,10 @@ function getModalScriptsJS() {
                 modal.classList.add('hidden');
             }
 
-            function openWithdrawModal(clientName, clientPts, uplinePts) {
+            function openWithdrawModal(clientName, clientBal, uplinePts) {
                 document.getElementById('modalWithdrawClientUsername').value = clientName;
                 document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
-                document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
+                document.getElementById('modalWithdrawClientPoints').value = clientBal.toLocaleString();
                 
                 const modal = document.getElementById('withdrawModal');
                 modal.classList.remove('hidden');
@@ -1054,7 +1057,7 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
                     <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
                         ${u.userActive !== false ? '✓' : '✕'}
@@ -1070,10 +1073,10 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${u.balance || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.balance || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
+                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                         <button type="button" onclick="openStatusModal('${u.username}', ${u.userActive !== false}, ${u.betActive !== false})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
@@ -1200,7 +1203,7 @@ app.get('/soni-view', async (req, res) => {
         });
 
         // SORT USERS BY BALANCE DESCENDING (HIGHEST TO LOWEST)
-        usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+        usersList.sort((a, b) => Number(b.balance || 0) - Number(a.balance || 0));
 
         // Calculate Totals for filtered list
         let totalCR = 0;
@@ -1212,14 +1215,14 @@ app.get('/soni-view', async (req, res) => {
 
         usersList.forEach(u => {
             const cr = Number(u.creditRef || 0);
-            const bal = Number(u.points || 0);
-            const pl = bal - cr;
+            const bal = Number(u.balance || 0);
+            const pl = Number(u.pl || 0);
             const exp = Number(u.exposure || 0);
-            const avail = bal - exp;
+            const avail = (bal + pl) - exp;
             const limit = Number(u.exposureLimit || 0);
 
             totalCR += cr;
-            totalBalance += Math.abs(bal); // Total calculation without negative sign
+            totalBalance += bal;
             totalPL += pl;
             totalExposure += exp;
             totalAvailBal += avail;
@@ -1230,11 +1233,10 @@ app.get('/soni-view', async (req, res) => {
             <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
         ` : usersList.map(u => {
             const cr = Number(u.creditRef || 0);
-            const rawBal = Number(u.points || 0);
-            const bal = Math.abs(rawBal); // BALANCE ME MINUS NAHI DIKHANA
-            const pl = rawBal - cr;      // P/L ME EXACT MINUS/PLUS DIKHANA
+            const bal = Number(u.balance || 0);
+            const pl = Number(u.pl || 0);
             const exp = Number(u.exposure || 0);
-            const avail = rawBal - exp;
+            const avail = (bal + pl) - exp;
 
             return `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
@@ -1261,8 +1263,8 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${cr})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
@@ -1322,14 +1324,14 @@ app.get('/soni-view', async (req, res) => {
                     <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
                         <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
                         <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
-                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Credit Reference:</span><span class="font-semibold">${totalCR.toLocaleString()}</span></div>
 
                         <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level:</span><span class="font-semibold">-1000</span></div>
-                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level:</span><span class="font-semibold">0</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Profit/Loss:</span><span class="font-semibold">${totalPL.toLocaleString()}</span></div>
 
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
-                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance:</span><span class="font-semibold">${totalAvailBal.toLocaleString()}</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance With Profit/Loss:</span><span class="font-semibold">${totalAvailBal.toLocaleString()}</span></div>
                         <div class="flex justify-between py-0.5"><span class="text-white/90">My Profit/Loss:</span><span class="font-semibold">0</span></div>
                     </div>
                 </div>
@@ -1766,7 +1768,7 @@ app.get('/insertuser', async (req, res) => {
 // 9. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
-    const pointsToGive = Number(creditRef) || 0;
+    const creditAmount = Number(creditRef) || 0;
 
     try {
         const creatorRef = doc(db, 'users', createdBy);
@@ -1789,16 +1791,14 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        await updateDoc(creatorRef, {
-            points: (creator.points || 0) - pointsToGive
-        });
-
         await setDoc(newClientRef, {
             username: clientName,
             password: password,
             role: accountType || 'Client',
-            points: pointsToGive,
-            creditRef: pointsToGive,
+            creditRef: creditAmount,
+            balance: 0,
+            pl: 0,
+            exposure: 0,
             exposureLimit: 0,
             userActive: true,
             betActive: true,
@@ -1839,7 +1839,7 @@ app.post('/api/deposit', async (req, res) => {
         const clientData = clientSnap.data();
 
         await updateDoc(uploaderRef, { points: currentUploaderPoints - depositAmount });
-        await updateDoc(clientRef, { points: Number(clientData.points || 0) + depositAmount });
+        await updateDoc(clientRef, { balance: Number(clientData.balance || 0) + depositAmount });
 
         res.send(`<script>alert('Deposit successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
@@ -1864,13 +1864,13 @@ app.post('/api/withdraw', async (req, res) => {
         const clientRef = doc(db, 'users', clientUsername);
         const clientSnap = await getDoc(clientRef);
         const clientData = clientSnap.data();
-        const currentClientPoints = Number(clientData.points || 0);
+        const currentClientBalance = Number(clientData.balance || 0);
 
-        if (currentClientPoints < withdrawAmount) {
+        if (currentClientBalance < withdrawAmount) {
             return res.send(`<script>alert('Client has insufficient balance!'); window.history.back();</script>`);
         }
 
-        await updateDoc(clientRef, { points: currentClientPoints - withdrawAmount });
+        await updateDoc(clientRef, { balance: currentClientBalance - withdrawAmount });
         await updateDoc(uploaderRef, { points: Number(uploader.points || 0) + withdrawAmount });
 
         res.send(`<script>alert('Withdraw successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
