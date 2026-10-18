@@ -57,7 +57,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR & SIDEBAR FUNCTION
+// TOP HEADER BAR & SIDEBAR FUNCTION WITH AUTO-COMPLETE SEARCH
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -78,7 +78,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 </nav>
             </div>
 
-            <div class="flex items-center space-x-2 ml-4">
+            <div class="flex items-center space-x-2 ml-4 relative">
                 <div class="relative inline-block text-left" id="userMenuDropdown">
                     <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
                         <span>${loggedInUser} ▾</span>
@@ -92,12 +92,17 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 
                 <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
 
-                <form onsubmit="return handleClientSearch(event)" class="relative ml-1 flex items-center">
-                    <input type="text" id="headerSearchInput" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
-                    <button type="submit" class="absolute right-1.5 text-gray-600 text-[11px]">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </form>
+                <!-- HEADER SEARCH BOX WITH REALTIME DROPDOWN -->
+                <div class="relative ml-1">
+                    <form onsubmit="return false;" class="flex items-center">
+                        <input type="text" id="headerSearchInput" placeholder="Search..." autocomplete="off" oninput="handleSearchInput(this.value)" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
+                        <span class="absolute right-1.5 text-gray-600 text-[11px] pointer-events-none">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                    </form>
+                    <!-- BLUE DROPDOWN BOX FOR MATCHED USERS -->
+                    <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
+                </div>
             </div>
         </header>
 
@@ -192,13 +197,46 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 }
             });
 
-            function handleClientSearch(e) {
-                e.preventDefault();
-                const q = document.getElementById('headerSearchInput').value;
-                if(q) {
-                    alert('Searching: ' + q);
+            // REALTIME SEARCH HANDLER
+            let searchTimeout = null;
+            function handleSearchInput(val) {
+                clearTimeout(searchTimeout);
+                const dropdown = document.getElementById('searchResultsDropdown');
+                if (!val || val.trim().length === 0) {
+                    dropdown.classList.add('hidden');
+                    dropdown.innerHTML = '';
+                    return;
                 }
+
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch('/api/search-users?q=' + encodeURIComponent(val) + '&loggedInUser=${encodeURIComponent(loggedInUser)}');
+                        const data = await res.json();
+                        
+                        if (data && data.length > 0) {
+                            dropdown.innerHTML = data.map(u => \`
+                                <div onclick="openMarketAnalysisModal('\${u.username}')" class="px-2.5 py-1.5 hover:bg-[#3b5cb8] cursor-pointer font-semibold border-b border-white/10 last:border-b-0">
+                                    \${u.username}
+                                </div>
+                            \`).join('');
+                            dropdown.classList.remove('hidden');
+                        } else {
+                            dropdown.innerHTML = '<div class="px-2 py-1.5 text-white/80 text-[10px]">No user found</div>';
+                            dropdown.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        console.error('Search error:', err);
+                    }
+                }, 200);
             }
+
+            document.addEventListener('click', function(e) {
+                const searchInput = document.getElementById('headerSearchInput');
+                const dropdown = document.getElementById('searchResultsDropdown');
+                if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
         </script>
     `;
 }
@@ -206,6 +244,69 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 // ALL MODALS HTML FUNCTION
 function getModalsHTML(loggedInUser) {
     return `
+        <!-- MARKET ANALYSIS MODAL (EXACT POPUP MATCH) -->
+        <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50" onclick="handleOverlayClick(event, 'marketAnalysisModal')">
+            <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
+                    <span class="font-bold text-xs">Market Analysis</span>
+                    <button type="button" onclick="closeMarketAnalysisModal()" class="w-5 h-5 bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
+                </div>
+                
+                <div class="p-3 bg-gray-100 grid grid-cols-1 md:grid-cols-12 gap-3 text-[11px]">
+                    <!-- GAME DETAIL BOX -->
+                    <div class="md:col-span-4 bg-white border border-gray-300 p-2 space-y-1 shadow-xs">
+                        <div class="font-bold border-b border-gray-300 pb-1 text-gray-800 text-[11px]">Game Detail</div>
+                        <div class="flex justify-between"><span class="text-gray-600">Username</span><span class="font-semibold text-gray-800" id="maUsername">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Account Type</span><span class="font-semibold text-gray-800" id="maRole">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">General</span><span class="font-semibold text-gray-800" id="maGeneral">0.00</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Exposure</span><span class="font-semibold text-gray-800" id="maExposure">0.00</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Credit Reference</span><span class="font-semibold text-gray-800" id="maCreditRef">0.00</span></div>
+                    </div>
+
+                    <!-- USER LOCK BOX -->
+                    <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
+                        <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">User Lock</div>
+                        <table class="w-full text-left text-[10px]">
+                            <thead>
+                                <tr class="bg-[#2b3e50] text-white font-bold">
+                                    <th class="p-1 border-r">Master Name</th>
+                                    <th class="p-1 text-center border-r">User Act</th>
+                                    <th class="p-1 text-center">Bet Active</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="p-1 font-semibold text-gray-800" id="maMasterName">-</td>
+                                    <td class="p-1 text-center"><input type="checkbox" id="maUserAct" disabled class="accent-[#2b3e50]"></td>
+                                    <td class="p-1 text-center"><input type="checkbox" id="maBetAct" disabled class="accent-[#2b3e50]"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- GAME LOCK BOX -->
+                    <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
+                        <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">Game Lock</div>
+                        <table class="w-full text-left text-[10px]">
+                            <thead>
+                                <tr class="bg-[#2b3e50] text-white font-bold">
+                                    <th class="p-1 border-r">S.No.</th>
+                                    <th class="p-1 border-r">Master Name</th>
+                                    <th class="p-1 border-r text-center">Bet Lock</th>
+                                    <th class="p-1">Event Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b bg-gray-50">
+                                    <td colspan="4" class="p-2 text-center text-gray-500 font-semibold">No records found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- DEPOSIT POPUP MODAL -->
         <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
             <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
@@ -459,7 +560,42 @@ function getModalScriptsJS() {
                     if (modalId === 'creditModal') closeCreditModal();
                     if (modalId === 'passwordModal') closePasswordModal();
                     if (modalId === 'statusModal') closeStatusModal();
+                    if (modalId === 'marketAnalysisModal') closeMarketAnalysisModal();
                 }
+            }
+
+            async function openMarketAnalysisModal(username) {
+                const dropdown = document.getElementById('searchResultsDropdown');
+                if(dropdown) dropdown.classList.add('hidden');
+
+                try {
+                    const res = await fetch('/api/user-detail?username=' + encodeURIComponent(username));
+                    const data = await res.json();
+                    
+                    if (data && data.success) {
+                        const u = data.user;
+                        document.getElementById('maUsername').textContent = u.username || '-';
+                        document.getElementById('maRole').textContent = u.role || 'User';
+                        document.getElementById('maGeneral').textContent = Number(u.points || 0).toFixed(2);
+                        document.getElementById('maExposure').textContent = Number(u.exposure || 0).toFixed(2);
+                        document.getElementById('maCreditRef').textContent = Number(u.creditRef || 0).toFixed(2);
+                        document.getElementById('maMasterName').textContent = u.createdBy || 'Soniexchange';
+                        document.getElementById('maUserAct').checked = u.userActive !== false;
+                        document.getElementById('maBetAct').checked = u.betActive !== false;
+
+                        const modal = document.getElementById('marketAnalysisModal');
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                } catch(err) {
+                    console.error('Error fetching market analysis detail:', err);
+                }
+            }
+
+            function closeMarketAnalysisModal() {
+                const modal = document.getElementById('marketAnalysisModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
             }
 
             function openDepositModal(clientName, clientPts, uplinePts) {
@@ -616,6 +752,21 @@ function getModalScriptsJS() {
                 }
             }
 
+            function filterTableBySearch() {
+                const q = (document.getElementById('tableSearchInput')?.value || '').toLowerCase();
+                const rows = document.querySelectorAll('#soniAccountTable tbody tr, #accountTable tbody tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            }
+
+            function resetTableSearch() {
+                const input = document.getElementById('tableSearchInput');
+                if(input) input.value = '';
+                filterTableBySearch();
+            }
+
             window.addEventListener('popstate', function() {
                 closeDepositModal();
                 closeWithdrawModal();
@@ -623,10 +774,62 @@ function getModalScriptsJS() {
                 closeCreditModal();
                 closePasswordModal();
                 closeStatusModal();
+                closeMarketAnalysisModal();
             });
         </script>
     `;
 }
+
+// SEARCH USERS API (REALTIME)
+app.get('/api/search-users', async (req, res) => {
+    const q = (req.query.q || '').trim().toLowerCase();
+    const loggedInUser = req.query.loggedInUser || 'Soniexchange';
+
+    if (!q) return res.json([]);
+
+    try {
+        let usersList = [];
+        if (loggedInUser === 'Soniexchange') {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            querySnapshot.forEach((docItem) => {
+                if (docItem.id !== 'Soniexchange') {
+                    usersList.push({ username: docItem.id, ...docItem.data() });
+                }
+            });
+        } else {
+            const queryRef = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
+            const querySnapshot = await getDocs(queryRef);
+            querySnapshot.forEach((docItem) => {
+                usersList.push({ username: docItem.id, ...docItem.data() });
+            });
+        }
+
+        const filtered = usersList.filter(u => u.username.toLowerCase().includes(q));
+        res.json(filtered);
+    } catch(err) {
+        console.error(err);
+        res.json([]);
+    }
+});
+
+// GET USER DETAIL FOR MARKET ANALYSIS MODAL
+app.get('/api/user-detail', async (req, res) => {
+    const username = (req.query.username || '').trim();
+    if (!username) return res.json({ success: false });
+
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+            return res.json({ success: true, user: docSnap.data() });
+        }
+        res.json({ success: false });
+    } catch(err) {
+        console.error(err);
+        res.json({ success: false });
+    }
+});
 
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
@@ -810,6 +1013,8 @@ app.get('/dashboard', async (req, res) => {
                         <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in top header for exact Account List view, or <strong>List of Clients</strong> for standard view.</p>
                     </div>
                 </main>
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
             </body>
             </html>
         `);
@@ -925,9 +1130,9 @@ app.get('/users', async (req, res) => {
 
                         <div class="flex items-center space-x-1">
                             <span class="font-semibold">Search:</span>
-                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
-                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
-                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                            <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button onclick="filterTableBySearch()" class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
                         </div>
                     </div>
 
@@ -1135,6 +1340,27 @@ app.get('/soni-view', async (req, res) => {
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
+                    <!-- SHOW ENTRIES AND SEARCH BAR ROW -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
+                        <div class="flex items-center space-x-1">
+                            <span>Show</span>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
+                                <option>25</option>
+                                <option>10</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold">Search:</span>
+                            <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button onclick="filterTableBySearch()" class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                        </div>
+                    </div>
+
                     <!-- ACTIVE & DEACTIVE USERS TABS -->
                     <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
                         <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
@@ -1152,26 +1378,6 @@ app.get('/soni-view', async (req, res) => {
                         <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
                             <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
                         </button>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
-                        <div class="flex items-center space-x-1">
-                            <span>Show</span>
-                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
-                                <option>10</option>
-                                <option>25</option>
-                                <option>50</option>
-                                <option>100</option>
-                            </select>
-                            <span>entries</span>
-                        </div>
-
-                        <div class="flex items-center space-x-1">
-                            <span class="font-semibold">Search:</span>
-                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
-                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
-                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
-                        </div>
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
