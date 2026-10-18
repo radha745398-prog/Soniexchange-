@@ -115,9 +115,43 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
             <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Mixed Martial Arts</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Golf</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boxing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Beach Volleyball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Table Tennis</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Futsal</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Horse Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>E Games</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>MotoGP</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Chess</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Volleyball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Ice Hockey</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cycling</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motorbikes</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Athletics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball 3X3</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Sumo</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Virtual sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Handball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Politics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motor Sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Baseball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby Union</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby League</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Darts</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>American Football</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Snooker</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Soccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Greyhound Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Kabaddi</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boat Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esoccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Wrestling</span> <span>+</span></div>
             </div>
         </aside>
 
@@ -207,10 +241,10 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
     `;
 }
 
-// ALL MODALS HTML FUNCTION (INCLUDING MARKET ANALYSIS MODAL)
+// ALL MODALS HTML FUNCTION
 function getModalsHTML(loggedInUser) {
     return `
-        <!-- MARKET ANALYSIS MODAL (EXACT SCREENSHOT 2 MATCH) -->
+        <!-- MARKET ANALYSIS MODAL -->
         <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50" onclick="handleOverlayClick(event, 'marketAnalysisModal')">
             <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
                 <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
@@ -218,7 +252,7 @@ function getModalsHTML(loggedInUser) {
                     <button type="button" onclick="closeMarketAnalysisModal()" class="w-5 h-5 bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
                 </div>
                 
-                <div class="p-3 bg-gray-100 grid grid-cols-1 md:grid-cols-12 gap-3 text-[11px]" id="marketAnalysisContent">
+                <div class="p-3 bg-gray-100 grid grid-cols-1 md:grid-cols-12 gap-3 text-[11px]">
                     <!-- GAME DETAIL BOX -->
                     <div class="md:col-span-4 bg-white border border-gray-300 p-2 space-y-1 shadow-xs">
                         <div class="font-bold border-b border-gray-300 pb-1 text-gray-800 text-[11px]">Game Detail</div>
@@ -706,16 +740,18 @@ function getModalScriptsJS() {
                 setBetActiveState(!isBetActive);
             }
 
-            function toggleSummaryBanner() {
-                const banner = document.getElementById('summaryBannerContent');
-                const arrowIcon = document.getElementById('summaryArrowIcon');
-                if (banner.classList.contains('hidden')) {
-                    banner.classList.remove('hidden');
-                    arrowIcon.className = "fa-solid fa-chevron-up text-xs";
-                } else {
-                    banner.classList.add('hidden');
-                    arrowIcon.className = "fa-solid fa-chevron-down text-xs";
-                }
+            function filterTableBySearch() {
+                const q = document.getElementById('tableSearchInput').value.toLowerCase();
+                const rows = document.querySelectorAll('#soniAccountTable tbody tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            }
+
+            function resetTableSearch() {
+                document.getElementById('tableSearchInput').value = '';
+                filterTableBySearch();
             }
 
             window.addEventListener('popstate', function() {
@@ -1087,7 +1123,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
+// 7. EXACT SCREENSHOT MATCH VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active';
@@ -1202,26 +1238,59 @@ app.get('/soni-view', async (req, res) => {
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
-                    .tab-active-box { background-color: #ffffff; border-top: 1px solid #d1d5db; border-left: 1px solid #d1d5db; border-right: 1px solid #d1d5db; border-bottom: 1px solid #ffffff; color: #1f2937; font-weight: 600; margin-bottom: -1px; z-index: 10; }
-                    .tab-inactive-link { background-color: transparent; border: 1px solid transparent; color: #0077b6; font-weight: 600; }
+                    .tab-active-link { color: #0077b6; border-bottom: 2px solid #0077b6; font-weight: bold; }
+                    .tab-inactive-link { color: #0077b6; font-weight: normal; }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
                 <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
-                    <div class="flex justify-between items-center mb-2">
+                    <!-- TOP TITLE AND ADD ACCOUNT BUTTON ROW -->
+                    <div class="flex justify-between items-center mb-3">
                         <h2 class="text-base font-bold text-gray-800">Account List</h2>
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
+                    <!-- SHOW ENTRIES AND SEARCH BAR ROW -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
+                        <div class="flex items-center space-x-1">
+                            <span>Show</span>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none border-gray-300">
+                                <option>25</option>
+                                <option>10</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold text-gray-700">Search:</span>
+                            <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none border-gray-300 w-36">
+                            <button type="button" onclick="filterTableBySearch()" class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button type="button" onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE & DEACTIVE USERS TABS -->
+                    <div class="flex items-center space-x-4 border-b border-gray-200 mb-3 text-[11px]">
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="pb-1 cursor-pointer ${tab === 'active' ? 'tab-active-link' : 'tab-inactive-link'}">
                             Active Users
                         </a>
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'deactive' ? 'tab-active-box' : 'tab-inactive-link'}">
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="pb-1 cursor-pointer ${tab === 'deactive' ? 'tab-active-link' : 'tab-inactive-link'}">
                             Deactive Users
                         </a>
+                    </div>
+
+                    <!-- EXPORT PDF & EXCEL BUTTONS ROW -->
+                    <div class="flex space-x-1 mb-3">
+                        <button type="button" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                        </button>
+                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                        </button>
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
@@ -1230,7 +1299,7 @@ app.get('/soni-view', async (req, res) => {
                                 <tr class="bg-gray-100 text-gray-700 text-[10px] border-b-2 border-gray-400 font-bold">
                                     <th class="p-2 border-r">User Name</th>
                                     <th class="p-2 border-r text-right">CR</th>
-                                    <th class="p-2 border-r text-right">Balance <span class="text-xs">🞁</span></th>
+                                    <th class="p-2 border-r text-right">Balance</th>
                                     <th class="p-2 border-r text-right">Client(P/L)</th>
                                     <th class="p-2 border-r text-right">Exposure</th>
                                     <th class="p-2 border-r text-right">Available Balance</th>
