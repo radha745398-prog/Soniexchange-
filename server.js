@@ -868,7 +868,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (No More Accidental Password Reset Redirects)
+// 2. LOGIN PROCESS
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -889,10 +889,7 @@ app.post('/login-process', async (req, res) => {
             return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
         }
 
-        req.session.loggedInUser = user.username;
-        req.session.userRole = user.role;
-
-        if (user.mustChangePassword === true) {
+        if (user.mustChangePassword) {
             return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
         }
 
@@ -903,42 +900,70 @@ app.post('/login-process', async (req, res) => {
     }
 });
 
-// 3. FIRST TIME PASSWORD CHANGE PAGE
-app.get('/change-password', (req, res) => {
-    const username = req.query.username || '';
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Change Password & Get Transaction Password</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
-            <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
-                <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
-                <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your password. Upon updating, your unique 6-digit transaction password will be generated.</p>
-                <form action="/api/update-password" method="POST" class="space-y-3">
-                    <input type="hidden" name="username" value="${username}">
-                    <div>
-                        <label class="block font-semibold mb-1">New Password:</label>
-                        <input type="password" name="newPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
-                    </div>
-                    <div>
-                        <label class="block font-semibold mb-1">Confirm New Password:</label>
-                        <input type="password" name="confirmPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
-                    </div>
-                    <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Update Password</button>
-                </form>
-            </div>
-        </body>
-        </html>
-    `);
+// 3. CHANGE PASSWORD PAGE (EXACT TULA111 SCREENSHOT MATCH - INSIDE DASHBOARD)
+app.get('/change-password', async (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Change Password</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, role)}
+
+                <main class="flex-1 p-4 max-w-4xl w-full">
+                    <h2 class="text-sm font-semibold text-gray-800 mb-4">Change Password</h2>
+
+                    <form action="/api/update-password" method="POST" class="space-y-3 max-w-xs">
+                        <input type="hidden" name="username" value="${loggedInUser}">
+                        
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1 text-[11px]">New Password</label>
+                            <input type="password" name="newPassword" required class="w-full border border-gray-300 bg-white p-1.5 rounded-xs text-xs focus:outline-none focus:border-blue-500 shadow-xs">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Confirm Password</label>
+                            <input type="password" name="confirmPassword" required class="w-full border border-gray-300 bg-white p-1.5 rounded-xs text-xs focus:outline-none focus:border-blue-500 shadow-xs">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1 text-[11px]">Transaction Password</label>
+                            <input type="password" name="txnPassword" required class="w-full border border-gray-300 bg-white p-1.5 rounded-xs text-xs focus:outline-none focus:border-blue-500 shadow-xs">
+                        </div>
+
+                        <div class="pt-1">
+                            <button type="submit" class="bg-[#1f303e] hover:bg-[#15222d] text-white px-3.5 py-1 rounded-xs text-[11px] font-semibold cursor-pointer shadow-xs">
+                                Load
+                            </button>
+                        </div>
+                    </form>
+                </main>
+
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        res.redirect('/');
+    }
 });
 
-// 4. FIXED UPDATE PASSWORD API (Permanently Sets mustChangePassword to False)
+// 4. UPDATE PASSWORD API
 app.post('/api/update-password', async (req, res) => {
-    const { username, newPassword, confirmPassword } = req.body;
+    const { username, newPassword, confirmPassword, txnPassword } = req.body;
     if (newPassword !== confirmPassword) {
         return res.send("<script>alert('Passwords do not match!'); window.history.back();</script>");
     }
@@ -951,38 +976,22 @@ app.post('/api/update-password', async (req, res) => {
             return res.send("<script>alert('User not found!'); window.location='/';</script>");
         }
 
-        const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
+        const user = docSnap.data();
+
+        // Check Txn Password if existing
+        if (user.txnPassword && user.txnPassword !== txnPassword) {
+            return res.send("<script>alert('Invalid Transaction Password!'); window.history.back();</script>");
+        }
+
+        const finalTxnPass = user.txnPassword || Math.floor(100000 + Math.random() * 900000).toString();
 
         await updateDoc(userRef, {
             password: newPassword,
             mustChangePassword: false,
-            txnPassword: txnPass
+            txnPassword: finalTxnPass
         });
 
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Transaction Password Generated</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs font-sans">
-                <div class="bg-white p-6 rounded shadow-lg max-w-lg w-full text-center space-y-4">
-                    <h2 class="text-green-600 font-bold text-lg">Success! Aapka password badal chuka hai.</h2>
-                    <div class="bg-gray-100 p-4 rounded border">
-                        <p class="font-semibold text-gray-700 mb-1">Your transaction password is:</p>
-                        <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
-                    </div>
-                    <p class="text-gray-600 text-[11px] leading-relaxed">
-                        Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
-                        Is transaction password ko yaad rakhein, saare transactions isi se honge.
-                    </p>
-                    <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
-                </div>
-            </body>
-            </html>
-        `);
+        res.send(`<script>alert('Password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(username)}';</script>`);
     } catch(err) {
         console.error(err);
         res.send("<script>alert('Error updating password'); window.history.back();</script>");
@@ -1974,7 +1983,7 @@ app.post('/api/change-status', async (req, res) => {
     }
 });
 
-// 16. SECURE LOGOUT ROUTE (Clears All Session, Cookies & Browser Cache)
+// 16. SECURE LOGOUT ROUTE
 app.get('/logout', (req, res) => {
     try {
         req.session.destroy((err) => {
