@@ -244,7 +244,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 // ALL MODALS HTML FUNCTION
 function getModalsHTML(loggedInUser) {
     return `
-        <!-- MARKET ANALYSIS MODAL (EXACT POPUP MATCH) -->
+        <!-- MARKET ANALYSIS MODAL -->
         <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50" onclick="handleOverlayClick(event, 'marketAnalysisModal')">
             <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
                 <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
@@ -253,7 +253,6 @@ function getModalsHTML(loggedInUser) {
                 </div>
                 
                 <div class="p-3 bg-gray-100 grid grid-cols-1 md:grid-cols-12 gap-3 text-[11px]">
-                    <!-- GAME DETAIL BOX -->
                     <div class="md:col-span-4 bg-white border border-gray-300 p-2 space-y-1 shadow-xs">
                         <div class="font-bold border-b border-gray-300 pb-1 text-gray-800 text-[11px]">Game Detail</div>
                         <div class="flex justify-between"><span class="text-gray-600">Username</span><span class="font-semibold text-gray-800" id="maUsername">-</span></div>
@@ -263,7 +262,6 @@ function getModalsHTML(loggedInUser) {
                         <div class="flex justify-between"><span class="text-gray-600">Credit Reference</span><span class="font-semibold text-gray-800" id="maCreditRef">0.00</span></div>
                     </div>
 
-                    <!-- USER LOCK BOX -->
                     <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
                         <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">User Lock</div>
                         <table class="w-full text-left text-[10px]">
@@ -284,7 +282,6 @@ function getModalsHTML(loggedInUser) {
                         </table>
                     </div>
 
-                    <!-- GAME LOCK BOX -->
                     <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
                         <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">Game Lock</div>
                         <table class="w-full text-left text-[10px]">
@@ -913,7 +910,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (No More Accidental Password Reset Redirects)
+// 2. FIXED LOGIN PROCESS (Redirects to temporary password setup ONLY on first-time login)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -938,32 +935,32 @@ app.post('/login-process', async (req, res) => {
         req.session.userRole = user.role;
 
         if (user.mustChangePassword === true) {
-            return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
+            return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
         res.send("<script>alert('Login Error'); window.history.back();</script>");
     }
 });
 
-// 3. FIRST TIME PASSWORD CHANGE PAGE
-app.get('/change-password', (req, res) => {
+// 3. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
+app.get('/change-temporary-password', (req, res) => {
     const username = req.query.username || '';
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>Change Password & Get Transaction Password</title>
+            <title>Change Temporary Password</title>
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
         <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
             <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
                 <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
                 <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your password. Upon updating, your unique 6-digit transaction password will be generated.</p>
-                <form action="/api/update-password" method="POST" class="space-y-3">
+                <form action="/api/update-temporary-password" method="POST" class="space-y-3">
                     <input type="hidden" name="username" value="${username}">
                     <div>
                         <label class="block font-semibold mb-1">New Password:</label>
@@ -981,8 +978,8 @@ app.get('/change-password', (req, res) => {
     `);
 });
 
-// 4. FIXED UPDATE PASSWORD API (Permanently Sets mustChangePassword to False)
-app.post('/api/update-password', async (req, res) => {
+// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION
+app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
         return res.send("<script>alert('Passwords do not match!'); window.history.back();</script>");
@@ -1034,44 +1031,84 @@ app.post('/api/update-password', async (req, res) => {
     }
 });
 
-// 5. DASHBOARD ROUTE
-app.get('/dashboard', async (req, res) => {
-    const loggedInUser = req.query.username || 'Soniexchange';
-    try {
-        const userRef = doc(db, 'users', loggedInUser);
-        const docSnap = await getDoc(userRef);
-        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+// 5. MANUAL MENU-DRIVEN CHANGE PASSWORD ROUTE (EXACT LOAD BUTTON SCREENSHOT MATCH)
+app.get('/change-password', async (req, res) => {
+    const username = req.query.username || '';
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Change Password - Soniexchange</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+        </head>
+        <body class="min-h-screen flex flex-col text-xs">
+            ${getHeaderAndSidebar(username, 'ADMIN')}
+            <main class="flex-1 p-4 max-w-xl mx-auto w-full mt-6">
+                <div class="bg-white p-6 rounded shadow border border-gray-300">
+                    <h2 class="text-sm font-bold text-gray-800 mb-4 border-b pb-2">Change Password</h2>
+                    <form action="/api/update-manual-password" method="POST" class="space-y-3">
+                        <input type="hidden" name="username" value="${username}">
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">New Password</label>
+                            <input type="password" name="newPassword" required class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Confirm Password</label>
+                            <input type="password" name="confirmPassword" required class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Transaction Password</label>
+                            <input type="password" name="txnPassword" required class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none">
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005b8e] text-white px-4 py-1.5 rounded font-bold text-xs shadow-xs cursor-pointer">Load</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+            ${getModalsHTML(username)}
+            ${getModalScriptsJS()}
+        </body>
+        </html>
+    `);
+});
 
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Dashboard</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
-            </head>
-            <body class="min-h-screen flex flex-col text-xs">
-                ${getHeaderAndSidebar(loggedInUser, role)}
-                <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
-                    <div class="bg-white p-4 rounded border shadow-xs">
-                        <h2 class="text-sm font-bold text-gray-800 mb-2">Welcome, ${loggedInUser}</h2>
-                        <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in top header for exact Account List view, or <strong>List of Clients</strong> for standard view.</p>
-                    </div>
-                </main>
-                ${getModalsHTML(loggedInUser)}
-                ${getModalScriptsJS()}
-            </body>
-            </html>
-        `);
+// 6. MANUAL PASSWORD UPDATE API (LOAD BUTTON SUBMISSION)
+app.post('/api/update-manual-password', async (req, res) => {
+    const { username, newPassword, confirmPassword, txnPassword } = req.body;
+    if (newPassword !== confirmPassword) {
+        return res.send("<script>alert('New Password and Confirm Password do not match!'); window.history.back();</script>");
+    }
+
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+            return res.send("<script>alert('User not found!'); window.location='/';</script>");
+        }
+
+        const user = docSnap.data();
+        if (user.txnPassword && user.txnPassword !== txnPassword) {
+            return res.send("<script>alert('Invalid Transaction Password!'); window.history.back();</script>");
+        }
+
+        await updateDoc(userRef, {
+            password: newPassword
+        });
+
+        res.send(`<script>alert('Password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(username)}';</script>`);
     } catch(err) {
-        res.redirect('/');
+        console.error(err);
+        res.send("<script>alert('Error updating password'); window.history.back();</script>");
     }
 });
 
-// 6. ORIGINAL ACCOUNT LIST PAGE (/users)
+// 7. ORIGINAL ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1215,7 +1252,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
+// 8. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1241,16 +1278,13 @@ app.get('/soni-view', async (req, res) => {
             });
         }
 
-        // Filter based on tab
         let usersList = allUsersList.filter(u => {
             const isActive = u.userActive !== false;
             return tab === 'active' ? isActive : !isActive;
         });
 
-        // SORT USERS BY BALANCE DESCENDING (HIGHEST TO LOWEST)
         usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
-        // Calculate Totals for filtered list
         let totalCR = 0;
         let totalBalance = 0;
         let totalPL = 0;
@@ -1267,7 +1301,7 @@ app.get('/soni-view', async (req, res) => {
             const limit = Number(u.exposureLimit || 0);
 
             totalCR += cr;
-            totalBalance += Math.abs(bal); // Total calculation without negative sign
+            totalBalance += Math.abs(bal);
             totalPL += pl;
             totalExposure += exp;
             totalAvailBal += avail;
@@ -1279,8 +1313,8 @@ app.get('/soni-view', async (req, res) => {
         ` : usersList.map(u => {
             const cr = Number(u.creditRef || 0);
             const rawBal = Number(u.points || 0);
-            const bal = Math.abs(rawBal); // BALANCE ME MINUS NAHI DIKHANA
-            const pl = rawBal - cr;      // P/L ME EXACT MINUS/PLUS DIKHANA
+            const bal = Math.abs(rawBal);
+            const pl = rawBal - cr;
             const exp = Number(u.exposure || 0);
             const avail = rawBal - exp;
 
@@ -1335,8 +1369,6 @@ app.get('/soni-view', async (req, res) => {
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
-                    
-                    /* TULA111 EXACT TAB BOX STYLING */
                     .tab-active-box {
                         background-color: #ffffff;
                         border-top: 1px solid #d1d5db;
@@ -1404,7 +1436,6 @@ app.get('/soni-view', async (req, res) => {
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <!-- SHOW ENTRIES AND SEARCH BAR ROW -->
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
                         <div class="flex items-center space-x-1">
                             <span>Show</span>
@@ -1425,7 +1456,6 @@ app.get('/soni-view', async (req, res) => {
                         </div>
                     </div>
 
-                    <!-- ACTIVE & DEACTIVE USERS TABS -->
                     <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
                         <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
                             Active Users
@@ -1480,14 +1510,6 @@ app.get('/soni-view', async (req, res) => {
                                 ${tableRows}
                             </tbody>
                         </table>
-                    </div>
-
-                    <div class="flex justify-end items-center mt-3 space-x-1 text-xs">
-                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">«</button>
-                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">‹</button>
-                        <button class="px-2.5 py-1 bg-[#0088cc] text-white font-bold rounded">1</button>
-                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">›</button>
-                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">»</button>
                     </div>
                 </main>
 
@@ -1547,7 +1569,7 @@ app.get('/soni-view', async (req, res) => {
     }
 });
 
-// 8. ADD ACCOUNT FORM PAGE (MATCHING BLUE PANEL LAYOUT)
+// 9. ADD ACCOUNT FORM PAGE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1582,7 +1604,6 @@ app.get('/insertuser', async (req, res) => {
                         <input type="hidden" name="createdBy" value="${loggedInUser}">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- PERSONAL DETAIL BOX -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="blue-box-title">Personal Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -1629,7 +1650,6 @@ app.get('/insertuser', async (req, res) => {
                                 </div>
                             </div>
 
-                            <!-- ACCOUNT DETAIL BOX -->
                             <div class="border bg-white rounded-xs shadow-xs">
                                 <div class="blue-box-title">Account Detail</div>
                                 <div class="p-3 space-y-2 text-[11px]">
@@ -1652,7 +1672,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- COMMISSION SETTINGS TABLE BOX -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="blue-box-title">Commission Settings</div>
                             <div class="p-2 overflow-x-auto">
@@ -1664,7 +1683,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- PARTNERSHIP TABLE BOX -->
                         <div class="border bg-white rounded-xs shadow-xs">
                             <div class="blue-box-title">Partnership</div>
                             <div class="p-2 overflow-x-auto">
@@ -1676,7 +1694,6 @@ app.get('/insertuser', async (req, res) => {
                             </div>
                         </div>
 
-                        <!-- BOTTOM ACTION BAR -->
                         <div class="flex flex-col items-end space-y-2 pt-2">
                             <div class="w-full sm:w-64">
                                 <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
@@ -1827,7 +1844,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 9. CREATE ACCOUNT API
+// 10. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -1879,7 +1896,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// 10. DEPOSIT API
+// 11. DEPOSIT API
 app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
@@ -1911,7 +1928,7 @@ app.post('/api/deposit', async (req, res) => {
     }
 });
 
-// 11. WITHDRAW API
+// 12. WITHDRAW API
 app.post('/api/withdraw', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const withdrawAmount = Number(amount) || 0;
@@ -1943,7 +1960,7 @@ app.post('/api/withdraw', async (req, res) => {
     }
 });
 
-// 12. EXPOSURE LIMIT API
+// 13. EXPOSURE LIMIT API
 app.post('/api/exposure-limit', async (req, res) => {
     const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
     try {
@@ -1964,7 +1981,7 @@ app.post('/api/exposure-limit', async (req, res) => {
     }
 });
 
-// 13. CREDIT UPDATE API
+// 14. CREDIT UPDATE API
 app.post('/api/credit-update', async (req, res) => {
     const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
     try {
@@ -1985,7 +2002,7 @@ app.post('/api/credit-update', async (req, res) => {
     }
 });
 
-// 14. CLIENT PASSWORD UPDATE API
+// 15. CLIENT PASSWORD UPDATE API
 app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
@@ -2011,7 +2028,7 @@ app.post('/api/client-password-update', async (req, res) => {
     }
 });
 
-// 15. CHANGE STATUS API (S BUTTON)
+// 16. CHANGE STATUS API (S BUTTON)
 app.post('/api/change-status', async (req, res) => {
     const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
     try {
@@ -2035,7 +2052,7 @@ app.post('/api/change-status', async (req, res) => {
     }
 });
 
-// 16. SECURE LOGOUT ROUTE (Clears All Session, Cookies & Browser Cache)
+// 17. SECURE LOGOUT ROUTE
 app.get('/logout', (req, res) => {
     try {
         req.session.destroy((err) => {
@@ -2050,7 +2067,7 @@ app.get('/logout', (req, res) => {
     }
 });
 
-// 17. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
+// 18. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
 app.post('/api/admin/update-balance', async (req, res) => {
     const { loggedInUser, newBalance, txnPassword } = req.body;
     const amount = Number(newBalance);
@@ -2060,7 +2077,6 @@ app.post('/api/admin/update-balance', async (req, res) => {
     }
 
     try {
-        // Strict Security Check: Only Soniexchange Account
         if (loggedInUser !== 'Soniexchange') {
             return res.send("<script>alert('Unauthorized Action!'); window.history.back();</script>");
         }
@@ -2074,12 +2090,10 @@ app.post('/api/admin/update-balance', async (req, res) => {
 
         const user = docSnap.data();
 
-        // Check Transaction Password
         if (user.txnPassword && user.txnPassword !== txnPassword) {
             return res.send("<script>alert('Invalid Transaction Password!'); window.history.back();</script>");
         }
 
-        // Live Update in Firestore
         await updateDoc(userRef, {
             points: amount,
             creditRef: amount
