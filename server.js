@@ -57,7 +57,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR & SIDEBAR FUNCTION WITH AUTOCOMPLETE SEARCH
+// TOP HEADER BAR & SIDEBAR FUNCTION
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -78,7 +78,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 </nav>
             </div>
 
-            <div class="flex items-center space-x-2 ml-4 relative">
+            <div class="flex items-center space-x-2 ml-4">
                 <div class="relative inline-block text-left" id="userMenuDropdown">
                     <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
                         <span>${loggedInUser} ▾</span>
@@ -92,17 +92,12 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 
                 <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
 
-                <!-- LIVE AUTOCOMPLETE SEARCH BOX -->
-                <div class="relative ml-1">
-                    <form onsubmit="return false;" class="flex items-center">
-                        <input type="text" id="headerSearchInput" placeholder="Search..." autocomplete="off" oninput="handleSearchInput(this.value)" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
-                        <span class="absolute right-1.5 text-gray-600 text-[11px] pointer-events-none">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </span>
-                    </form>
-                    <!-- BLUE DROPDOWN BOX FOR MATCHED USERS -->
-                    <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
-                </div>
+                <form onsubmit="return handleClientSearch(event)" class="relative ml-1 flex items-center">
+                    <input type="text" id="headerSearchInput" placeholder="Soni" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
+                    <button type="submit" class="absolute right-1.5 text-gray-600 text-[11px]">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -197,46 +192,13 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 }
             });
 
-            // HANDLE LIVE SEARCH INPUT
-            let searchTimeout = null;
-            function handleSearchInput(val) {
-                clearTimeout(searchTimeout);
-                const dropdown = document.getElementById('searchResultsDropdown');
-                if (!val || val.trim().length === 0) {
-                    dropdown.classList.add('hidden');
-                    dropdown.innerHTML = '';
-                    return;
+            function handleClientSearch(e) {
+                e.preventDefault();
+                const q = document.getElementById('headerSearchInput').value;
+                if(q) {
+                    alert('Searching: ' + q);
                 }
-
-                searchTimeout = setTimeout(async () => {
-                    try {
-                        const res = await fetch('/api/search-users?q=' + encodeURIComponent(val) + '&loggedInUser=${encodeURIComponent(loggedInUser)}');
-                        const data = await res.json();
-                        
-                        if (data && data.length > 0) {
-                            dropdown.innerHTML = data.map(u => \`
-                                <div onclick="openMarketAnalysisModal('\${u.username}')" class="px-2.5 py-1.5 hover:bg-[#3b5cb8] cursor-pointer font-semibold border-b border-white/10 last:border-b-0">
-                                    \${u.username}
-                                </div>
-                            \`).join('');
-                            dropdown.classList.remove('hidden');
-                        } else {
-                            dropdown.innerHTML = '<div class="px-2 py-1.5 text-white/80 text-[10px]">No user found</div>';
-                            dropdown.classList.remove('hidden');
-                        }
-                    } catch (err) {
-                        console.error('Search error:', err);
-                    }
-                }, 200);
             }
-
-            document.addEventListener('click', function(e) {
-                const searchInput = document.getElementById('headerSearchInput');
-                const dropdown = document.getElementById('searchResultsDropdown');
-                if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.classList.add('hidden');
-                }
-            });
         </script>
     `;
 }
@@ -244,69 +206,6 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
 // ALL MODALS HTML FUNCTION
 function getModalsHTML(loggedInUser) {
     return `
-        <!-- MARKET ANALYSIS MODAL -->
-        <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50" onclick="handleOverlayClick(event, 'marketAnalysisModal')">
-            <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
-                    <span class="font-bold text-xs">Market Analysis</span>
-                    <button type="button" onclick="closeMarketAnalysisModal()" class="w-5 h-5 bg-[#00a8e8] text-white flex items-center justify-center text-xs hover:bg-[#008bc2] transition cursor-pointer">✕</button>
-                </div>
-                
-                <div class="p-3 bg-gray-100 grid grid-cols-1 md:grid-cols-12 gap-3 text-[11px]">
-                    <!-- GAME DETAIL BOX -->
-                    <div class="md:col-span-4 bg-white border border-gray-300 p-2 space-y-1 shadow-xs">
-                        <div class="font-bold border-b border-gray-300 pb-1 text-gray-800 text-[11px]">Game Detail</div>
-                        <div class="flex justify-between"><span class="text-gray-600">Username</span><span class="font-semibold text-gray-800" id="maUsername">-</span></div>
-                        <div class="flex justify-between"><span class="text-gray-600">Account Type</span><span class="font-semibold text-gray-800" id="maRole">-</span></div>
-                        <div class="flex justify-between"><span class="text-gray-600">General</span><span class="font-semibold text-gray-800" id="maGeneral">0.00</span></div>
-                        <div class="flex justify-between"><span class="text-gray-600">Exposure</span><span class="font-semibold text-gray-800" id="maExposure">0.00</span></div>
-                        <div class="flex justify-between"><span class="text-gray-600">Credit Reference</span><span class="font-semibold text-gray-800" id="maCreditRef">0.00</span></div>
-                    </div>
-
-                    <!-- USER LOCK BOX -->
-                    <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
-                        <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">User Lock</div>
-                        <table class="w-full text-left text-[10px]">
-                            <thead>
-                                <tr class="bg-[#2b3e50] text-white font-bold">
-                                    <th class="p-1 border-r">Master Name</th>
-                                    <th class="p-1 text-center border-r">User Act</th>
-                                    <th class="p-1 text-center">Bet Active</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b">
-                                    <td class="p-1 font-semibold text-gray-800" id="maMasterName">-</td>
-                                    <td class="p-1 text-center"><input type="checkbox" id="maUserAct" disabled class="accent-[#2b3e50]"></td>
-                                    <td class="p-1 text-center"><input type="checkbox" id="maBetAct" disabled class="accent-[#2b3e50]"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- GAME LOCK BOX -->
-                    <div class="md:col-span-4 bg-white border border-gray-300 shadow-xs">
-                        <div class="font-bold p-1.5 border-b border-gray-300 text-gray-800 text-[11px]">Game Lock</div>
-                        <table class="w-full text-left text-[10px]">
-                            <thead>
-                                <tr class="bg-[#2b3e50] text-white font-bold">
-                                    <th class="p-1 border-r">S.No.</th>
-                                    <th class="p-1 border-r">Master Name</th>
-                                    <th class="p-1 border-r text-center">Bet Lock</th>
-                                    <th class="p-1">Event Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b bg-gray-50">
-                                    <td colspan="4" class="p-2 text-center text-gray-500 font-semibold">No records found</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- DEPOSIT POPUP MODAL -->
         <div id="depositModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-16 z-50" onclick="handleOverlayClick(event, 'depositModal')">
             <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300">
@@ -560,42 +459,7 @@ function getModalScriptsJS() {
                     if (modalId === 'creditModal') closeCreditModal();
                     if (modalId === 'passwordModal') closePasswordModal();
                     if (modalId === 'statusModal') closeStatusModal();
-                    if (modalId === 'marketAnalysisModal') closeMarketAnalysisModal();
                 }
-            }
-
-            async function openMarketAnalysisModal(username) {
-                const dropdown = document.getElementById('searchResultsDropdown');
-                if(dropdown) dropdown.classList.add('hidden');
-
-                try {
-                    const res = await fetch('/api/user-detail?username=' + encodeURIComponent(username));
-                    const data = await res.json();
-                    
-                    if (data && data.success) {
-                        const u = data.user;
-                        document.getElementById('maUsername').textContent = u.username || '-';
-                        document.getElementById('maRole').textContent = u.role || 'User';
-                        document.getElementById('maGeneral').textContent = Number(u.points || 0).toFixed(2);
-                        document.getElementById('maExposure').textContent = Number(u.exposure || 0).toFixed(2);
-                        document.getElementById('maCreditRef').textContent = Number(u.creditRef || 0).toFixed(2);
-                        document.getElementById('maMasterName').textContent = u.createdBy || 'Soniexchange';
-                        document.getElementById('maUserAct').checked = u.userActive !== false;
-                        document.getElementById('maBetAct').checked = u.betActive !== false;
-
-                        const modal = document.getElementById('marketAnalysisModal');
-                        modal.classList.remove('hidden');
-                        modal.classList.add('flex');
-                    }
-                } catch(err) {
-                    console.error('Error fetching market analysis detail:', err);
-                }
-            }
-
-            function closeMarketAnalysisModal() {
-                const modal = document.getElementById('marketAnalysisModal');
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
             }
 
             function openDepositModal(clientName, clientPts, uplinePts) {
@@ -740,18 +604,16 @@ function getModalScriptsJS() {
                 setBetActiveState(!isBetActive);
             }
 
-            function filterTableBySearch() {
-                const q = document.getElementById('tableSearchInput').value.toLowerCase();
-                const rows = document.querySelectorAll('#soniAccountTable tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(q) ? '' : 'none';
-                });
-            }
-
-            function resetTableSearch() {
-                document.getElementById('tableSearchInput').value = '';
-                filterTableBySearch();
+            function toggleSummaryBanner() {
+                const banner = document.getElementById('summaryBannerContent');
+                const arrowIcon = document.getElementById('summaryArrowIcon');
+                if (banner.classList.contains('hidden')) {
+                    banner.classList.remove('hidden');
+                    arrowIcon.className = "fa-solid fa-chevron-up text-xs";
+                } else {
+                    banner.classList.add('hidden');
+                    arrowIcon.className = "fa-solid fa-chevron-down text-xs";
+                }
             }
 
             window.addEventListener('popstate', function() {
@@ -761,62 +623,10 @@ function getModalScriptsJS() {
                 closeCreditModal();
                 closePasswordModal();
                 closeStatusModal();
-                closeMarketAnalysisModal();
             });
         </script>
     `;
 }
-
-// API TO SEARCH USERS REALTIME
-app.get('/api/search-users', async (req, res) => {
-    const q = (req.query.q || '').trim().toLowerCase();
-    const loggedInUser = req.query.loggedInUser || 'Soniexchange';
-
-    if (!q) return res.json([]);
-
-    try {
-        let usersList = [];
-        if (loggedInUser === 'Soniexchange') {
-            const querySnapshot = await getDocs(collection(db, "users"));
-            querySnapshot.forEach((docItem) => {
-                if (docItem.id !== 'Soniexchange') {
-                    usersList.push({ username: docItem.id, ...docItem.data() });
-                }
-            });
-        } else {
-            const queryRef = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
-            const querySnapshot = await getDocs(queryRef);
-            querySnapshot.forEach((docItem) => {
-                usersList.push({ username: docItem.id, ...docItem.data() });
-            });
-        }
-
-        const filtered = usersList.filter(u => u.username.toLowerCase().includes(q));
-        res.json(filtered);
-    } catch(err) {
-        console.error(err);
-        res.json([]);
-    }
-});
-
-// API TO GET SINGLE USER DETAIL FOR MARKET ANALYSIS MODAL
-app.get('/api/user-detail', async (req, res) => {
-    const username = (req.query.username || '').trim();
-    if (!username) return res.json({ success: false });
-
-    try {
-        const userRef = doc(db, 'users', username);
-        const docSnap = await getDoc(userRef);
-
-        if (docSnap.exists()) {
-            return res.json({ success: true, user: docSnap.data() });
-        }
-        res.json({ success: false });
-    } catch(err) {
-        console.error(err);
-        res.json({ success: false });
-    }
-});
 
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
@@ -959,8 +769,8 @@ app.post('/api/update-password', async (req, res) => {
                         <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
                     </div>
                     <p class="text-gray-600 text-[11px] leading-relaxed">
-                        Remember this transaction password, from now on all transactions can be done only with this password.<br>
-                        लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण इसी से किए जा सकते हैं।
+                        Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
+                        लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण इसी से किए जा सकते हैं और इस पासवर्ड को किसी के साथ साझा न करें।
                     </p>
                     <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
                 </div>
@@ -1000,8 +810,6 @@ app.get('/dashboard', async (req, res) => {
                         <p class="text-gray-600 text-[11px]">Click on <strong>Soni</strong> in top header for exact Account List view, or <strong>List of Clients</strong> for standard view.</p>
                     </div>
                 </main>
-                ${getModalsHTML(loggedInUser)}
-                ${getModalScriptsJS()}
             </body>
             </html>
         `);
@@ -1078,6 +886,8 @@ app.get('/users', async (req, res) => {
                 <title>Account List</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
@@ -1090,6 +900,35 @@ app.get('/users', async (req, res) => {
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-base font-bold text-gray-800">Account List</h2>
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
+                    </div>
+
+                    <div class="flex space-x-1 mb-3">
+                        <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                        </button>
+                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
+                        <div class="flex items-center space-x-1">
+                            <span>Show</span>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
+                                <option>10</option>
+                                <option>25</option>
+                                <option>50</option>
+                                <option>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold">Search:</span>
+                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                        </div>
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
@@ -1123,10 +962,10 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT SCREENSHOT MATCH VIEW (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const tab = req.query.tab || 'active';
+    const tab = req.query.tab || 'active'; // 'active' or 'deactive'
 
     try {
         const userRef = doc(db, 'users', loggedInUser);
@@ -1149,13 +988,16 @@ app.get('/soni-view', async (req, res) => {
             });
         }
 
+        // Filter based on tab
         let usersList = allUsersList.filter(u => {
             const isActive = u.userActive !== false;
             return tab === 'active' ? isActive : !isActive;
         });
 
+        // SORT USERS BY BALANCE DESCENDING (HIGHEST TO LOWEST)
         usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
+        // Calculate Totals for filtered list
         let totalCR = 0;
         let totalBalance = 0;
         let totalPL = 0;
@@ -1172,7 +1014,7 @@ app.get('/soni-view', async (req, res) => {
             const limit = Number(u.exposureLimit || 0);
 
             totalCR += cr;
-            totalBalance += Math.abs(bal);
+            totalBalance += Math.abs(bal); // Total calculation without negative sign
             totalPL += pl;
             totalExposure += exp;
             totalAvailBal += avail;
@@ -1184,8 +1026,8 @@ app.get('/soni-view', async (req, res) => {
         ` : usersList.map(u => {
             const cr = Number(u.creditRef || 0);
             const rawBal = Number(u.points || 0);
-            const bal = Math.abs(rawBal);
-            const pl = rawBal - cr;
+            const bal = Math.abs(rawBal); // BALANCE ME MINUS NAHI DIKHANA
+            const pl = rawBal - cr;      // P/L ME EXACT MINUS/PLUS DIKHANA
             const exp = Number(u.exposure || 0);
             const avail = rawBal - exp;
 
@@ -1235,30 +1077,89 @@ app.get('/soni-view', async (req, res) => {
                 <title>Account List - Soni View</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .modal-bg-overlay { background-color: rgba(0, 0, 0, 0.45); }
-                    .tab-active-link { color: #0077b6; border-bottom: 2px solid #0077b6; font-weight: bold; }
-                    .tab-inactive-link { color: #0077b6; font-weight: normal; }
+                    
+                    /* TULA111 EXACT TAB BOX STYLING */
+                    .tab-active-box {
+                        background-color: #ffffff;
+                        border-top: 1px solid #d1d5db;
+                        border-left: 1px solid #d1d5db;
+                        border-right: 1px solid #d1d5db;
+                        border-bottom: 1px solid #ffffff;
+                        color: #1f2937;
+                        font-weight: 600;
+                        margin-bottom: -1px;
+                        z-index: 10;
+                    }
+                    .tab-inactive-link {
+                        background-color: transparent;
+                        border: 1px solid transparent;
+                        color: #0077b6;
+                        font-weight: 600;
+                    }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
+                <!-- EXPANDABLE BLUE SUMMARY BANNER -->
+                <div class="bg-[#0077b6] text-white shadow-md">
+                    <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
+                        <button type="button" id="summaryToggleBtn" class="text-white text-xs focus:outline-none cursor-pointer">
+                            <i id="summaryArrowIcon" class="fa-solid fa-chevron-down text-xs pointer-events-none"></i>
+                        </button>
+                    </div>
+
+                    <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
+
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Upper Level:</span><span class="font-semibold">-1000</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
+
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                        <div class="flex justify-between py-0.5 border-b border-white/10 md:border-b-0"><span class="text-white/90">Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-white/90">My Profit/Loss:</span><span class="font-semibold">0</span></div>
+                    </div>
+                </div>
+
                 <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
-                    <!-- TOP TITLE AND ADD ACCOUNT BUTTON ROW -->
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-2">
                         <h2 class="text-base font-bold text-gray-800">Account List</h2>
                         <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] hover:bg-[#006699] text-white px-3 py-1 rounded text-xs font-semibold shadow-xs">Add Account</a>
                     </div>
 
-                    <!-- SHOW ENTRIES AND SEARCH BAR ROW -->
+                    <!-- ACTIVE & DEACTIVE USERS TABS -->
+                    <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
+                            Active Users
+                        </a>
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'deactive' ? 'tab-active-box' : 'tab-inactive-link'}">
+                            Deactive Users
+                        </a>
+                    </div>
+
+                    <div class="flex space-x-1 mb-3">
+                        <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                        </button>
+                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                        </button>
+                    </div>
+
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 text-[11px]">
                         <div class="flex items-center space-x-1">
                             <span>Show</span>
-                            <select class="border rounded p-1 bg-white text-xs focus:outline-none border-gray-300">
-                                <option>25</option>
+                            <select class="border rounded p-1 bg-white text-xs focus:outline-none">
                                 <option>10</option>
+                                <option>25</option>
                                 <option>50</option>
                                 <option>100</option>
                             </select>
@@ -1266,31 +1167,11 @@ app.get('/soni-view', async (req, res) => {
                         </div>
 
                         <div class="flex items-center space-x-1">
-                            <span class="font-semibold text-gray-700">Search:</span>
-                            <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none border-gray-300 w-36">
-                            <button type="button" onclick="filterTableBySearch()" class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
-                            <button type="button" onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
+                            <span class="font-semibold">Search:</span>
+                            <input type="text" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                            <button class="bg-[#0088cc] text-white px-2.5 py-1 rounded-xs font-semibold">Load</button>
+                            <button class="bg-[#6c757d] text-white px-2.5 py-1 rounded-xs font-semibold">Reset</button>
                         </div>
-                    </div>
-
-                    <!-- ACTIVE & DEACTIVE USERS TABS -->
-                    <div class="flex items-center space-x-4 border-b border-gray-200 mb-3 text-[11px]">
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="pb-1 cursor-pointer ${tab === 'active' ? 'tab-active-link' : 'tab-inactive-link'}">
-                            Active Users
-                        </a>
-                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="pb-1 cursor-pointer ${tab === 'deactive' ? 'tab-active-link' : 'tab-inactive-link'}">
-                            Deactive Users
-                        </a>
-                    </div>
-
-                    <!-- EXPORT PDF & EXCEL BUTTONS ROW -->
-                    <div class="flex space-x-1 mb-3">
-                        <button type="button" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
-                            <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
-                        </button>
-                        <button type="button" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded-xs text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
-                            <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
-                        </button>
                     </div>
 
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
@@ -1299,7 +1180,7 @@ app.get('/soni-view', async (req, res) => {
                                 <tr class="bg-gray-100 text-gray-700 text-[10px] border-b-2 border-gray-400 font-bold">
                                     <th class="p-2 border-r">User Name</th>
                                     <th class="p-2 border-r text-right">CR</th>
-                                    <th class="p-2 border-r text-right">Balance</th>
+                                    <th class="p-2 border-r text-right">Balance <span class="text-xs">🞁</span></th>
                                     <th class="p-2 border-r text-right">Client(P/L)</th>
                                     <th class="p-2 border-r text-right">Exposure</th>
                                     <th class="p-2 border-r text-right">Available Balance</th>
@@ -1330,10 +1211,63 @@ app.get('/soni-view', async (req, res) => {
                             </tbody>
                         </table>
                     </div>
+
+                    <div class="flex justify-end items-center mt-3 space-x-1 text-xs">
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">«</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">‹</button>
+                        <button class="px-2.5 py-1 bg-[#0088cc] text-white font-bold rounded">1</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">›</button>
+                        <button class="px-2 py-1 bg-white border rounded text-gray-500 hover:bg-gray-100">»</button>
+                    </div>
                 </main>
 
                 ${getModalsHTML(loggedInUser)}
                 ${getModalScriptsJS()}
+
+                <script>
+                    function downloadPDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(14);
+                        doc.text("User List (${tab})", 105, 15, { align: "center" });
+
+                        const data = [];
+                        const rows = document.querySelectorAll("#soniAccountTable tbody tr");
+
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll("td");
+                            if (cells.length >= 11) {
+                                const username = cells[0].innerText.trim();
+                                const cr = cells[1].innerText.trim();
+                                const ust = cells[6].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const bst = cells[7].innerText.includes('✓') ? 'Active' : 'Deactive';
+                                const expLimit = cells[8].innerText.trim();
+                                const defPct = cells[9].innerText.trim();
+                                const accType = cells[10].innerText.trim();
+                                data.push([username, cr, ust, bst, expLimit, defPct, accType]);
+                            }
+                        });
+
+                        doc.autoTable({
+                            startY: 20,
+                            head: [['User Name', 'CR', 'U st', 'B st', 'Exposure Limit', 'Default %', 'Account type']],
+                            body: data,
+                            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+                            alternateRowStyles: { fillColor: [245, 245, 245] },
+                            styles: { fontSize: 8, cellPadding: 2 }
+                        });
+
+                        const pdfBlob = doc.output('blob');
+                        const blobUrl = URL.createObjectURL(pdfBlob);
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = 'userlist-${tab}.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                </script>
             </body>
             </html>
         `);
@@ -1343,7 +1277,7 @@ app.get('/soni-view', async (req, res) => {
     }
 });
 
-// 8. ADD ACCOUNT FORM PAGE
+// 8. ADD ACCOUNT FORM PAGE (MATCHING BLUE PANEL LAYOUT)
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1363,6 +1297,9 @@ app.get('/insertuser', async (req, res) => {
                 <style>
                     body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
                     .blue-box-title { background-color: #0077b6; color: #ffffff; padding: 5px 10px; font-weight: bold; font-size: 12px; }
+                    .table-row-bg { background-color: #f8f9fa; }
+                    .input-state-red { border: 1.5px solid #ef4444 !important; background-color: #fef2f2 !important; }
+                    .input-state-green { border: 1.5px solid #10b981 !important; background-color: #ffffff !important; }
                 </style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
@@ -1370,19 +1307,248 @@ app.get('/insertuser', async (req, res) => {
 
                 <main class="flex-1 p-3 max-w-6xl mx-auto w-full">
                     <h2 class="text-base font-bold text-gray-800 mb-3">Add Account</h2>
-                    <form action="/api/clients/create" method="POST" class="space-y-4">
+
+                    <form id="createAccountForm" action="/api/clients/create" method="POST" class="space-y-4">
                         <input type="hidden" name="createdBy" value="${loggedInUser}">
-                        <div class="border bg-white rounded-xs p-3">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label class="block font-semibold">Client Name:</label><input type="text" name="clientName" required class="w-full border p-1 rounded"></div>
-                                <div><label class="block font-semibold">User Password:</label><input type="password" name="password" required class="w-full border p-1 rounded"></div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- PERSONAL DETAIL BOX -->
+                            <div class="border bg-white rounded-xs shadow-xs">
+                                <div class="blue-box-title">Personal Detail</div>
+                                <div class="p-3 space-y-2 text-[11px]">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Client Name:</label>
+                                            <div class="relative">
+                                                <input type="text" id="clientName" name="clientName" required placeholder="Client Name" class="w-full border p-1 pr-6 rounded text-xs focus:outline-none">
+                                                <span id="nameIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 font-bold text-xs pointer-events-none hidden"></span>
+                                            </div>
+                                            <p id="nameError" class="text-red-500 text-[10px] mt-0.5 hidden"></p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">User Password:</label>
+                                            <div class="relative">
+                                                <input type="password" id="password" name="password" required placeholder="User Password" class="w-full border p-1 pr-6 rounded text-xs focus:outline-none">
+                                                <span id="passIcon" class="absolute right-1.5 top-1/2 -translate-y-1/2 font-bold text-xs pointer-events-none hidden"></span>
+                                            </div>
+                                            <p id="passError" class="text-red-500 text-[10px] mt-0.5 hidden"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Retype Password:</label>
+                                            <input type="password" id="retypePassword" name="retypePassword" required placeholder="Retype Password" class="w-full border p-1 rounded bg-white text-xs focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Full Name:</label>
+                                            <input type="text" name="fullName" placeholder="Full Name" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">City:</label>
+                                            <input type="text" name="city" placeholder="City" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Phone:</label>
+                                            <input type="text" name="phone" placeholder="Phone Number" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ACCOUNT DETAIL BOX -->
+                            <div class="border bg-white rounded-xs shadow-xs">
+                                <div class="blue-box-title">Account Detail</div>
+                                <div class="p-3 space-y-2 text-[11px]">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Account Type:</label>
+                                            <select name="accountType" id="accountType" class="w-full border p-1 rounded bg-white text-xs">
+                                                <option value="">Select Account Type</option>
+                                                ${currentUser.role === 'ADMIN' ? '<option value="Super">Super</option>' : ''}
+                                                <option value="Master">Master</option>
+                                                <option value="Client">Client</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 font-semibold mb-0.5">Credit Reference:</label>
+                                            <input type="number" id="creditRef" name="creditRef" required placeholder="Credit Reference" class="w-full border p-1 rounded bg-white text-xs">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <button type="submit" class="bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold">Create Account</button>
+
+                        <!-- COMMISSION SETTINGS TABLE BOX -->
+                        <div class="border bg-white rounded-xs shadow-xs">
+                            <div class="blue-box-title">Commission Settings</div>
+                            <div class="p-2 overflow-x-auto">
+                                <table class="w-full text-left text-[11px] border border-gray-200">
+                                    <tr class="table-row-bg border-b"><td class="p-2 font-semibold w-36 border-r text-gray-700">Upline</td><td class="p-2 text-gray-700">0</td></tr>
+                                    <tr class="border-b"><td class="p-2 font-semibold border-r text-gray-700">Downline</td><td class="p-2 text-gray-700">0</td></tr>
+                                    <tr class="table-row-bg"><td class="p-2 font-semibold border-r text-gray-700">Our</td><td class="p-2 text-gray-700">0</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- PARTNERSHIP TABLE BOX -->
+                        <div class="border bg-white rounded-xs shadow-xs">
+                            <div class="blue-box-title">Partnership</div>
+                            <div class="p-2 overflow-x-auto">
+                                <table class="w-full text-left text-[11px] border border-gray-200">
+                                    <tr class="table-row-bg border-b"><td class="p-2 font-semibold w-36 border-r text-gray-700">Upline</td><td class="p-2 text-gray-700">0</td></tr>
+                                    <tr class="border-b"><td class="p-2 font-semibold border-r text-gray-700">Downline</td><td class="p-2 text-gray-700">0</td></tr>
+                                    <tr class="table-row-bg"><td class="p-2 font-semibold border-r text-gray-700">Our</td><td class="p-2 text-gray-700">0</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- BOTTOM ACTION BAR -->
+                        <div class="flex flex-col items-end space-y-2 pt-2">
+                            <div class="w-full sm:w-64">
+                                <label class="block text-gray-700 font-semibold mb-0.5 text-[11px]">Transaction Password:</label>
+                                <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border p-1.5 rounded bg-white text-xs focus:outline-none">
+                            </div>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005b8e] text-white font-bold px-4 py-2 rounded text-xs shadow-xs transition cursor-pointer">Create Account</button>
+                        </div>
                     </form>
                 </main>
-                ${getModalsHTML(loggedInUser)}
-                ${getModalScriptsJS()}
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const nameInput = document.getElementById('clientName');
+                        const nameError = document.getElementById('nameError');
+                        const nameIcon = document.getElementById('nameIcon');
+
+                        const passInput = document.getElementById('password');
+                        const passError = document.getElementById('passError');
+                        const passIcon = document.getElementById('passIcon');
+
+                        let isNameValid = false;
+                        let isPassValid = false;
+
+                        function setFieldState(input, errorElement, iconElement, isValid, errorMessage) {
+                            input.classList.remove('input-state-red', 'input-state-green');
+                            if (isValid) {
+                                input.classList.add('input-state-green');
+                                errorElement.style.display = 'none';
+                                iconElement.textContent = '✓';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-sm pointer-events-none block';
+                            } else {
+                                input.classList.add('input-state-red');
+                                errorElement.textContent = errorMessage;
+                                errorElement.style.display = 'block';
+                                iconElement.textContent = '✕';
+                                iconElement.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xs pointer-events-none block';
+                            }
+                        }
+
+                        function autoCapitalize(input) {
+                            let val = input.value;
+                            if (val.length > 0) {
+                                const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+                                if (val !== formatted) {
+                                    const start = input.selectionStart;
+                                    const end = input.selectionEnd;
+                                    input.value = formatted;
+                                    input.setSelectionRange(start, end);
+                                }
+                            }
+                        }
+
+                        function validateClientName() {
+                            autoCapitalize(nameInput);
+                            const val = nameInput.value.trim();
+
+                            if (val === '') {
+                                nameInput.classList.remove('input-state-red', 'input-state-green');
+                                nameError.style.display = 'none';
+                                nameIcon.style.display = 'none';
+                                isNameValid = false;
+                                return;
+                            }
+                            if (val.length < 4) {
+                                setFieldState(nameInput, nameError, nameIcon, false, "The clientname field must be at least 4 characters");
+                                isNameValid = false;
+                                return;
+                            }
+                            const isFirstCapital = /^[A-Z]/.test(val);
+                            const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(val);
+
+                            if (!isFirstCapital || !isAlphanumeric) {
+                                setFieldState(nameInput, nameError, nameIcon, false, "Must start with Capital letter & contain alpha-numeric characters");
+                                isNameValid = false;
+                                return;
+                            }
+
+                            setFieldState(nameInput, nameError, nameIcon, true, "");
+                            isNameValid = true;
+                        }
+
+                        function validatePassword() {
+                            autoCapitalize(passInput);
+                            const val = passInput.value;
+
+                            if (!val || val.trim().length === 0) {
+                                passInput.classList.remove('input-state-red', 'input-state-green');
+                                passError.style.display = 'none';
+                                passIcon.style.display = 'none';
+                                isPassValid = false;
+                                return;
+                            }
+                            if (val.length < 4) {
+                                setFieldState(passInput, passError, passIcon, false, "The password field must be at least 4 characters");
+                                isPassValid = false;
+                                return;
+                            }
+                            const isFirstCapital = /^[A-Z]/.test(val);
+                            const hasSpecialChar = /[$¢¥€@#!%*?&^()_+\-=\[\]{};':\"\\\\|,.<>\/?]/.test(val);
+
+                            if (!isFirstCapital || !hasSpecialChar) {
+                                setFieldState(passInput, passError, passIcon, false, "Must start with Capital letter and contain special character");
+                                isPassValid = false;
+                                return;
+                            }
+
+                            setFieldState(passInput, passError, passIcon, true, "");
+                            isPassValid = true;
+                        }
+
+                        ['input', 'keyup', 'change', 'blur'].forEach(eventType => {
+                            nameInput.addEventListener(eventType, validateClientName);
+                            passInput.addEventListener(eventType, validatePassword);
+                        });
+
+                        document.getElementById('createAccountForm').onsubmit = function(e) {
+                            validateClientName();
+                            validatePassword();
+
+                            if (!isNameValid) {
+                                alert('Please provide a valid Client Name');
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            if (!isPassValid) {
+                                alert('Please provide a valid Password');
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            const retype = document.getElementById('retypePassword').value;
+                            if (passInput.value !== retype) {
+                                alert('Passwords do not match!');
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            return true;
+                        };
+                    });
+                </script>
             </body>
             </html>
         `);
@@ -1399,9 +1565,13 @@ app.post('/api/clients/create', async (req, res) => {
     try {
         const creatorRef = doc(db, 'users', createdBy);
         const creatorSnap = await getDoc(creatorRef);
-        if (!creatorSnap.exists()) return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
+
+        if (!creatorSnap.exists()) {
+            return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
+        }
 
         const creator = creatorSnap.data();
+
         if (creator.txnPassword && creator.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
@@ -1413,14 +1583,16 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        await updateDoc(creatorRef, { points: (creator.points || 0) - pointsToGive });
+        await updateDoc(creatorRef, {
+            points: (creator.points || 0) - pointsToGive
+        });
+
         await setDoc(newClientRef, {
             username: clientName,
             password: password,
             role: accountType || 'Client',
             points: pointsToGive,
             creditRef: pointsToGive,
-            exposure: 0,
             exposureLimit: 0,
             userActive: true,
             betActive: true,
@@ -1437,10 +1609,11 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// OTHER APIS (DEPOSIT, WITHDRAW, ETC.)
+// 10. DEPOSIT API
 app.post('/api/deposit', async (req, res) => {
-    const { loggedInUser, clientUsername, amount, txnPassword } = req.body;
+    const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
+
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
@@ -1450,11 +1623,16 @@ app.post('/api/deposit', async (req, res) => {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
 
+        const currentUploaderPoints = Number(uploader.points || 0);
+        if (currentUploaderPoints < depositAmount) {
+            return res.send(`<script>alert('Insufficient balance!'); window.history.back();</script>`);
+        }
+
         const clientRef = doc(db, 'users', clientUsername);
         const clientSnap = await getDoc(clientRef);
         const clientData = clientSnap.data();
 
-        await updateDoc(uploaderRef, { points: Number(uploader.points || 0) - depositAmount });
+        await updateDoc(uploaderRef, { points: currentUploaderPoints - depositAmount });
         await updateDoc(clientRef, { points: Number(clientData.points || 0) + depositAmount });
 
         res.send(`<script>alert('Deposit successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
@@ -1463,9 +1641,11 @@ app.post('/api/deposit', async (req, res) => {
     }
 });
 
+// 11. WITHDRAW API
 app.post('/api/withdraw', async (req, res) => {
-    const { loggedInUser, clientUsername, amount, txnPassword } = req.body;
+    const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const withdrawAmount = Number(amount) || 0;
+
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
@@ -1478,8 +1658,13 @@ app.post('/api/withdraw', async (req, res) => {
         const clientRef = doc(db, 'users', clientUsername);
         const clientSnap = await getDoc(clientRef);
         const clientData = clientSnap.data();
+        const currentClientPoints = Number(clientData.points || 0);
 
-        await updateDoc(clientRef, { points: Number(clientData.points || 0) - withdrawAmount });
+        if (currentClientPoints < withdrawAmount) {
+            return res.send(`<script>alert('Client has insufficient balance!'); window.history.back();</script>`);
+        }
+
+        await updateDoc(clientRef, { points: currentClientPoints - withdrawAmount });
         await updateDoc(uploaderRef, { points: Number(uploader.points || 0) + withdrawAmount });
 
         res.send(`<script>alert('Withdraw successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
@@ -1488,64 +1673,92 @@ app.post('/api/withdraw', async (req, res) => {
     }
 });
 
+// 12. EXPOSURE LIMIT API
 app.post('/api/exposure-limit', async (req, res) => {
     const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-        if (uploaderSnap.data().txnPassword !== txnPassword) {
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
-        await updateDoc(doc(db, 'users', clientUsername), { exposureLimit: Number(newLimit) || 0 });
-        res.send(`<script>alert('Exposure limit updated!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+
+        const clientRef = doc(db, 'users', clientUsername);
+        await updateDoc(clientRef, { exposureLimit: Number(newLimit) || 0 });
+
+        res.send(`<script>alert('Exposure limit updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        res.send(`<script>alert('Error updating limit'); window.history.back();</script>`);
+        res.send(`<script>alert('Error updating exposure limit'); window.history.back();</script>`);
     }
 });
 
+// 13. CREDIT UPDATE API
 app.post('/api/credit-update', async (req, res) => {
     const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-        if (uploaderSnap.data().txnPassword !== txnPassword) {
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
-        await updateDoc(doc(db, 'users', clientUsername), { creditRef: Number(newCredit) || 0 });
-        res.send(`<script>alert('Credit reference updated!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+
+        const clientRef = doc(db, 'users', clientUsername);
+        await updateDoc(clientRef, { creditRef: Number(newCredit) || 0 });
+
+        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
-        res.send(`<script>alert('Error updating credit'); window.history.back();</script>`);
+        res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
     }
 });
 
+// 14. CLIENT PASSWORD UPDATE API
 app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
-    if (newPassword !== confirmPassword) return res.send(`<script>alert('Passwords do not match!'); window.history.back();</script>`);
+
+    if (newPassword !== confirmPassword) {
+        return res.send(`<script>alert('Passwords do not match!'); window.history.back();</script>`);
+    }
+
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-        if (uploaderSnap.data().txnPassword !== txnPassword) {
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
-        await updateDoc(doc(db, 'users', clientUsername), { password: newPassword, mustChangePassword: false });
-        res.send(`<script>alert('Password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+
+        const clientRef = doc(db, 'users', clientUsername);
+        await updateDoc(clientRef, { password: newPassword, mustChangePassword: false });
+
+        res.send(`<script>alert('Client password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
         res.send(`<script>alert('Error updating password'); window.history.back();</script>`);
     }
 });
 
+// 15. CHANGE STATUS API (S BUTTON)
 app.post('/api/change-status', async (req, res) => {
     const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
     try {
         const uploaderRef = doc(db, 'users', loggedInUser);
         const uploaderSnap = await getDoc(uploaderRef);
-        if (uploaderSnap.data().txnPassword !== txnPassword) {
+        const uploader = uploaderSnap.data();
+
+        if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
             return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
         }
-        await updateDoc(doc(db, 'users', clientUsername), {
+
+        const clientRef = doc(db, 'users', clientUsername);
+        await updateDoc(clientRef, {
             userActive: userActive === 'true',
             betActive: betActive === 'true'
         });
+
         res.send(`<script>alert('Status updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
         res.send(`<script>alert('Error updating status'); window.history.back();</script>`);
