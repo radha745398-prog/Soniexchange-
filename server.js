@@ -962,7 +962,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH BALANCE SORTING & DYNAMIC P/L (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH DYNAMIC P/L SHOWING PLUS / MINUS PROPERLY (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1006,7 +1006,7 @@ app.get('/soni-view', async (req, res) => {
         let totalExpLimit = 0;
 
         usersList.forEach(u => {
-            const cr = Number(u.creditRef || u.points || 0);
+            const cr = Number(u.creditRef || 0);
             const bal = Number(u.points || 0);
             const pl = bal - cr;
             const exp = Number(u.exposure || 0);
@@ -1024,7 +1024,7 @@ app.get('/soni-view', async (req, res) => {
         let tableRows = usersList.length === 0 ? `
             <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
         ` : usersList.map(u => {
-            const cr = Number(u.creditRef || u.points || 0);
+            const cr = Number(u.creditRef || 0);
             const bal = Number(u.points || 0);
             const pl = bal - cr;
             const exp = Number(u.exposure || 0);
@@ -1037,9 +1037,9 @@ app.get('/soni-view', async (req, res) => {
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${cr.toLocaleString()}</td>
                 <td class="p-2 border-r text-right font-semibold">${bal.toLocaleString()}</td>
-                <td class="p-2 border-r text-right ${pl < 0 ? 'text-red-600' : ''}">${pl.toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold ${pl < 0 ? 'text-red-600' : 'text-gray-800'}">${pl < 0 ? pl.toLocaleString() : pl.toLocaleString()}</td>
                 <td class="p-2 border-r text-right">${exp.toLocaleString()}</td>
-                <td class="p-2 border-r text-right">${avail.toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${avail.toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
                     <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
                         ${u.userActive !== false ? '✓' : '✕'}
@@ -1194,7 +1194,7 @@ app.get('/soni-view', async (req, res) => {
                                     <td class="p-2 border-r">Total</td>
                                     <td class="p-2 border-r text-right">${totalCR.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalBalance.toLocaleString()}</td>
-                                    <td class="p-2 border-r text-right ${totalPL < 0 ? 'text-red-600' : ''}">${totalPL.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right ${totalPL < 0 ? 'text-red-600' : 'text-gray-900'}">${totalPL.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalAvailBal.toLocaleString()}</td>
                                     <td class="p-2 border-r text-center"></td>
@@ -1708,7 +1708,7 @@ app.post('/api/credit-update', async (req, res) => {
         const clientRef = doc(db, 'users', clientUsername);
         await updateDoc(clientRef, { creditRef: Number(newCredit) || 0 });
 
-        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(createdBy)}';</script>`);
+        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
     } catch(err) {
         res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
     }
