@@ -962,7 +962,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH DYNAMIC P/L SHOWING PLUS / MINUS PROPERLY (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1014,7 +1014,7 @@ app.get('/soni-view', async (req, res) => {
             const limit = Number(u.exposureLimit || 0);
 
             totalCR += cr;
-            totalBalance += bal;
+            totalBalance += Math.abs(bal); // Total calculation without negative sign
             totalPL += pl;
             totalExposure += exp;
             totalAvailBal += avail;
@@ -1025,10 +1025,11 @@ app.get('/soni-view', async (req, res) => {
             <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
         ` : usersList.map(u => {
             const cr = Number(u.creditRef || 0);
-            const bal = Number(u.points || 0);
-            const pl = bal - cr;
+            const rawBal = Number(u.points || 0);
+            const bal = Math.abs(rawBal); // BALANCE ME MINUS NAHI DIKHANA
+            const pl = rawBal - cr;      // P/L ME EXACT MINUS/PLUS DIKHANA
             const exp = Number(u.exposure || 0);
-            const avail = bal - exp;
+            const avail = rawBal - exp;
 
             return `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
@@ -1037,9 +1038,9 @@ app.get('/soni-view', async (req, res) => {
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${cr.toLocaleString()}</td>
                 <td class="p-2 border-r text-right font-semibold">${bal.toLocaleString()}</td>
-                <td class="p-2 border-r text-right font-semibold ${pl < 0 ? 'text-red-600' : 'text-gray-800'}">${pl < 0 ? pl.toLocaleString() : pl.toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold ${pl < 0 ? 'text-red-600' : 'text-gray-800'}">${pl.toLocaleString()}</td>
                 <td class="p-2 border-r text-right">${exp.toLocaleString()}</td>
-                <td class="p-2 border-r text-right font-semibold">${avail.toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold ${avail < 0 ? 'text-red-600' : ''}">${avail.toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
                     <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
                         ${u.userActive !== false ? '✓' : '✕'}
@@ -1055,8 +1056,8 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${cr})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
