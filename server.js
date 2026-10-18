@@ -868,7 +868,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. LOGIN PROCESS
+// 2. FIXED LOGIN PROCESS (No More Accidental Password Reset Redirects)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -889,7 +889,10 @@ app.post('/login-process', async (req, res) => {
             return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
         }
 
-        if (user.mustChangePassword) {
+        req.session.loggedInUser = user.username;
+        req.session.userRole = user.role;
+
+        if (user.mustChangePassword === true) {
             return res.redirect(`/change-password?username=${encodeURIComponent(user.username)}`);
         }
 
@@ -933,7 +936,7 @@ app.get('/change-password', (req, res) => {
     `);
 });
 
-// 4. UPDATE PASSWORD API
+// 4. FIXED UPDATE PASSWORD API (Permanently Sets mustChangePassword to False)
 app.post('/api/update-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -966,14 +969,14 @@ app.post('/api/update-password', async (req, res) => {
             </head>
             <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs font-sans">
                 <div class="bg-white p-6 rounded shadow-lg max-w-lg w-full text-center space-y-4">
-                    <h2 class="text-green-600 font-bold text-lg">Success! आपका password बदला जा चुका है।</h2>
+                    <h2 class="text-green-600 font-bold text-lg">Success! Aapka password badal chuka hai.</h2>
                     <div class="bg-gray-100 p-4 rounded border">
                         <p class="font-semibold text-gray-700 mb-1">Your transaction password is:</p>
                         <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
                     </div>
                     <p class="text-gray-600 text-[11px] leading-relaxed">
                         Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
-                        लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण इसी से किए जा सकते हैं और इस पासवर्ड को किसी के साथ साझा न करें।
+                        Is transaction password ko yaad rakhein, saare transactions isi se honge.
                     </p>
                     <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
                 </div>
@@ -1971,7 +1974,20 @@ app.post('/api/change-status', async (req, res) => {
     }
 });
 
-app.get('/logout', (req, res) => res.redirect('/'));
+// 16. SECURE LOGOUT ROUTE (Clears All Session, Cookies & Browser Cache)
+app.get('/logout', (req, res) => {
+    try {
+        req.session.destroy((err) => {
+            res.clearCookie('connect.sid', { path: '/' });
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+            res.redirect('/');
+        });
+    } catch (err) {
+        res.redirect('/');
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
