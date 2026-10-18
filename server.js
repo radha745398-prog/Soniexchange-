@@ -962,7 +962,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 7. EXACT NEW SCREENSHOT VIEW WITH GEHRI HEADER LINE (/soni-view)
+// 7. EXACT NEW SCREENSHOT VIEW WITH BALANCE SORTING & DYNAMIC P/L (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -989,10 +989,13 @@ app.get('/soni-view', async (req, res) => {
         }
 
         // Filter based on tab
-        const usersList = allUsersList.filter(u => {
+        let usersList = allUsersList.filter(u => {
             const isActive = u.userActive !== false;
             return tab === 'active' ? isActive : !isActive;
         });
+
+        // SORT USERS BY BALANCE DESCENDING (HIGHEST TO LOWEST)
+        usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
         // Calculate Totals for filtered list
         let totalCR = 0;
@@ -1005,9 +1008,9 @@ app.get('/soni-view', async (req, res) => {
         usersList.forEach(u => {
             const cr = Number(u.creditRef || u.points || 0);
             const bal = Number(u.points || 0);
-            const pl = 0;
+            const pl = bal - cr;
             const exp = Number(u.exposure || 0);
-            const avail = bal;
+            const avail = bal - exp;
             const limit = Number(u.exposureLimit || 0);
 
             totalCR += cr;
@@ -1020,16 +1023,23 @@ app.get('/soni-view', async (req, res) => {
 
         let tableRows = usersList.length === 0 ? `
             <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
-        ` : usersList.map(u => `
+        ` : usersList.map(u => {
+            const cr = Number(u.creditRef || u.points || 0);
+            const bal = Number(u.points || 0);
+            const pl = bal - cr;
+            const exp = Number(u.exposure || 0);
+            const avail = bal - exp;
+
+            return `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
                 <td class="p-2 border-r">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.points || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-right">0</td>
-                <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
-                <td class="p-2 border-r text-right">${Number(u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${cr.toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${bal.toLocaleString()}</td>
+                <td class="p-2 border-r text-right ${pl < 0 ? 'text-red-600' : ''}">${pl.toLocaleString()}</td>
+                <td class="p-2 border-r text-right">${exp.toLocaleString()}</td>
+                <td class="p-2 border-r text-right">${avail.toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
                     <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
                         ${u.userActive !== false ? '✓' : '✕'}
@@ -1045,17 +1055,17 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${bal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
+                        <button type="button" onclick="openCreditModal('${u.username}', ${cr})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                         <button type="button" onclick="openStatusModal('${u.username}', ${u.userActive !== false}, ${u.betActive !== false})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
                     </div>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
 
         res.send(`
             <!DOCTYPE html>
@@ -1166,11 +1176,10 @@ app.get('/soni-view', async (req, res) => {
                     <div class="bg-white border rounded shadow-xs overflow-x-auto">
                         <table id="soniAccountTable" class="w-full text-left border-collapse">
                             <thead>
-                                <!-- GEHRI DIVIDER LINE (border-b-2 border-gray-400) -->
                                 <tr class="bg-gray-100 text-gray-700 text-[10px] border-b-2 border-gray-400 font-bold">
                                     <th class="p-2 border-r">User Name</th>
                                     <th class="p-2 border-r text-right">CR</th>
-                                    <th class="p-2 border-r text-right">Balance</th>
+                                    <th class="p-2 border-r text-right">Balance <span class="text-xs">🞁</span></th>
                                     <th class="p-2 border-r text-right">Client(P/L)</th>
                                     <th class="p-2 border-r text-right">Exposure</th>
                                     <th class="p-2 border-r text-right">Available Balance</th>
@@ -1185,7 +1194,7 @@ app.get('/soni-view', async (req, res) => {
                                     <td class="p-2 border-r">Total</td>
                                     <td class="p-2 border-r text-right">${totalCR.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalBalance.toLocaleString()}</td>
-                                    <td class="p-2 border-r text-right">${totalPL.toLocaleString()}</td>
+                                    <td class="p-2 border-r text-right ${totalPL < 0 ? 'text-red-600' : ''}">${totalPL.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
                                     <td class="p-2 border-r text-right">${totalAvailBal.toLocaleString()}</td>
                                     <td class="p-2 border-r text-center"></td>
