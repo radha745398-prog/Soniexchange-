@@ -910,7 +910,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (Redirects to temporary password setup ONLY on first-time login)
+// 2. FIXED LOGIN PROCESS (Redirects to BLANK DASHBOARD by default)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -938,7 +938,8 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
+        // REDIRECT TO BLANK DASHBOARD ON LOGIN
+        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
         res.send("<script>alert('Login Error'); window.history.back();</script>");
@@ -1031,7 +1032,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
     }
 });
 
-// 5. MANUAL MENU-DRIVEN CHANGE PASSWORD ROUTE (EXACT LOAD BUTTON SCREENSHOT MATCH)
+// 5. MANUAL MENU-DRIVEN CHANGE PASSWORD ROUTE
 app.get('/change-password', async (req, res) => {
     const username = req.query.username || '';
     res.send(`
@@ -1077,7 +1078,7 @@ app.get('/change-password', async (req, res) => {
     `);
 });
 
-// 6. MANUAL PASSWORD UPDATE API (LOAD BUTTON SUBMISSION)
+// 6. MANUAL PASSWORD UPDATE API
 app.post('/api/update-manual-password', async (req, res) => {
     const { username, newPassword, confirmPassword, txnPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1108,7 +1109,41 @@ app.post('/api/update-manual-password', async (req, res) => {
     }
 });
 
-// 7. ORIGINAL ACCOUNT LIST PAGE (/users)
+// 7. DASHBOARD ROUTE (CLEAN / BLANK LANDING PAGE AFTER LOGIN)
+app.get('/dashboard', async (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Dashboard</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, role)}
+                <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
+                    <!-- BLANK SCREEN BODY AFTER LOGIN -->
+                </main>
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        res.redirect('/');
+    }
+});
+
+// 8. ORIGINAL ACCOUNT LIST PAGE (/users)
 app.get('/users', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1252,7 +1287,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-// 8. EXACT NEW SCREENSHOT VIEW (/soni-view)
+// 9. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     const tab = req.query.tab || 'active'; // 'active' or 'deactive'
@@ -1569,7 +1604,7 @@ app.get('/soni-view', async (req, res) => {
     }
 });
 
-// 9. ADD ACCOUNT FORM PAGE
+// 10. ADD ACCOUNT FORM PAGE
 app.get('/insertuser', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
@@ -1844,7 +1879,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 10. CREATE ACCOUNT API
+// 11. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -1896,7 +1931,7 @@ app.post('/api/clients/create', async (req, res) => {
     }
 });
 
-// 11. DEPOSIT API
+// 12. DEPOSIT API
 app.post('/api/deposit', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const depositAmount = Number(amount) || 0;
@@ -1928,7 +1963,7 @@ app.post('/api/deposit', async (req, res) => {
     }
 });
 
-// 12. WITHDRAW API
+// 13. WITHDRAW API
 app.post('/api/withdraw', async (req, res) => {
     const { loggedInUser, clientUsername, amount, remark, txnPassword } = req.body;
     const withdrawAmount = Number(amount) || 0;
@@ -1960,7 +1995,7 @@ app.post('/api/withdraw', async (req, res) => {
     }
 });
 
-// 13. EXPOSURE LIMIT API
+// 14. EXPOSURE LIMIT API
 app.post('/api/exposure-limit', async (req, res) => {
     const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
     try {
@@ -1981,7 +2016,7 @@ app.post('/api/exposure-limit', async (req, res) => {
     }
 });
 
-// 14. CREDIT UPDATE API
+// 15. CREDIT UPDATE API
 app.post('/api/credit-update', async (req, res) => {
     const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
     try {
@@ -2002,7 +2037,7 @@ app.post('/api/credit-update', async (req, res) => {
     }
 });
 
-// 15. CLIENT PASSWORD UPDATE API
+// 16. CLIENT PASSWORD UPDATE API
 app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
@@ -2028,7 +2063,7 @@ app.post('/api/client-password-update', async (req, res) => {
     }
 });
 
-// 16. CHANGE STATUS API (S BUTTON)
+// 17. CHANGE STATUS API (S BUTTON)
 app.post('/api/change-status', async (req, res) => {
     const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
     try {
@@ -2052,7 +2087,7 @@ app.post('/api/change-status', async (req, res) => {
     }
 });
 
-// 17. SECURE LOGOUT ROUTE
+// 18. SECURE LOGOUT ROUTE
 app.get('/logout', (req, res) => {
     try {
         req.session.destroy((err) => {
@@ -2067,7 +2102,7 @@ app.get('/logout', (req, res) => {
     }
 });
 
-// 18. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
+// 19. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
 app.post('/api/admin/update-balance', async (req, res) => {
     const { loggedInUser, newBalance, txnPassword } = req.body;
     const amount = Number(newBalance);
