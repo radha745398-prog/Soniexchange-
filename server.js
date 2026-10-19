@@ -315,26 +315,26 @@ function getModalsHTML(loggedInUser) {
                     <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                     <input type="hidden" name="clientUsername" id="modalClientUsername">
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <span id="modalUplineLabel" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <div class="col-span-4"><input type="text" id="modalLoggedInCredit" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <span id="modalClientLabel" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <div class="col-span-4"><input type="text" id="modalClientCredit" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                        <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                        <div class="col-span-8"><input type="number" name="amount" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                        <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                        <div class="col-span-8"><input type="text" name="remark" placeholder="Remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                     </div>
                     <div class="flex justify-end space-x-2 pt-3">
                         <button type="button" onclick="closeDepositModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
@@ -359,26 +359,26 @@ function getModalsHTML(loggedInUser) {
                     <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                     <input type="hidden" name="clientUsername" id="modalWithdrawClientUsername">
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
-                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <span id="modalWithdrawUplineLabel" class="col-span-4 font-normal text-gray-700 text-[11px]">Upline</span>
+                        <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInCredit" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalWithdrawLoggedInPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
-                        <span class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
-                        <div class="col-span-4"><input type="text" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
+                        <span id="modalWithdrawClientLabel" class="col-span-4 font-normal text-gray-700 text-[11px]">Client</span>
+                        <div class="col-span-4"><input type="text" id="modalWithdrawClientCredit" value="0" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none"></div>
                         <div class="col-span-4"><input type="text" id="modalWithdrawClientPoints" readonly class="w-full border border-gray-300 bg-gray-200 p-1.5 rounded-xs text-right text-gray-700 focus:outline-none" value="0"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Amount</label>
-                        <div class="col-span-8"><input type="number" name="amount" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
+                        <div class="col-span-8"><input type="number" name="amount" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none text-right"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Remark</label>
-                        <div class="col-span-8"><input type="text" name="remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                        <div class="col-span-8"><input type="text" name="remark" placeholder="Remark" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                     </div>
                     <div class="grid grid-cols-12 gap-2 items-center">
                         <label class="col-span-4 font-normal text-gray-700 text-[11px]">Transaction Password</label>
-                        <div class="col-span-8"><input type="password" name="txnPassword" required class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
+                        <div class="col-span-8"><input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded-xs bg-white focus:outline-none"></div>
                     </div>
                     <div class="flex justify-end space-x-2 pt-3">
                         <button type="button" onclick="closeWithdrawModal()" class="bg-[#2d3e50] hover:bg-[#1a2530] text-white px-3.5 py-1.5 rounded-xs font-bold flex items-center space-x-1 cursor-pointer text-[11px]">
@@ -639,9 +639,13 @@ function getModalScriptsJS() {
                 modal.classList.add('hidden');
             }
 
-            function openDepositModal(clientName, clientPts, uplinePts) {
+            function openDepositModal(clientName, clientPts, uplinePts, loggedInUser) {
                 document.getElementById('modalClientUsername').value = clientName;
+                document.getElementById('modalUplineLabel').textContent = loggedInUser || 'Upline';
+                document.getElementById('modalClientLabel').textContent = clientName;
+                document.getElementById('modalLoggedInCredit').value = '0';
                 document.getElementById('modalLoggedInPoints').value = uplinePts.toLocaleString();
+                document.getElementById('modalClientCredit').value = '0';
                 document.getElementById('modalClientPoints').value = clientPts.toLocaleString();
                 
                 const modal = document.getElementById('depositModal');
@@ -654,9 +658,13 @@ function getModalScriptsJS() {
                 modal.classList.add('hidden');
             }
 
-            function openWithdrawModal(clientName, clientPts, uplinePts) {
+            function openWithdrawModal(clientName, clientPts, uplinePts, loggedInUser) {
                 document.getElementById('modalWithdrawClientUsername').value = clientName;
+                document.getElementById('modalWithdrawUplineLabel').textContent = loggedInUser || 'Upline';
+                document.getElementById('modalWithdrawClientLabel').textContent = clientName;
+                document.getElementById('modalWithdrawLoggedInCredit').value = '0';
                 document.getElementById('modalWithdrawLoggedInPoints').value = uplinePts.toLocaleString();
+                document.getElementById('modalWithdrawClientCredit').value = '0';
                 document.getElementById('modalWithdrawClientPoints').value = clientPts.toLocaleString();
                 
                 const modal = document.getElementById('withdrawModal');
@@ -1190,8 +1198,8 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0}, '${loggedInUser}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0}, '${loggedInUser}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
@@ -1378,8 +1386,8 @@ app.get('/soni-view', async (req, res) => {
                 <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                 <td class="p-1.5 text-center">
                     <div class="flex items-center justify-center space-x-1">
-                        <button type="button" onclick="openDepositModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                        <button type="button" onclick="openWithdrawModal('${u.username}', ${rawBal}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
+                        <button type="button" onclick="openDepositModal('${u.username}', ${rawBal}, ${currentUser.points || 0}, '${loggedInUser}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                        <button type="button" onclick="openWithdrawModal('${u.username}', ${rawBal}, ${currentUser.points || 0}, '${loggedInUser}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                         <button type="button" onclick="openCreditModal('${u.username}', ${cr})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
@@ -1910,8 +1918,8 @@ app.post('/api/clients/create', async (req, res) => {
             username: clientName,
             password: password,
             role: accountType || 'Client',
-            points: 0,             // Initial balance starts at 0[span_2](start_span)[span_2](end_span)
-            creditRef: creditValue, // CR stored independently[span_3](start_span)[span_3](end_span)
+            points: 0,             // Initial balance starts at 0[span_0](start_span)[span_0](end_span)
+            creditRef: creditValue, // CR stored independently[span_1](start_span)[span_1](end_span)
             exposure: 0,
             exposureLimit: 0,
             userActive: true,
