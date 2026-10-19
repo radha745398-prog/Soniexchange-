@@ -929,14 +929,14 @@ app.post('/login-process', async (req, res) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
+            return res.redirect('/');
         }
 
         const user = docSnap.data();
         const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password).catch(() => false));
 
         if (!isMatch) {
-            return res.send("<script>alert('Invalid Username or Password!'); window.history.back();</script>");
+            return res.redirect('/');
         }
 
         req.session.loggedInUser = user.username;
@@ -950,7 +950,7 @@ app.post('/login-process', async (req, res) => {
         res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
-        res.send("<script>alert('Login Error'); window.history.back();</script>");
+        res.redirect('/');
     }
 });
 
@@ -991,7 +991,7 @@ app.get('/change-temporary-password', (req, res) => {
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
-        return res.send("<script>alert('Passwords do not match!'); window.history.back();</script>");
+        return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}`);
     }
 
     try {
@@ -999,7 +999,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            return res.send("<script>alert('User not found!'); window.location='/';</script>");
+            return res.redirect('/');
         }
 
         const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
@@ -1036,7 +1036,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
         `);
     } catch(err) {
         console.error(err);
-        res.send("<script>alert('Error updating password'); window.history.back();</script>");
+        res.redirect('/');
     }
 });
 
@@ -1090,7 +1090,7 @@ app.get('/change-password', async (req, res) => {
 app.post('/api/update-manual-password', async (req, res) => {
     const { username, newPassword, confirmPassword, txnPassword } = req.body;
     if (newPassword !== confirmPassword) {
-        return res.send("<script>alert('New Password and Confirm Password do not match!'); window.history.back();</script>");
+        return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 
     try {
@@ -1098,22 +1098,22 @@ app.post('/api/update-manual-password', async (req, res) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            return res.send("<script>alert('User not found!'); window.location='/';</script>");
+            return res.redirect('/');
         }
 
         const user = docSnap.data();
         if (user.txnPassword && user.txnPassword !== txnPassword) {
-            return res.send("<script>alert('Invalid Transaction Password!'); window.history.back();</script>");
+            return res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
         }
 
         await updateDoc(userRef, {
             password: newPassword
         });
 
-        res.send(`<script>alert('Password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(username)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(username)}`);
     } catch(err) {
         console.error(err);
-        res.send("<script>alert('Error updating password'); window.history.back();</script>");
+        res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 });
 
@@ -1856,21 +1856,13 @@ app.get('/insertuser', async (req, res) => {
                             validateClientName();
                             validatePassword();
 
-                            if (!isNameValid) {
-                                alert('Please provide a valid Client Name');
-                                e.preventDefault();
-                                return false;
-                            }
-
-                            if (!isPassValid) {
-                                alert('Please provide a valid Password');
+                            if (!isNameValid || !isPassValid) {
                                 e.preventDefault();
                                 return false;
                             }
 
                             const retype = document.getElementById('retypePassword').value;
                             if (passInput.value !== retype) {
-                                alert('Passwords do not match!');
                                 e.preventDefault();
                                 return false;
                             }
@@ -1897,20 +1889,20 @@ app.post('/api/clients/create', async (req, res) => {
         const creatorSnap = await getDoc(creatorRef);
 
         if (!creatorSnap.exists()) {
-            return res.send(`<script>alert('Creator session error!'); window.location='/';</script>`);
+            return res.redirect('/');
         }
 
         const creator = creatorSnap.data();
 
         if (creator.txnPassword && creator.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/insertuser?username=${encodeURIComponent(createdBy)}`);
         }
 
         const newClientRef = doc(db, 'users', clientName);
         const newClientSnap = await getDoc(newClientRef);
 
         if (newClientSnap.exists()) {
-            return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
+            return res.redirect(`/insertuser?username=${encodeURIComponent(createdBy)}`);
         }
 
         // Initialize new user with Balance (points) = 0 and Credit Reference (creditRef) = entered value
@@ -1918,8 +1910,8 @@ app.post('/api/clients/create', async (req, res) => {
             username: clientName,
             password: password,
             role: accountType || 'Client',
-            points: 0,             // Initial balance starts at 0[span_0](start_span)[span_0](end_span)
-            creditRef: creditValue, // CR stored independently[span_1](start_span)[span_1](end_span)
+            points: 0,             // Initial balance starts at 0
+            creditRef: creditValue, // CR stored independently
             exposure: 0,
             exposureLimit: 0,
             userActive: true,
@@ -1934,7 +1926,7 @@ app.post('/api/clients/create', async (req, res) => {
         res.redirect(`/soni-view?username=${encodeURIComponent(createdBy)}`);
     } catch(err) {
         console.error(err);
-        res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
+        res.redirect(`/insertuser?username=${encodeURIComponent(createdBy)}`);
     }
 });
 
@@ -1949,12 +1941,12 @@ app.post('/api/deposit', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const currentUploaderPoints = Number(uploader.points || 0);
         if (currentUploaderPoints < depositAmount) {
-            return res.send(`<script>alert('Insufficient balance!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
@@ -1964,9 +1956,9 @@ app.post('/api/deposit', async (req, res) => {
         await updateDoc(uploaderRef, { points: currentUploaderPoints - depositAmount });
         await updateDoc(clientRef, { points: Number(clientData.points || 0) + depositAmount });
 
-        res.send(`<script>alert('Deposit successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Deposit error occurred'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -1981,7 +1973,7 @@ app.post('/api/withdraw', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
@@ -1990,15 +1982,15 @@ app.post('/api/withdraw', async (req, res) => {
         const currentClientPoints = Number(clientData.points || 0);
 
         if (currentClientPoints < withdrawAmount) {
-            return res.send(`<script>alert('Client has insufficient balance!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         await updateDoc(clientRef, { points: currentClientPoints - withdrawAmount });
         await updateDoc(uploaderRef, { points: Number(uploader.points || 0) + withdrawAmount });
 
-        res.send(`<script>alert('Withdraw successful!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Withdraw error occurred'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -2011,15 +2003,15 @@ app.post('/api/exposure-limit', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
         await updateDoc(clientRef, { exposureLimit: Number(newLimit) || 0 });
 
-        res.send(`<script>alert('Exposure limit updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Error updating exposure limit'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -2032,15 +2024,15 @@ app.post('/api/credit-update', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
         await updateDoc(clientRef, { creditRef: Number(newCredit) || 0 });
 
-        res.send(`<script>alert('Credit reference updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Error updating credit reference'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -2049,7 +2041,7 @@ app.post('/api/client-password-update', async (req, res) => {
     const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
-        return res.send(`<script>alert('Passwords do not match!'); window.history.back();</script>`);
+        return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 
     try {
@@ -2058,15 +2050,15 @@ app.post('/api/client-password-update', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
         await updateDoc(clientRef, { password: newPassword, mustChangePassword: false });
 
-        res.send(`<script>alert('Client password updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Error updating password'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -2079,7 +2071,7 @@ app.post('/api/change-status', async (req, res) => {
         const uploader = uploaderSnap.data();
 
         if (uploader.txnPassword && uploader.txnPassword !== txnPassword) {
-            return res.send(`<script>alert('Invalid Transaction Password!'); window.history.back();</script>`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const clientRef = doc(db, 'users', clientUsername);
@@ -2088,9 +2080,9 @@ app.post('/api/change-status', async (req, res) => {
             betActive: betActive === 'true'
         });
 
-        res.send(`<script>alert('Status updated successfully!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
-        res.send(`<script>alert('Error updating status'); window.history.back();</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
@@ -2115,25 +2107,25 @@ app.post('/api/admin/update-balance', async (req, res) => {
     const amount = Number(newBalance);
 
     if (isNaN(amount) || amount < 0) {
-        return res.send("<script>alert('Please enter a valid amount!'); window.history.back();</script>");
+        return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 
     try {
         if (loggedInUser !== 'Soniexchange') {
-            return res.send("<script>alert('Unauthorized Action!'); window.history.back();</script>");
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         const userRef = doc(db, 'users', 'Soniexchange');
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            return res.send("<script>alert('Admin user not found!'); window.location='/';</script>");
+            return res.redirect('/');
         }
 
         const user = docSnap.data();
 
         if (user.txnPassword && user.txnPassword !== txnPassword) {
-            return res.send("<script>alert('Invalid Transaction Password!'); window.history.back();</script>");
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
 
         await updateDoc(userRef, {
@@ -2141,10 +2133,10 @@ app.post('/api/admin/update-balance', async (req, res) => {
             creditRef: amount
         });
 
-        res.send(`<script>alert('Balance updated successfully to ${amount}!'); window.location='/soni-view?username=${encodeURIComponent(loggedInUser)}';</script>`);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     } catch(err) {
         console.error(err);
-        res.send("<script>alert('Error updating balance'); window.history.back();</script>");
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
 
