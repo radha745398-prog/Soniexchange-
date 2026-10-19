@@ -987,7 +987,7 @@ app.get('/change-temporary-password', (req, res) => {
     `);
 });
 
-// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION
+// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION (CORRECTED SCREEN & TRANSACTION PASSWORD TEXT)
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1015,21 +1015,38 @@ app.post('/api/update-temporary-password', async (req, res) => {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Transaction Password Generated</title>
+                <title>Transaction Password Generated - Soniexchange</title>
                 <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #116491; margin: 0; }</style>
             </head>
-            <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs font-sans">
-                <div class="bg-white p-6 rounded shadow-lg max-w-lg w-full text-center space-y-4">
-                    <h2 class="text-green-600 font-bold text-lg">Success! Aapka password badal chuka hai.</h2>
-                    <div class="bg-gray-100 p-4 rounded border">
-                        <p class="font-semibold text-gray-700 mb-1">Your transaction password is:</p>
-                        <p class="text-2xl font-black text-blue-600 tracking-wider">${txnPass}</p>
+            <body class="min-h-screen flex items-center justify-center p-4 text-xs font-sans">
+                <div class="bg-white p-6 rounded shadow-2xl max-w-lg w-full text-center space-y-4 border border-gray-300 text-gray-800">
+                    <div class="space-y-1">
+                        <p class="text-green-600 font-bold text-sm">Success! Your password has been updated successfully.</p>
+                        <p class="text-green-600 font-bold text-xs">Success! आपका पासवर्ड बदला जा चुका है।</p>
                     </div>
-                    <p class="text-gray-600 text-[11px] leading-relaxed">
-                        Remember this transaction password, from now on all transactions can be done only with this password. Do not share this password with anyone.<br>
-                        Is transaction password ko yaad rakhein, saare transactions isi se honge.
-                    </p>
-                    <a href="/" class="inline-block bg-[#0077b6] text-white font-bold px-6 py-2 rounded text-xs">Back to Login</a>
+
+                    <div class="bg-gray-100 p-3 rounded border border-gray-200">
+                        <p class="text-gray-700 font-semibold text-[11px]">Your transaction password is: <span class="text-blue-600 font-bold text-base tracking-wider">${txnPass}</span></p>
+                        <p class="text-gray-700 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-base tracking-wider">${txnPass}</span> है।</p>
+                    </div>
+
+                    <div class="text-gray-600 text-[10px] leading-relaxed space-y-1 text-left">
+                        <p>Please remember this transaction password, from now on all transaction of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
+                        <p>कृपया इस लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण केवल इस पासवर्ड से किए जा सकते हैं और एक बात का ध्यान रखें, इस पासवर्ड को किसी के साथ साझा न करें।</p>
+                    </div>
+
+                    <div class="text-gray-500 text-[11px] pt-1 font-medium">
+                        Thank you, Team Soniexchange<br>
+                        धन्यवाद, टीम Soniexchange
+                    </div>
+
+                    <div class="pt-2">
+                        <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition">
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Back
+                        </a>
+                    </div>
                 </div>
             </body>
             </html>
