@@ -1174,7 +1174,7 @@ app.get('/users', async (req, res) => {
                 <td class="p-2 border-r">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
                 </td>
-                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || u.points || 0).toLocaleString()}</td>
+                <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
                     <div class="inline-flex items-center justify-center w-4 h-4 ${u.userActive !== false ? 'bg-black text-white' : 'bg-red-500 text-white'} rounded-xs text-[10px] font-bold">
                         ${u.userActive !== false ? '✓' : '✕'}
@@ -1193,7 +1193,7 @@ app.get('/users', async (req, res) => {
                         <button type="button" onclick="openDepositModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                         <button type="button" onclick="openWithdrawModal('${u.username}', ${u.points || 0}, ${currentUser.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                         <button type="button" onclick="openExposureModal('${u.username}', ${u.exposureLimit || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || u.points || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
+                        <button type="button" onclick="openCreditModal('${u.username}', ${u.creditRef || 0})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                         <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                         <button type="button" onclick="openStatusModal('${u.username}', ${u.userActive !== false}, ${u.betActive !== false})" class="bg-[#343a40] hover:bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         <button class="bg-[#343a40] hover:bg-black text-white px-2 py-0.5 rounded text-[10px] font-bold">MORE</button>
@@ -1879,10 +1879,10 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 11. CREATE ACCOUNT API (DIRECT REDIRECT WITHOUT ANY POPUP / ALERT)
+// 11. CREATE ACCOUNT API (DIRECT REDIRECT, INITIAL BALANCE = 0, CR STORED INDEPENDENTLY)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
-    const pointsToGive = Number(creditRef) || 0;
+    const creditValue = Number(creditRef) || 0;
 
     try {
         const creatorRef = doc(db, 'users', createdBy);
@@ -1905,16 +1905,14 @@ app.post('/api/clients/create', async (req, res) => {
             return res.send(`<script>alert('Client already exists!'); window.location='/insertuser?username=${encodeURIComponent(createdBy)}';</script>`);
         }
 
-        await updateDoc(creatorRef, {
-            points: (creator.points || 0) - pointsToGive
-        });
-
+        // Initialize new user with Balance (points) = 0 and Credit Reference (creditRef) = entered value
         await setDoc(newClientRef, {
             username: clientName,
             password: password,
             role: accountType || 'Client',
-            points: pointsToGive,
-            creditRef: pointsToGive,
+            points: 0,             // Initial balance starts at 0[span_2](start_span)[span_2](end_span)
+            creditRef: creditValue, // CR stored independently[span_3](start_span)[span_3](end_span)
+            exposure: 0,
             exposureLimit: 0,
             userActive: true,
             betActive: true,
