@@ -1879,7 +1879,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 11. CREATE ACCOUNT API
+// 11. CREATE ACCOUNT API (DIRECT REDIRECT WITHOUT ANY POPUP / ALERT)
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const pointsToGive = Number(creditRef) || 0;
@@ -1924,7 +1924,8 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        res.send(`<script>alert('Account created successfully!'); window.location='/soni-view?username=${encodeURIComponent(createdBy)}';</script>`);
+        // NO POPUP - DIRECT REDIRECT TO CLIENT LIST
+        res.redirect(`/soni-view?username=${encodeURIComponent(createdBy)}`);
     } catch(err) {
         console.error(err);
         res.send(`<script>alert('Error creating account'); window.history.back();</script>`);
