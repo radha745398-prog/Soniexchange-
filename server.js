@@ -987,7 +987,7 @@ app.get('/change-temporary-password', (req, res) => {
     `);
 });
 
-// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION (CORRECTED SCREEN & TRANSACTION PASSWORD TEXT)
+// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION (EXACT REFERENCE SCREEN LAYOUT)
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1018,26 +1018,26 @@ app.post('/api/update-temporary-password', async (req, res) => {
                 <title>Transaction Password Generated - Soniexchange</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>body { font-family: Arial, sans-serif; background-color: #116491; margin: 0; }</style>
+                <style>body { font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; }</style>
             </head>
-            <body class="min-h-screen flex items-center justify-center p-4 text-xs font-sans">
-                <div class="bg-white p-6 rounded shadow-2xl max-w-lg w-full text-center space-y-4 border border-gray-300 text-gray-800">
+            <body class="min-h-screen flex items-center justify-center p-4 text-xs font-sans bg-white">
+                <div class="p-6 max-w-xl w-full text-center space-y-4 text-gray-800">
                     <div class="space-y-1">
-                        <p class="text-green-600 font-bold text-sm">Success! Your password has been updated successfully.</p>
-                        <p class="text-green-600 font-bold text-xs">Success! आपका पासवर्ड बदला जा चुका है।</p>
+                        <p class="text-green-700 font-bold text-sm">Success! Your password has been updated successfully.</p>
+                        <p class="text-green-700 font-bold text-xs">Success! आपका पासवर्ड बदला जा चुका है।</p>
                     </div>
 
-                    <div class="bg-gray-100 p-3 rounded border border-gray-200">
-                        <p class="text-gray-700 font-semibold text-[11px]">Your transaction password is: <span class="text-blue-600 font-bold text-base tracking-wider">${txnPass}</span></p>
-                        <p class="text-gray-700 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-base tracking-wider">${txnPass}</span> है।</p>
+                    <div>
+                        <p class="text-gray-800 font-semibold text-[11px]">Your transaction password is <span class="text-blue-600 font-bold text-base">${txnPass}</span>.</p>
+                        <p class="text-gray-800 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-base">${txnPass}</span> है।</p>
                     </div>
 
-                    <div class="text-gray-600 text-[10px] leading-relaxed space-y-1 text-left">
-                        <p>Please remember this transaction password, from now on all transaction of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
+                    <div class="text-gray-700 text-[11px] leading-relaxed space-y-1 px-4">
+                        <p>Please remember this transaction password, from now on all transcation of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
                         <p>कृपया इस लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण केवल इस पासवर्ड से किए जा सकते हैं और एक बात का ध्यान रखें, इस पासवर्ड को किसी के साथ साझा न करें।</p>
                     </div>
 
-                    <div class="text-gray-500 text-[11px] pt-1 font-medium">
+                    <div class="text-gray-600 text-[11px] pt-1 font-medium">
                         Thank you, Team Soniexchange<br>
                         धन्यवाद, टीम Soniexchange
                     </div>
