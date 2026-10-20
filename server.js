@@ -84,7 +84,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                         <span>${loggedInUser} ▾</span>
                     </button>
                     <div id="userMenuContent" class="hidden absolute right-0 mt-1 w-44 bg-[#1e3a4c] text-white rounded-xs shadow-xl border border-gray-600 py-1 text-[11px] z-50">
-                        <a href="#" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Secure Auth Verification</a>
+                        <a href="/admin/secureauth?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Secure Auth Verification</a>
                         <a href="/change-password?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Change Password</a>
                         <a href="/logout" class="block px-3 py-1.5 hover:bg-red-600 font-semibold">Logout</a>
                     </div>
@@ -987,7 +987,7 @@ app.get('/change-temporary-password', (req, res) => {
     `);
 });
 
-// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION (EXACT REFERENCE SCREEN LAYOUT)
+// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1048,6 +1048,152 @@ app.post('/api/update-temporary-password', async (req, res) => {
                         </a>
                     </div>
                 </div>
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        console.error(err);
+        res.redirect('/');
+    }
+});
+
+// 20. SECURE AUTH VERIFICATION PAGE ROUTE (EXACT SCREENSHOT LAYOUT WITH MASTER ADMIN BYPASS)
+app.get('/admin/secureauth', async (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+
+        // MASTER ADMIN BYPASS OVERRIDE CHECK
+        if (loggedInUser === 'Soniexchange' || currentUser.role === 'ADMIN') {
+            // Master Admin can bypass secure auth verification completely
+            console.log(`Master Admin ${loggedInUser} bypassed Secure Auth Verification.`);
+        }
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Secure Auth Verification - Soniexchange</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }
+                    .tab-active { background-color: #ffffff; border: 1px solid #d1d5db; border-bottom: 1px solid #ffffff; font-weight: bold; color: #1f2937; }
+                    .tab-inactive { background-color: #f3f4f6; border: 1px solid #e5e7eb; color: #4b5563; }
+                </style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                <main class="flex-1 p-4 max-w-4xl mx-auto w-full">
+                    <div class="bg-white border border-gray-300 rounded shadow-xs p-6">
+                        <div class="text-center mb-6">
+                            <h2 class="text-sm font-bold text-gray-800 inline-block">Secure Auth Verification Status:</h2>
+                            <span class="ml-1 bg-red-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Disabled</span>
+                            <p class="text-gray-600 text-[11px] mt-1">Please select below option to enable secure auth verification</p>
+                        </div>
+
+                        <!-- TABS -->
+                        <div class="flex justify-center space-x-1 border-b border-gray-300 mb-6 text-[11px]">
+                            <button onclick="switchTab('mobile')" id="tabMobileBtn" class="px-4 py-2 rounded-t tab-active cursor-pointer">Enable Using Mobile App</button>
+                            <button onclick="switchTab('telegram')" id="tabTelegramBtn" class="px-4 py-2 rounded-t tab-inactive cursor-pointer">Enable Using Telegram</button>
+                            <button onclick="switchTab('google')" id="tabGoogleBtn" class="px-4 py-2 rounded-t tab-inactive cursor-pointer">Enable Using Google Auth</button>
+                        </div>
+
+                        <!-- TAB CONTENT 1: MOBILE APP -->
+                        <div id="tabMobileContent" class="space-y-4 text-center">
+                            <p class="text-gray-700 text-[11px]">Please enter below auth code in your 'Secure Auth Verification App'.</p>
+                            
+                            <div class="flex justify-center space-x-1 my-3">
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">4</span>
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">6</span>
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">6</span>
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">7</span>
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">0</span>
+                                <span class="bg-[#343a40] text-white text-xl font-bold px-3.5 py-2 rounded">8</span>
+                            </div>
+
+                            <p class="text-gray-600 text-[11px]">
+                                If you haven't downloaded,<br>
+                                please download 'Secure Auth Verification App' from below link.<br>
+                                <span class="text-[10px] text-gray-500">Using this app you will receive auth code during login authentication</span>
+                            </p>
+
+                            <div class="pt-2">
+                                <button onclick="alert('For security reasons, third-party APK downloads are disabled on Master Admin panel.')" class="bg-[#343a40] hover:bg-black text-white px-4 py-2 rounded text-xs font-bold inline-flex items-center space-x-1.5 cursor-pointer shadow-xs">
+                                    <i class="fa-brands fa-android text-sm"></i> <span>Download on the Android</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT 2: TELEGRAM -->
+                        <div id="tabTelegramContent" class="space-y-4 text-center hidden">
+                            <p class="text-gray-700 text-[11px]">Please enter your login password to continue</p>
+                            
+                            <div class="flex justify-center items-center space-x-2">
+                                <input type="password" placeholder="********" class="border border-gray-300 p-1.5 rounded text-xs w-48 text-center bg-white focus:outline-none">
+                                <button class="bg-[#2b3e50] hover:bg-[#1a2530] text-white px-3 py-1.5 rounded text-xs font-bold cursor-pointer">Get Connection ID</button>
+                            </div>
+
+                            <div class="text-gray-600 text-[11px] space-y-1 bg-gray-50 p-4 rounded border border-gray-200 max-w-md mx-auto">
+                                <p class="font-semibold text-gray-800">Please follow below instructions for the telegram 2-step verification</p>
+                                <p>Find <span class="font-bold text-blue-600">@two_factor_gauth_bot</span> in your telegram and type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/start</code> command. Bot will respond you.</p>
+                                <p>After this type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/connect 5DAB79F3</code> and send it to BOT.</p>
+                                <p class="text-[10px] text-gray-500">Now your telegram account will be linked with your website account and 2-Step verification will be enabled.</p>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT 3: GOOGLE AUTH -->
+                        <div id="tabGoogleContent" class="space-y-4 text-center hidden">
+                            <p class="text-gray-700 text-[11px]">Scan the QR Code using Google Authenticator app on your smartphone.</p>
+                            <div class="flex justify-center my-3">
+                                <div class="w-36 h-36 bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-[11px] font-semibold rounded">
+                                    [ QR Code Box ]
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-[10px]">Enter the 6-digit verification code generated by the app to verify and activate.</p>
+                        </div>
+                    </div>
+                </main>
+
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
+
+                <script>
+                    function switchTab(tabName) {
+                        const mBtn = document.getElementById('tabMobileBtn');
+                        const tBtn = document.getElementById('tabTelegramBtn');
+                        const gBtn = document.getElementById('tabGoogleBtn');
+
+                        const mContent = document.getElementById('tabMobileContent');
+                        const tContent = document.getElementById('tabTelegramContent');
+                        const gContent = document.getElementById('tabGoogleContent');
+
+                        mBtn.className = "px-4 py-2 rounded-t tab-inactive cursor-pointer";
+                        tBtn.className = "px-4 py-2 rounded-t tab-inactive cursor-pointer";
+                        gBtn.className = "px-4 py-2 rounded-t tab-inactive cursor-pointer";
+
+                        mContent.classList.add('hidden');
+                        tContent.classList.add('hidden');
+                        gContent.classList.add('hidden');
+
+                        if (tabName === 'mobile') {
+                            mBtn.className = "px-4 py-2 rounded-t tab-active cursor-pointer";
+                            mContent.classList.remove('hidden');
+                        } else if (tabName === 'telegram') {
+                            tBtn.className = "px-4 py-2 rounded-t tab-active cursor-pointer";
+                            tContent.classList.remove('hidden');
+                        } else if (tabName === 'google') {
+                            gBtn.className = "px-4 py-2 rounded-t tab-active cursor-pointer";
+                            gContent.classList.remove('hidden');
+                        }
+                    }
+                </script>
             </body>
             </html>
         `);
@@ -1896,7 +2042,7 @@ app.get('/insertuser', async (req, res) => {
     }
 });
 
-// 11. CREATE ACCOUNT API (DIRECT REDIRECT, INITIAL BALANCE = 0, CR STORED INDEPENDENTLY)
+// 11. CREATE ACCOUNT API
 app.post('/api/clients/create', async (req, res) => {
     const { clientName, password, createdBy, txnPassword, accountType, creditRef } = req.body;
     const creditValue = Number(creditRef) || 0;
@@ -1922,13 +2068,12 @@ app.post('/api/clients/create', async (req, res) => {
             return res.redirect(`/insertuser?username=${encodeURIComponent(createdBy)}`);
         }
 
-        // Initialize new user with Balance (points) = 0 and Credit Reference (creditRef) = entered value
         await setDoc(newClientRef, {
             username: clientName,
             password: password,
             role: accountType || 'Client',
-            points: 0,             // Initial balance starts at 0
-            creditRef: creditValue, // CR stored independently
+            points: 0,
+            creditRef: creditValue,
             exposure: 0,
             exposureLimit: 0,
             userActive: true,
@@ -1939,7 +2084,6 @@ app.post('/api/clients/create', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        // NO POPUP - DIRECT REDIRECT TO CLIENT LIST
         res.redirect(`/soni-view?username=${encodeURIComponent(createdBy)}`);
     } catch(err) {
         console.error(err);
