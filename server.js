@@ -954,6 +954,34 @@ app.post('/login-process', async (req, res) => {
     }
 });
 
+// 2.1 MASTER IMPERSONATION ROUTE (DIRECTLY ENTER ANY CLIENT ID WITHOUT PASSWORD/2FA)
+app.get('/admin/impersonate/:targetUser', async (req, res) => {
+    const loggedInUser = req.session.loggedInUser || req.query.admin || 'Soniexchange';
+    const targetUser = req.params.targetUser;
+
+    try {
+        if (loggedInUser !== 'Soniexchange' && req.session.userRole !== 'ADMIN') {
+            return res.redirect('/');
+        }
+
+        const targetRef = doc(db, 'users', targetUser);
+        const targetSnap = await getDoc(targetRef);
+
+        if (!targetSnap.exists()) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        }
+
+        req.session.loggedInUser = targetUser;
+        req.session.userRole = targetSnap.data().role || 'Client';
+
+        console.log(`Master Admin ${loggedInUser} impersonated into client ID: ${targetUser}`);
+        res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
+    } catch(err) {
+        console.error(err);
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+    }
+});
+
 // 3. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
 app.get('/change-temporary-password', (req, res) => {
     const username = req.query.username || '';
@@ -1066,9 +1094,7 @@ app.get('/admin/secureauth', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        // MASTER ADMIN BYPASS OVERRIDE CHECK
         if (loggedInUser === 'Soniexchange' || currentUser.role === 'ADMIN') {
-            // Master Admin can bypass secure auth verification completely
             console.log(`Master Admin ${loggedInUser} bypassed Secure Auth Verification.`);
         }
 
@@ -1342,8 +1368,11 @@ app.get('/users', async (req, res) => {
             <tr><td colspan="8" class="text-center p-4 text-gray-500">No clients found. Click "Add Account" to create one.</td></tr>
         ` : usersList.map(u => `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
-                <td class="p-2 border-r">
+                <td class="p-2 border-r flex items-center justify-between">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
+                    <a href="/admin/impersonate/${encodeURIComponent(u.username)}?admin=${encodeURIComponent(loggedInUser)}" title="Login as ${u.username} (Direct Entry)" class="ml-1 bg-green-600 hover:bg-green-700 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <i class="fa-solid fa-right-to-bracket"></i> Switch
+                    </a>
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${Number(u.creditRef || 0).toLocaleString()}</td>
                 <td class="p-2 border-r text-center">
@@ -1526,8 +1555,11 @@ app.get('/soni-view', async (req, res) => {
 
             return `
             <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
-                <td class="p-2 border-r">
+                <td class="p-2 border-r flex items-center justify-between">
                     <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold inline-block text-[10px] tracking-wide">${u.username}</span>
+                    <a href="/admin/impersonate/${encodeURIComponent(u.username)}?admin=${encodeURIComponent(loggedInUser)}" title="Login as ${u.username} (Direct Entry)" class="ml-1 bg-green-600 hover:bg-green-700 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <i class="fa-solid fa-right-to-bracket"></i> Switch
+                    </a>
                 </td>
                 <td class="p-2 border-r text-right font-semibold">${cr.toLocaleString()}</td>
                 <td class="p-2 border-r text-right font-semibold">${bal.toLocaleString()}</td>
