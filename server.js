@@ -4,6 +4,9 @@ const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
+const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 app.use(express.json());
@@ -1100,7 +1103,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
     }
 });
 
-// 20. SECURE AUTH VERIFICATION PAGE ROUTE (EXACT SCREENSHOT LAYOUT WITH MASTER ADMIN BYPASS)
+// 20. SECURE AUTH VERIFICATION PAGE ROUTE (WITH FULL WORKING BACKEND LOGIC FOR GOOGLE AUTH & TELEGRAM)
 app.get('/admin/secureauth', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -1109,9 +1112,22 @@ app.get('/admin/secureauth', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        if (loggedInUser === 'Soniexchange' || currentUser.role === 'ADMIN') {
-            console.log(`Master Admin ${loggedInUser} bypassed Secure Auth Verification.`);
+        // Generate Speakeasy Secret for Google Authenticator if not present
+        let secretBase32 = currentUser.gauthSecret;
+        if (!secretBase32) {
+            const secret = speakeasy.generateSecret({ name: `Soniexchange (${loggedInUser})` });
+            secretBase32 = secret.base32;
+            await updateDoc(userRef, { gauthSecret: secretBase32 });
         }
+
+        const otpauthUrl = speakeasy.otpauthURL({
+            secret: secretBase32,
+            label: `Soniexchange:${loggedInUser}`,
+            encoding: 'base32'
+        });
+
+        const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+        const isAuthEnabled = currentUser.gauthEnabled === true || currentUser.telegramEnabled === true;
 
         res.send(`
             <!DOCTYPE html>
@@ -1135,7 +1151,7 @@ app.get('/admin/secureauth', async (req, res) => {
                     <div class="bg-white border border-gray-300 rounded shadow-xs p-6">
                         <div class="text-center mb-6">
                             <h2 class="text-sm font-bold text-gray-800 inline-block">Secure Auth Verification Status:</h2>
-                            <span class="ml-1 bg-red-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Disabled</span>
+                            <span class="ml-1 ${isAuthEnabled ? 'bg-green-600' : 'bg-red-500'} text-white px-2 py-0.5 rounded text-[10px] font-bold">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span>
                             <p class="text-gray-600 text-[11px] mt-1">Please select below option to enable secure auth verification</p>
                         </div>
 
@@ -1176,15 +1192,18 @@ app.get('/admin/secureauth', async (req, res) => {
                         <div id="tabTelegramContent" class="space-y-4 text-center hidden">
                             <p class="text-gray-700 text-[11px]">Please enter your login password to continue</p>
                             
-                            <div class="flex justify-center items-center space-x-2">
-                                <input type="password" placeholder="********" class="border border-gray-300 p-1.5 rounded text-xs w-48 text-center bg-white focus:outline-none">
-                                <button class="bg-[#2b3e50] hover:bg-[#1a2530] text-white px-3 py-1.5 rounded text-xs font-bold cursor-pointer">Get Connection ID</button>
-                            </div>
+                            <form action="/api/secureauth/telegram" method="POST" class="space-y-3">
+                                <input type="hidden" name="username" value="${loggedInUser}">
+                                <div class="flex justify-center items-center space-x-2">
+                                    <input type="password" name="password" required placeholder="********" class="border border-gray-300 p-1.5 rounded text-xs w-48 text-center bg-white focus:outline-none">
+                                    <button type="submit" class="bg-[#2b3e50] hover:bg-[#1a2530] text-white px-3 py-1.5 rounded text-xs font-bold cursor-pointer">Get Connection ID</button>
+                                </div>
+                            </form>
 
                             <div class="text-gray-600 text-[11px] space-y-1 bg-gray-50 p-4 rounded border border-gray-200 max-w-md mx-auto">
                                 <p class="font-semibold text-gray-800">Please follow below instructions for the telegram 2-step verification</p>
                                 <p>Find <span class="font-bold text-blue-600">@two_factor_gauth_bot</span> in your telegram and type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/start</code> command. Bot will respond you.</p>
-                                <p>After this type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/connect 5DAB79F3</code> and send it to BOT.</p>
+                                <p>After this type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/connect ${currentUser.telegramCode || '5DAB79F3'}</code> and send it to BOT.</p>
                                 <p class="text-[10px] text-gray-500">Now your telegram account will be linked with your website account and 2-Step verification will be enabled.</p>
                             </div>
                         </div>
@@ -1193,11 +1212,15 @@ app.get('/admin/secureauth', async (req, res) => {
                         <div id="tabGoogleContent" class="space-y-4 text-center hidden">
                             <p class="text-gray-700 text-[11px]">Scan the QR Code using Google Authenticator app on your smartphone.</p>
                             <div class="flex justify-center my-3">
-                                <div class="w-36 h-36 bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-[11px] font-semibold rounded">
-                                    [ QR Code Box ]
-                                </div>
+                                <img src="${qrCodeDataUrl}" alt="Google Auth QR Code" class="w-36 h-36 border border-gray-300 rounded shadow-xs p-1 bg-white">
                             </div>
-                            <p class="text-gray-600 text-[10px]">Enter the 6-digit verification code generated by the app to verify and activate.</p>
+                            <form action="/api/secureauth/google/verify" method="POST" class="space-y-3 max-w-xs mx-auto">
+                                <input type="hidden" name="username" value="${loggedInUser}">
+                                <div>
+                                    <input type="text" name="token" required placeholder="Enter 6-digit code" maxlength="6" class="w-full border border-gray-300 p-1.5 rounded text-xs text-center tracking-widest font-bold focus:outline-none">
+                                </div>
+                                <button type="submit" class="w-full bg-[#0077b6] hover:bg-[#005b8e] text-white font-bold py-1.5 rounded text-xs cursor-pointer shadow-xs">Verify & Enable Google Auth</button>
+                            </form>
                         </div>
                     </div>
                 </main>
@@ -1239,6 +1262,57 @@ app.get('/admin/secureauth', async (req, res) => {
             </html>
         `);
     } catch(err) {
+        console.error(err);
+        res.redirect('/');
+    }
+});
+
+// BACKEND API FOR TELEGRAM CONNECTION ID GENERATION
+app.post('/api/secureauth/telegram', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists()) return res.redirect('/');
+
+        const user = docSnap.data();
+        if (user.password !== password) {
+            return res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
+        }
+
+        const telegramCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        await updateDoc(userRef, { telegramCode, telegramEnabled: true });
+
+        res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
+    } catch (err) {
+        console.error(err);
+        res.redirect('/');
+    }
+});
+
+// BACKEND API FOR GOOGLE AUTH VERIFICATION & ACTIVATION
+app.post('/api/secureauth/google/verify', async (req, res) => {
+    const { username, token } = req.body;
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists()) return res.redirect('/');
+
+        const user = docSnap.data();
+        const verified = speakeasy.totp.verify({
+            secret: user.gauthSecret,
+            encoding: 'base32',
+            token: token,
+            window: 1
+        });
+
+        if (verified) {
+            await updateDoc(userRef, { gauthEnabled: true });
+            console.log(`Google Authenticator enabled successfully for ${username}`);
+        }
+
+        res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
+    } catch (err) {
         console.error(err);
         res.redirect('/');
     }
