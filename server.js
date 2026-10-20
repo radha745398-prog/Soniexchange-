@@ -918,7 +918,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (Redirects to BLANK DASHBOARD by default)
+// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -942,6 +942,11 @@ app.post('/login-process', async (req, res) => {
         req.session.loggedInUser = user.username;
         req.session.userRole = user.role;
 
+        // FIXED: SAVE MASTER ADMIN PERMANENTLY IN SESSION MEMORY
+        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            req.session.masterAdmin = user.username;
+        }
+
         if (user.mustChangePassword === true) {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
@@ -954,13 +959,21 @@ app.post('/login-process', async (req, res) => {
     }
 });
 
-// 2.1 MASTER IMPERSONATION ROUTE (DIRECTLY ENTER ANY CLIENT ID WITHOUT PASSWORD/2FA)
+// 2.1 MASTER IMPERSONATION ROUTE (FIXED FOR UNLIMITED SWITCHING AFTER MOBILE BACK)
 app.get('/admin/impersonate/:targetUser', async (req, res) => {
-    const loggedInUser = req.session.loggedInUser || req.query.admin || 'Soniexchange';
+    const loggedInUser = req.session.loggedInUser;
+    const masterAdmin = req.session.masterAdmin;
+    const userRole = req.session.userRole;
     const targetUser = req.params.targetUser;
 
     try {
-        if (loggedInUser !== 'Soniexchange' && req.session.userRole !== 'ADMIN') {
+        // FIXED: ALLOW IF MASTER ADMIN SESSION OR FALLBACK URL ADMIN MATCHES
+        const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
+                                   (loggedInUser === 'Soniexchange') || 
+                                   (userRole === 'ADMIN') || 
+                                   (req.query.admin === 'Soniexchange');
+
+        if (!isMasterAuthorized) {
             return res.redirect('/');
         }
 
@@ -968,17 +981,19 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
         const targetSnap = await getDoc(targetRef);
 
         if (!targetSnap.exists()) {
-            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
         }
 
+        // FIXED: PRESERVE MASTER ADMIN MEMORY WHILE SWITCHING CURRENT SESSION
         req.session.loggedInUser = targetUser;
         req.session.userRole = targetSnap.data().role || 'Client';
+        req.session.masterAdmin = masterAdmin || 'Soniexchange';
 
-        console.log(`Master Admin ${loggedInUser} impersonated into client ID: ${targetUser}`);
+        console.log(`Master Admin impersonated into client ID: ${targetUser}`);
         res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
     } catch(err) {
         console.error(err);
-        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        res.redirect(`/soni-view?username=Soniexchange`);
     }
 });
 
