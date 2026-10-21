@@ -1010,7 +1010,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY & 2FA REDIRECTION CHECK)
+// 2. FIXED LOGIN PROCESS (DIRECT SESSION SETUP & REDIRECT)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -1021,6 +1021,7 @@ app.post('/login-process', async (req, res) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
+            console.log("Login failed: User not found ->", username);
             return res.redirect('/');
         }
 
@@ -1028,10 +1029,19 @@ app.post('/login-process', async (req, res) => {
         const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password).catch(() => false));
 
         if (!isMatch) {
+            console.log("Login failed: Password mismatch for ->", username);
             return res.redirect('/');
         }
 
-        // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
+        // SET SESSION IMMEDIATELY
+        req.session.loggedInUser = user.username;
+        req.session.userRole = user.role || 'ADMIN';
+
+        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            req.session.masterAdmin = user.username;
+        }
+
+        // CHECK 2FA IF ENABLED
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
 
@@ -1039,7 +1049,7 @@ app.post('/login-process', async (req, res) => {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
                 try {
-                    await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*. Valid for this login attempt.`, { parse_mode: 'Markdown' });
+                    await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*`, { parse_mode: 'Markdown' });
                 } catch (err) {
                     console.error("Failed to send telegram OTP:", err);
                 }
@@ -1048,21 +1058,18 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/login/verify-otp?username=${encodeURIComponent(user.username)}`);
         }
 
-        req.session.loggedInUser = user.username;
-        req.session.userRole = user.role;
-
-        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
-            req.session.masterAdmin = user.username;
-        }
-
+        // CHECK TEMPORARY PASSWORD
         if (user.mustChangePassword === true) {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+        // DIRECTLY OPEN SONI-VIEW (DASHBOARD)
+        console.log("Login successful! Redirecting to soni-view for:", user.username);
+        return res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
+
     } catch(err) {
-        console.error(err);
-        res.redirect('/');
+        console.error("Login process error:", err);
+        return res.redirect('/');
     }
 });
 
