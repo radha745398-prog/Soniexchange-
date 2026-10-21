@@ -13,6 +13,59 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
+// TELEGRAM BOT CONFIGURATION (REPLACE WITH YOUR ACTUAL BOT TOKEN IF NEEDED)
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+let bot = null;
+try {
+  if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
+    bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+    
+    // Listen for Telegram /start and /connect commands
+    bot.on('message', async (msg) => {
+      const chatId = msg.chat.id;
+      const text = msg.text ? msg.text.trim() : '';
+
+      if (text.startsWith('/start')) {
+        bot.sendMessage(chatId, "Welcome to Soniexchange Security Bot! To connect your account, type /connect YOUR_CODE");
+      } else if (text.startsWith('/connect')) {
+        const parts = text.split(' ');
+        if (parts.length < 2) {
+          bot.sendMessage(chatId, "Please provide your connection code e.g. /connect 5DAB79F3");
+          return;
+        }
+        const connCode = parts[1].toUpperCase();
+
+        try {
+          const q = query(collection(db, "users"), where("telegramCode", "==", connCode));
+          const querySnapshot = await getDocs(q);
+
+          if (querySnapshot.empty) {
+            bot.sendMessage(chatId, "Invalid or expired connection code! Please generate a new code from your website secure auth settings.");
+          } else {
+            let targetDocId = null;
+            querySnapshot.forEach((d) => { targetDocId = d.id; });
+
+            if (targetDocId) {
+              const userRef = doc(db, 'users', targetDocId);
+              await updateDoc(userRef, {
+                telegramChatId: chatId.toString(),
+                telegramEnabled: true,
+                telegramCode: null // clear code after successful link
+              });
+              bot.sendMessage(chatId, `Success! Your account (${targetDocId}) is now successfully linked with Telegram. 2FA is enabled.`);
+            }
+          }
+        } catch (err) {
+          console.error("Telegram connection error:", err);
+          bot.sendMessage(chatId, "An error occurred while linking your account. Please try again.");
+        }
+      }
+    });
+  }
+} catch (e) {
+  console.log("Telegram Bot initialization notice:", e.message);
+}
+
 // Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyC_qTjOTUx0BdW5qMajZauMvquItJXchVA",
@@ -945,6 +998,19 @@ app.post('/login-process', async (req, res) => {
         // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
+
+            // If Telegram is enabled (and Google Auth is not primary or user prefers Telegram), 
+            // we can also generate and send a Telegram OTP right away if bot is active!
+            if (user.telegramEnabled && user.telegramChatId && bot) {
+                const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
+                req.session.pendingTelegramOtp = teleOtp;
+                try {
+                    await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*. Valid for this login attempt.`, { parse_mode: 'Markdown' });
+                } catch (err) {
+                    console.error("Failed to send telegram OTP:", err);
+                }
+            }
+
             return res.redirect(`/login/verify-otp?username=${encodeURIComponent(user.username)}`);
         }
 
@@ -1006,9 +1072,26 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     }
 });
 
-// 2.2 LOGIN OTP VERIFICATION PAGE (FOR 2FA USERS)
-app.get('/login/verify-otp', (req, res) => {
+// 2.2 LOGIN OTP VERIFICATION PAGE (FOR 2FA USERS - SUPPORTS GOOGLE AUTH, TELEGRAM, OR BOTH)
+app.get('/login/verify-otp', async (req, res) => {
     const username = req.query.username || '';
+    
+    let hasGauth = false;
+    let hasTelegram = false;
+
+    try {
+        if (username) {
+            const userRef = doc(db, 'users', username);
+            const docSnap = await getDoc(userRef);
+            if (docSnap.exists()) {
+                hasGauth = docSnap.data().gauthEnabled === true;
+                hasTelegram = docSnap.data().telegramEnabled === true;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
@@ -1022,17 +1105,32 @@ app.get('/login/verify-otp', (req, res) => {
             <div class="flex flex-col items-center justify-center w-full max-w-sm">
                 <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center">
                     <h2 class="text-sm font-bold text-gray-800 mb-2">Security Verification</h2>
-                    <p class="text-gray-600 text-[11px] mb-4">Please enter the 6-digit code from your Google Authenticator app.</p>
+                    <p class="text-gray-600 text-[11px] mb-4">
+                        ${hasGauth && hasTelegram ? 'Please enter your Google Authenticator 6-digit code or request an OTP via Telegram.' : 
+                          hasTelegram ? 'Please enter the OTP sent to your connected Telegram account.' : 
+                          'Please enter the 6-digit code from your Google Authenticator app.'}
+                    </p>
                     
                     <form action="/api/login/verify-otp" method="POST" class="space-y-4" autocomplete="off">
                         <input type="hidden" name="username" value="${username}">
                         <div>
-                            <input type="text" name="token" required placeholder="Enter 6-digit code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
+                            <input type="text" name="token" required placeholder="Enter verification code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
                         <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
                             Verify & Login →
                         </button>
                     </form>
+
+                    ${hasTelegram ? `
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <form action="/api/login/resend-telegram-otp" method="POST">
+                                <input type="hidden" name="username" value="${username}">
+                                <button type="submit" class="text-blue-600 hover:underline text-[11px] font-semibold bg-transparent border-0 cursor-pointer">
+                                    📩 Resend / Send OTP via Telegram
+                                </button>
+                            </form>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </body>
@@ -1040,7 +1138,24 @@ app.get('/login/verify-otp', (req, res) => {
     `);
 });
 
-// 2.3 LOGIN OTP VERIFICATION API
+// 2.2.1 RESEND TELEGRAM OTP ROUTE
+app.post('/api/login/resend-telegram-otp', async (req, res) => {
+    const { username } = req.body;
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists() && docSnap.data().telegramChatId && bot) {
+            const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            req.session.pendingTelegramOtp = teleOtp;
+            await bot.sendMessage(docSnap.data().telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*.`, { parse_mode: 'Markdown' });
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
+});
+
+// 2.3 LOGIN OTP VERIFICATION API (SUPPORTS BOTH GOOGLE AUTH & TELEGRAM)
 app.post('/api/login/verify-otp', async (req, res) => {
     const { username, token } = req.body;
     try {
@@ -1054,6 +1169,7 @@ app.post('/api/login/verify-otp', async (req, res) => {
         const user = docSnap.data();
         let verified = false;
 
+        // 1. Check Google Authenticator Token if enabled
         if (user.gauthEnabled && user.gauthSecret) {
             verified = speakeasy.totp.verify({
                 secret: user.gauthSecret,
@@ -1061,6 +1177,14 @@ app.post('/api/login/verify-otp', async (req, res) => {
                 token: token,
                 window: 1
             });
+        }
+
+        // 2. Check Telegram OTP if enabled and not yet verified by Google Auth
+        if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
+            if (token.trim() === req.session.pendingTelegramOtp.trim()) {
+                verified = true;
+                delete req.session.pendingTelegramOtp;
+            }
         }
 
         if (!verified) {
@@ -1362,7 +1486,7 @@ app.post('/api/secureauth/telegram', async (req, res) => {
         }
 
         const telegramCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-        await updateDoc(userRef, { telegramCode, telegramEnabled: true });
+        await updateDoc(userRef, { telegramCode });
 
         res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
     } catch (err) {
