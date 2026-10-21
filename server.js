@@ -13,21 +13,13 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// TELEGRAM BOT CONFIGURATION (WITH PERMANENT 409 CONFLICT SILENCER)
+// TELEGRAM BOT CONFIGURATION (UPDATED WITH YOUR NEW BOT TOKEN)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
 let bot = null;
 try {
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     
-    // Gracefully ignore duplicate polling conflicts on mobile/Render environments
-    bot.on('polling_error', (error) => {
-      if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
-        return; // Suppress conflict errors silently
-      }
-      console.log('Telegram Bot Error:', error.message);
-    });
-
     // Listen for Telegram /start and /connect commands
     bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
@@ -1010,7 +1002,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (DIRECT SESSION SETUP & REDIRECT)
+// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY & 2FA REDIRECTION CHECK)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -1021,7 +1013,6 @@ app.post('/login-process', async (req, res) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-            console.log("Login failed: User not found ->", username);
             return res.redirect('/');
         }
 
@@ -1029,19 +1020,10 @@ app.post('/login-process', async (req, res) => {
         const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password).catch(() => false));
 
         if (!isMatch) {
-            console.log("Login failed: Password mismatch for ->", username);
             return res.redirect('/');
         }
 
-        // SET SESSION IMMEDIATELY
-        req.session.loggedInUser = user.username;
-        req.session.userRole = user.role || 'ADMIN';
-
-        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
-            req.session.masterAdmin = user.username;
-        }
-
-        // CHECK 2FA IF ENABLED
+        // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
 
@@ -1049,7 +1031,7 @@ app.post('/login-process', async (req, res) => {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
                 try {
-                    await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*`, { parse_mode: 'Markdown' });
+                    await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*. Valid for this login attempt.`, { parse_mode: 'Markdown' });
                 } catch (err) {
                     console.error("Failed to send telegram OTP:", err);
                 }
@@ -1058,18 +1040,21 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/login/verify-otp?username=${encodeURIComponent(user.username)}`);
         }
 
-        // CHECK TEMPORARY PASSWORD
+        req.session.loggedInUser = user.username;
+        req.session.userRole = user.role;
+
+        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            req.session.masterAdmin = user.username;
+        }
+
         if (user.mustChangePassword === true) {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        // DIRECTLY OPEN SONI-VIEW (DASHBOARD)
-        console.log("Login successful! Redirecting to soni-view for:", user.username);
-        return res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
-
+        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
-        console.error("Login process error:", err);
-        return res.redirect('/');
+        console.error(err);
+        res.redirect('/');
     }
 });
 
