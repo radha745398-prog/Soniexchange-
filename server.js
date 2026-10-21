@@ -921,7 +921,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY)
+// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY & 2FA REDIRECTION CHECK)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -940,6 +940,12 @@ app.post('/login-process', async (req, res) => {
 
         if (!isMatch) {
             return res.redirect('/');
+        }
+
+        // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
+        if (user.gauthEnabled === true || user.telegramEnabled === true) {
+            req.session.pendingAuthUser = user.username;
+            return res.redirect(`/login/verify-otp?username=${encodeURIComponent(user.username)}`);
         }
 
         req.session.loggedInUser = user.username;
@@ -997,6 +1003,81 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.redirect(`/soni-view?username=Soniexchange`);
+    }
+});
+
+// 2.2 LOGIN OTP VERIFICATION PAGE (FOR 2FA USERS)
+app.get('/login/verify-otp', (req, res) => {
+    const username = req.query.username || '';
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Two-Factor Authentication - Soniexchange</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
+            <div class="flex flex-col items-center justify-center w-full max-w-sm">
+                <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center">
+                    <h2 class="text-sm font-bold text-gray-800 mb-2">Security Verification</h2>
+                    <p class="text-gray-600 text-[11px] mb-4">Please enter the 6-digit code from your Google Authenticator app.</p>
+                    
+                    <form action="/api/login/verify-otp" method="POST" class="space-y-4" autocomplete="off">
+                        <input type="hidden" name="username" value="${username}">
+                        <div>
+                            <input type="text" name="token" required placeholder="Enter 6-digit code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
+                            Verify & Login →
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+// 2.3 LOGIN OTP VERIFICATION API
+app.post('/api/login/verify-otp', async (req, res) => {
+    const { username, token } = req.body;
+    try {
+        const userRef = doc(db, 'users', username);
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+            return res.redirect('/');
+        }
+
+        const user = docSnap.data();
+        let verified = false;
+
+        if (user.gauthEnabled && user.gauthSecret) {
+            verified = speakeasy.totp.verify({
+                secret: user.gauthSecret,
+                encoding: 'base32',
+                token: token,
+                window: 1
+            });
+        }
+
+        if (!verified) {
+            return res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}&error=invalid`);
+        }
+
+        req.session.loggedInUser = user.username;
+        req.session.userRole = user.role;
+        if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            req.session.masterAdmin = user.username;
+        }
+        delete req.session.pendingAuthUser;
+
+        res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+    } catch (err) {
+        console.error(err);
+        res.redirect('/');
     }
 });
 
