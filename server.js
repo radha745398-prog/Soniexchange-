@@ -13,8 +13,8 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// TELEGRAM BOT CONFIGURATION (REPLACE WITH YOUR ACTUAL BOT TOKEN IF NEEDED)
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+// TELEGRAM BOT CONFIGURATION (UPDATED WITH YOUR NEW BOT TOKEN)
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
 let bot = null;
 try {
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
@@ -1407,7 +1407,7 @@ app.get('/admin/secureauth', async (req, res) => {
 
                             <div class="text-gray-600 text-[11px] space-y-1 bg-gray-50 p-4 rounded border border-gray-200 max-w-md mx-auto">
                                 <p class="font-semibold text-gray-800">Please follow below instructions for the telegram 2-step verification</p>
-                                <p>Find <span class="font-bold text-blue-600">@two_factor_gauth_bot</span> in your telegram and type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/start</code> command. Bot will respond you.</p>
+                                <p>Find <span class="font-bold text-blue-600">@soniexchange_auth_bot</span> in your telegram and type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/start</code> command. Bot will respond you.</p>
                                 <p>After this type <code class="bg-gray-200 px-1 py-0.5 rounded text-[10px]">/connect ${currentUser.telegramCode || '5DAB79F3'}</code> and send it to BOT.</p>
                                 <p class="text-[10px] text-gray-500">Now your telegram account will be linked with your website account and 2-Step verification will be enabled.</p>
                             </div>
