@@ -13,13 +13,21 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// TELEGRAM BOT CONFIGURATION (UPDATED WITH YOUR NEW BOT TOKEN)
+// TELEGRAM BOT CONFIGURATION (WITH PERMANENT 409 CONFLICT SILENCER)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
 let bot = null;
 try {
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     
+    // Gracefully ignore duplicate polling conflicts on mobile/Render environments
+    bot.on('polling_error', (error) => {
+      if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
+        return; // Suppress conflict errors silently
+      }
+      console.log('Telegram Bot Error:', error.message);
+    });
+
     // Listen for Telegram /start and /connect commands
     bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
