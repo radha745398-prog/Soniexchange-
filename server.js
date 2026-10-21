@@ -628,49 +628,10 @@ function getModalsHTML(loggedInUser) {
     `;
 }
 
-// MODAL SCRIPTS & BACK BUTTON NAVIGATION FIX FUNCTION
+// MODAL SCRIPTS FUNCTION
 function getModalScriptsJS() {
     return `
         <script>
-            // EXACT BACK BUTTON FLOW LOGIC
-            (function() {
-                if (window.history && window.history.pushState) {
-                    window.history.pushState(null, null, window.location.href);
-                    
-                    window.onpopstate = function () {
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const user = urlParams.get('username') || '${loggedInUser}';
-                        const currentPath = window.location.pathname;
-
-                        // 1. Check if any popup modal is open, close it first
-                        const activeModals = ['depositModal', 'withdrawModal', 'exposureModal', 'creditModal', 'passwordModal', 'statusModal', 'marketAnalysisModal', 'adminBalanceModal'];
-                        let modalClosed = false;
-                        activeModals.forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el && !el.classList.contains('hidden')) {
-                                el.classList.remove('flex');
-                                el.classList.add('hidden');
-                                modalClosed = true;
-                            }
-                        });
-
-                        if (modalClosed) {
-                            window.history.pushState(null, null, window.location.href);
-                            return;
-                        }
-
-                        // 2. If user is inside any page other than Dashboard -> Go STRAIGHT to Dashboard
-                        if (currentPath !== '/dashboard') {
-                            window.location.replace('/dashboard?username=' + encodeURIComponent(user));
-                        } 
-                        // 3. If user is ALREADY on Dashboard -> Go STRAIGHT to Login Page
-                        else {
-                            window.location.replace('/logout');
-                        }
-                    };
-                }
-            })();
-
             function handleOverlayClick(event, modalId) {
                 if (event.target.id === modalId) {
                     if (modalId === 'depositModal') closeDepositModal();
@@ -910,6 +871,17 @@ function getModalScriptsJS() {
                 if(input) input.value = '';
                 filterTableBySearch();
             }
+
+            window.addEventListener('popstate', function() {
+                closeDepositModal();
+                closeWithdrawModal();
+                closeExposureModal();
+                closeCreditModal();
+                closePasswordModal();
+                closeStatusModal();
+                closeMarketAnalysisModal();
+                closeAdminBalanceModal();
+            });
         </script>
     `;
 }
@@ -1027,6 +999,8 @@ app.post('/login-process', async (req, res) => {
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
 
+            // If Telegram is enabled (and Google Auth is not primary or user prefers Telegram), 
+            // we can also generate and send a Telegram OTP right away if bot is active!
             if (user.telegramEnabled && user.telegramChatId && bot) {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
@@ -1043,6 +1017,7 @@ app.post('/login-process', async (req, res) => {
         req.session.loggedInUser = user.username;
         req.session.userRole = user.role;
 
+        // FIXED: SAVE MASTER ADMIN PERMANENTLY IN SESSION MEMORY
         if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
             req.session.masterAdmin = user.username;
         }
@@ -1051,6 +1026,7 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
+        // REDIRECT TO BLANK DASHBOARD ON LOGIN
         res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
@@ -1066,6 +1042,7 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     const targetUser = req.params.targetUser;
 
     try {
+        // FIXED: ALLOW IF MASTER ADMIN SESSION OR FALLBACK URL ADMIN MATCHES
         const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
                                    (loggedInUser === 'Soniexchange') || 
                                    (userRole === 'ADMIN') || 
@@ -1082,6 +1059,7 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
             return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
         }
 
+        // FIXED: PRESERVE MASTER ADMIN MEMORY WHILE SWITCHING CURRENT SESSION
         req.session.loggedInUser = targetUser;
         req.session.userRole = targetSnap.data().role || 'Client';
         req.session.masterAdmin = masterAdmin || 'Soniexchange';
@@ -1191,6 +1169,7 @@ app.post('/api/login/verify-otp', async (req, res) => {
         const user = docSnap.data();
         let verified = false;
 
+        // 1. Check Google Authenticator Token if enabled
         if (user.gauthEnabled && user.gauthSecret) {
             verified = speakeasy.totp.verify({
                 secret: user.gauthSecret,
@@ -1200,6 +1179,7 @@ app.post('/api/login/verify-otp', async (req, res) => {
             });
         }
 
+        // 2. Check Telegram OTP if enabled and not yet verified by Google Auth
         if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
             if (token.trim() === req.session.pendingTelegramOtp.trim()) {
                 verified = true;
@@ -1328,7 +1308,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
     }
 });
 
-// 20. SECURE AUTH VERIFICATION PAGE ROUTE
+// 20. SECURE AUTH VERIFICATION PAGE ROUTE (WITH FULL WORKING BACKEND LOGIC FOR GOOGLE AUTH & TELEGRAM)
 app.get('/admin/secureauth', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -1337,6 +1317,7 @@ app.get('/admin/secureauth', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
+        // Generate Speakeasy Secret for Google Authenticator if not present
         let secretBase32 = currentUser.gauthSecret;
         if (!secretBase32) {
             const secret = speakeasy.generateSecret({ name: `Soniexchange (${loggedInUser})` });
