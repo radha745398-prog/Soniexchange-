@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const TelegramBot = require('node-telegram-bot-api');
-
+const axios = require('axios');
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -84,6 +84,33 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false }
 }));
+// RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
+
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'YOUR_RAPIDAPI_KEY_HERE';
+let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
+
+async function fetchRapidApiSportsData() {
+  try {
+    if (RAPIDAPI_KEY && RAPIDAPI_KEY !== 'YOUR_RAPIDAPI_KEY_HERE') {
+      const options = {
+        method: 'GET',
+        url: 'https://cricket-live-line1.p.rapidapi.com/matches',
+        headers: {
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'cricket-live-line1.p.rapidapi.com'
+        }
+      };
+      const response = await axios.request(options);
+      if (response && response.data) {
+        liveMatchesCache.cricket = response.data;
+      }
+    }
+  } catch (err) {
+    console.log("RapidAPI Fetch Notice (Using live engine fallback):", err.message);
+  }
+}
+fetchRapidApiSportsData();
+setInterval(fetchRapidApiSportsData, 15000);
 
 // AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
