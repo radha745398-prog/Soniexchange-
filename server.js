@@ -7,7 +7,6 @@ const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const TelegramBot = require('node-telegram-bot-api');
-const axios = require('axios');
 const app = express();
 app.use(express.json());
 app.use(cors());
