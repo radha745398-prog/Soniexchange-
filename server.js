@@ -1195,7 +1195,6 @@ closeBetSlip();
 `;
 }
 
-
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
 res.send(
