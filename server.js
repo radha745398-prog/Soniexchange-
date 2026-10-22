@@ -107,11 +107,11 @@ async function fetchRapidApiSportsData() {
   } catch (err) {
     console.log("RapidAPI Fetch Notice (Using live engine fallback):", err.message);
   }
+}
 
 fetchRapidApiSportsData();
 setInterval(fetchRapidApiSportsData, 15000);
 
-// AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
   try {
     const adminRef = doc(db, 'users', 'Soniexchange');
