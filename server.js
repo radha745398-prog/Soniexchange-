@@ -92,23 +92,22 @@ let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] 
 async function fetchRapidApiSportsData() {
   try {
     if (RAPIDAPI_KEY && RAPIDAPI_KEY !== 'YOUR_RAPIDAPI_KEY_HERE') {
-      const options = {
+      const response = await fetch('https://cricket-live-line1.p.rapidapi.com/matches', {
         method: 'GET',
-        url: 'https://cricket-live-line1.p.rapidapi.com/matches',
         headers: {
           'X-RapidAPI-Key': RAPIDAPI_KEY,
           'X-RapidAPI-Host': 'cricket-live-line1.p.rapidapi.com'
         }
-      };
-      const response = await axios.request(options);
-      if (response && response.data) {
-        liveMatchesCache.cricket = response.data;
+      });
+      const data = await response.json();
+      if (data) {
+        liveMatchesCache.cricket = data;
       }
     }
   } catch (err) {
     console.log("RapidAPI Fetch Notice (Using live engine fallback):", err.message);
   }
-}
+
 fetchRapidApiSportsData();
 setInterval(fetchRapidApiSportsData, 15000);
 
