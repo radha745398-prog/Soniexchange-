@@ -1,4 +1,4 @@
-Const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
@@ -977,10 +977,10 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">LIVE ALL</span>
 <div class="overflow-hidden whitespace-nowrap w-full">
 <div class="inline-block font-semibold text-white space-x-8">
-<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov) [Rate: <span class="market-price">1.90</span>]</span>
-<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87') [Rate: <span class="market-price">2.10</span>]</span>
-<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5 [Rate: <span class="market-price">1.75</span>]</span>
-<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9) [Rate: <span class="market-price">1.55</span>]</span>
+<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov) [Rate: <span class="market-price">1.90</span>]</span>
+<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87') [Rate: <span class="market-price">2.10</span>]</span>
+<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5 [Rate: <span class="market-price">1.75</span>]</span>
+<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9) [Rate: <span class="market-price">1.55</span>]</span>
 </div>
 </div>
 </div>
@@ -989,7 +989,6 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
 <span class="text-red-500 cursor-pointer">CRASH</span>
 <span class="cursor-pointer">LOTTERY</span>
-
 <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
 <span class="cursor-pointer">OUR CASINO</span>
 <span class="cursor-pointer">LIVE CASINO</span>
@@ -1011,7 +1010,7 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <!-- MATCH 1: CRICKET -->
 <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
 <div class="flex justify-between items-center mb-1">
-<span class="font-bold text-cyan-300">🏏 Mumbai Indians (w) vs Kolkata Knight Riders (w)</span>
+<span class="font-bold text-cyan-300">🏏 Mumbai Indians (w) vs Kolkata Knight Riders (w)</span>
 <span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE STREAMING</span>
 </div>
 <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
@@ -1027,7 +1026,7 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <!-- MATCH 2: FOOTBALL -->
 <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
 <div class="flex justify-between items-center mb-1">
-<span class="font-bold text-green-300">⚽ Real Madrid vs Barcelona</span>
+<span class="font-bold text-green-300">⚽ Real Madrid vs Barcelona</span>
 <span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE (87')</span>
 </div>
 <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
@@ -1043,8 +1042,7 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <!-- MATCH 3: TENNIS -->
 <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
 <div class="flex justify-between items-center mb-1">
-
-<span class="font-bold text-cyan-300">🎾 N. Djokovic vs C. Alcaraz</span>
+<span class="font-bold text-cyan-300">🎾 N. Djokovic vs C. Alcaraz</span>
 <span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
 </div>
 <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
@@ -1060,7 +1058,7 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <!-- MATCH 4: TABLE TENNIS -->
 <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
 <div class="flex justify-between items-center mb-1">
-<span class="font-bold text-pink-300">🏓 M. Fan vs D. Ovtcharov</span>
+<span class="font-bold text-pink-300">🏓 M. Fan vs D. Ovtcharov</span>
 <span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
 </div>
 <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
@@ -1094,7 +1092,6 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 </div>
 <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
 <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-
 <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
 </div>
 <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
@@ -1859,143 +1856,6 @@ app.post('/api/update-manual-password', async (req, res) => {
         res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 });
-
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (EXACTLY MATCHING YOUR SCREENSHOT)
-function renderClientInterface(username, points, exposure) {
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Soniexchange - Home</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-            .odds-back { background-color: #72bbef; color: #000000; font-weight: bold; }
-            .odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; }
-            .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
-            .casino-card:hover { transform: scale(1.02); }
-        </style>
-    </head>
-    <body class="text-xs">
-        <!-- CLIENT HEADER BAR -->
-        <header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-bars text-sm cursor-pointer"></i>
-                <span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
-            </div>
-            <div class="flex items-center space-x-3 text-[11px]">
-                <i class="fa-solid fa-magnifying-glass text-xs cursor-pointer"></i>
-                <div class="text-right">
-                    <div>Balance: <span class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
-                    <div class="text-[10px] text-gray-300">Exp: <span class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
-                </div>
-            </div>
-        </header>
-
-        <!-- TICKER MARQUEE -->
-        <div class="bg-[#162a3a] text-gray-300 px-3 py-1 text-[10px] flex items-center border-b border-gray-800">
-            <marquee class="font-semibold">Newly Launched Matka Market in Our Exchange | Welcome to Soniexchange!</marquee>
-        </div>
-
-        <!-- CATEGORIES BAR -->
-        <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
-            <span class="text-red-500 cursor-pointer">CRASH</span>
-            <span class="cursor-pointer">LOTTERY</span>
-            <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
-            <span class="cursor-pointer">OUR CASINO</span>
-            <span class="cursor-pointer">LIVE CASINO</span>
-            <span class="cursor-pointer">SLOTS</span>
-            <span class="cursor-pointer">FANTASY</span>
-        </div>
-
-        <!-- SPORTS ICONS BAR -->
-        <div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
-            <div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
-        </div>
-
-        <!-- MATCH ODDS ROWS -->
-        <div class="p-1 space-y-1">
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Mumbai Indians (w) - Kolkata Knight Riders (w)</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.90</div>
-                    <div class="odds-lay py-1 rounded-xs">1.92</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.10</div>
-                    <div class="odds-lay py-1 rounded-xs">2.12</div>
-                </div>
-            </div>
-
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Pakistan T10 v Bangladesh T10</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.85</div>
-                    <div class="odds-lay py-1 rounded-xs">1.87</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.15</div>
-                    <div class="odds-lay py-1 rounded-xs">2.18</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CASINO CARDS GRID -->
-        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
-                <span class="text-[10px] font-bold block mt-1">MATKA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
-                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
-                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
-                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
-                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
-                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
-                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
-                <span class="text-[10px] font-bold block mt-1">POKER</span>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-}
 
 // 7. DASHBOARD ROUTE (AUTOMATIC ROUTING FOR CLIENT VS MASTER/ADMIN)
 app.get('/dashboard', async (req, res) => {
