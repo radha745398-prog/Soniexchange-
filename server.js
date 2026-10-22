@@ -84,7 +84,7 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
+// RAPIDAPI & GLOBAL LIVE MATCH ENGINE FETCH SETUP
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '269384970fmsh3bc319f6f386606p1959e4jc75b4ec7';
 
 let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
@@ -101,7 +101,8 @@ async function fetchRapidApiSportsData() {
       });
       const data = await response.json();
       if (data) {
-        liveMatchesCache.cricket = data;
+        // Handle array or object response from RapidAPI securely
+        liveMatchesCache.cricket = Array.isArray(data) ? data : (data.matches || data.data || [data]);
       }
     }
   } catch (err) {
@@ -110,7 +111,12 @@ async function fetchRapidApiSportsData() {
 }
 
 fetchRapidApiSportsData();
-setInterval(fetchRapidApiSportsData, 30000); // Stable background fetch (no blinking)
+setInterval(fetchRapidApiSportsData, 15000); // Background fetch to keep live odds updated
+
+// API ENDPOINT TO SERVE LIVE MATCHES TO CLIENT PANEL
+app.get('/api/live-matches', (req, res) => {
+    res.json(liveMatchesCache);
+});
 
 // AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
@@ -194,45 +200,10 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 <button type="button" id="sidebarCloseBtn" class="text-white hover:text-gray-200 cursor-pointer"><i class="fa-solid fa-xmark text-base pointer-events-none"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Mixed Martial Arts</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Golf</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boxing</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Beach Volleyball</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Table Tennis</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Futsal</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Horse Racing</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>E Games</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>MotoGP</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Chess</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Volleyball</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Ice Hockey</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cycling</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motorbikes</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Athletics</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball 3X3</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Sumo</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Virtual sports</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Handball</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Politics</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motor Sports</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Baseball</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby Union</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby League</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Darts</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>American Football</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Snooker</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Soccer</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esports</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Greyhound Racing</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Kabaddi</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boat Racing</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esoccer</span> <span>+</span></div>
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Wrestling</span> <span>+</span></div>
             </div>
         </aside>
 
@@ -961,7 +932,7 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH STABLE STABLE INTERACTIVE BET SLIP
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH DYNAMIC RAPIDAPI LIVE CRICKET MATCHES
 function renderClientInterface(username, points, exposure) {
 return `
 <!DOCTYPE html>
@@ -1001,11 +972,8 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <div class="bg-[#162a3a] text-cyan-300 px-3 py-2 text-[11px] flex items-center border-b border-gray-800 space-x-3 shadow-inner">
 <span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">LIVE ALL</span>
 <div class="overflow-hidden whitespace-nowrap w-full">
-<div class="inline-block font-semibold text-white space-x-8">
-<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov)</span>
-<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87')</span>
-<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5</span>
-<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9)</span>
+<div id="liveTickerText" class="inline-block font-semibold text-white space-x-8">
+🏏 Synchronizing global live cricket matches, odds, and commentary...
 </div>
 </div>
 </div>
@@ -1014,87 +982,16 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
 <span class="text-red-500 cursor-pointer">CRASH</span>
 <span class="cursor-pointer">LOTTERY</span>
-<span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
+<span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">CRICKET (LIVE & UPCOMING)</span>
 <span class="cursor-pointer">OUR CASINO</span>
 <span class="cursor-pointer">LIVE CASINO</span>
 <span class="cursor-pointer">SLOTS</span>
 <span class="cursor-pointer">FANTASY</span>
 </div>
 
-<!-- SPORTS ICONS BAR -->
-<div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
-<div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
-<div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
-<div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
-<div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
-<div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
-</div>
-
-<!-- LIVE MATCH ODDS ROWS -->
-<div class="p-2 space-y-2">
-<!-- MATCH 1: CRICKET -->
-<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
-<div class="flex justify-between items-center mb-1">
-<span class="font-bold text-cyan-300">🏏 Mumbai Indians (w) vs Kolkata Knight Riders (w)</span>
-<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE STREAMING</span>
-</div>
-<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Mumbai Indians (w)', 'BACK', 1.90)">1.90</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Mumbai Indians (w)', 'LAY', 1.92)">1.92</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Kolkata Knight Riders (w)', 'BACK', 2.10)">2.10</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Kolkata Knight Riders (w)', 'LAY', 2.12)">2.12</div>
-</div>
-</div>
-
-<!-- MATCH 2: FOOTBALL -->
-<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
-<div class="flex justify-between items-center mb-1">
-<span class="font-bold text-green-300">⚽ Real Madrid vs Barcelona</span>
-<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE (87')</span>
-</div>
-<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Real Madrid', 'BACK', 1.75)">1.75</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Real Madrid', 'LAY', 1.78)">1.78</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">3.20</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">3.25</div>
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Barcelona', 'BACK', 2.45)">2.45</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Barcelona', 'LAY', 2.50)">2.50</div>
-</div>
-</div>
-
-<!-- MATCH 3: TENNIS -->
-<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
-<div class="flex justify-between items-center mb-1">
-<span class="font-bold text-cyan-300">🎾 N. Djokovic vs C. Alcaraz</span>
-<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
-</div>
-<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('N. Djokovic', 'BACK', 1.65)">1.65</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('N. Djokovic', 'LAY', 1.68)">1.68</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('C. Alcaraz', 'BACK', 2.30)">2.30</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('C. Alcaraz', 'LAY', 2.35)">2.35</div>
-</div>
-</div>
-
-<!-- MATCH 4: TABLE TENNIS -->
-<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
-<div class="flex justify-between items-center mb-1">
-<span class="font-bold text-pink-300">🏓 M. Fan vs D. Ovtcharov</span>
-<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
-</div>
-<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('M. Fan', 'BACK', 1.50)">1.50</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('M. Fan', 'LAY', 1.53)">1.53</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-<div class="odds-back py-1.5 rounded" onclick="openBetSlip('D. Ovtcharov', 'BACK', 2.70)">2.70</div>
-<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('D. Ovtcharov', 'LAY', 2.75)">2.75</div>
-</div>
-</div>
+<!-- DYNAMIC LIVE CRICKET MATCHES CONTAINER -->
+<div id="dynamicMatchesContainer" class="p-2 space-y-2">
+<div class="text-center text-gray-400 p-4">Loading live matches from RapidAPI...</div>
 </div>
 
 <!-- CASINO CARDS GRID -->
@@ -1122,18 +1019,6 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
 <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
 <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
-<span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
-<span class="text-[10px] font-bold block mt-1">BACCARAT</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
-<span class="text-[10px] font-bold block mt-1">POKER</span>
 </div>
 </div>
 
@@ -1163,48 +1048,94 @@ Odds: <span id="betOdds" class="font-bold text-cyan-300">0.00</span>
 </div>
 </div>
 
-<!-- STABLE BETTING SCRIPT (NO BLINKING) -->
+<!-- DYNAMIC LIVE FETCH & STABLE BETTING SCRIPT -->
 <script>
 let activeBet = { selection: '', type: '', odds: 0 };
 
+async function fetchAndRenderLiveMatches() {
+    try {
+        const res = await fetch('/api/live-matches');
+        const data = await res.json();
+        
+        let html = '';
+        if (data && data.cricket && data.cricket.length > 0) {
+            data.cricket.forEach(m => {
+                let matchTitle = m.matchname || m.title || m.name || 'Live Cricket Match';
+                let team1 = m.team1 || m.t1 || 'Team A';
+                let team2 = m.team2 || m.t2 || 'Team B';
+                let b1 = m.b1 || m.back1 || '1.90';
+                let l1 = m.l1 || m.lay1 || '1.92';
+                let b2 = m.b2 || m.back2 || '2.10';
+                let l2 = m.l2 || m.lay2 || '2.12';
+                let statusText = m.status || m.remark || '● LIVE';
+
+                html += \`
+                <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-cyan-300">🏏 \${matchTitle}</span>
+                        <span class="text-[9px] text-green-400 font-bold animate-pulse">\${statusText}</span>
+                    </div>
+                    <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
+                        <div class="odds-back py-1.5 rounded" onclick="openBetSlip('\${team1}', 'BACK', \${b1})">\${team1}<br>\${b1}</div>
+                        <div class="odds-lay py-1.5 rounded" onclick="openBetSlip('\${team1}', 'LAY', \${l1})">\${l1}</div>
+                        <div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+                        <div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+                        <div class="odds-back py-1.5 rounded" onclick="openBetSlip('\${team2}', 'BACK', \${b2})">\${team2}<br>\${b2}</div>
+                        <div class="odds-lay py-1.5 rounded" onclick="openBetSlip('\${team2}', 'LAY', \${l2})">\${l2}</div>
+                    </div>
+                </div>\`;
+            });
+            document.getElementById('dynamicMatchesContainer').innerHTML = html;
+            document.getElementById('liveTickerText').innerText = "🏏 Global live matches & odds successfully updated from RapidAPI!";
+        } else {
+            document.getElementById('dynamicMatchesContainer').innerHTML = '<div class="text-center text-gray-400 p-4">No live cricket matches found right now. Check back shortly.</div>';
+        }
+    } catch (err) {
+        console.error("Error fetching live matches:", err);
+    }
+}
+
+fetchAndRenderLiveMatches();
+setInterval(fetchAndRenderLiveMatches, 15000); // Stable background polling without page blinking
+
 function openBetSlip(selection, type, odds) {
-activeBet = { selection, type, odds };
-document.getElementById('betSelection').innerText = selection;
-document.getElementById('betType').innerText = type;
-document.getElementById('betType').className = type === 'BACK' ? 'font-bold text-blue-400' : 'font-bold text-pink-400';
-document.getElementById('betOdds').innerText = odds;
-document.getElementById('betStake').value = '';
-document.getElementById('betProfit').innerText = '0.00';
-document.getElementById('betSlipContainer').classList.remove('hidden');
+    activeBet = { selection, type, odds };
+    document.getElementById('betSelection').innerText = selection;
+    document.getElementById('betType').innerText = type;
+    document.getElementById('betType').className = type === 'BACK' ? 'font-bold text-blue-400' : 'font-bold text-pink-400';
+    document.getElementById('betOdds').innerText = odds;
+    document.getElementById('betStake').value = '';
+    document.getElementById('betProfit').innerText = '0.00';
+    document.getElementById('betSlipContainer').classList.remove('hidden');
 }
 
 function closeBetSlip() {
-document.getElementById('betSlipContainer').classList.add('hidden');
+    document.getElementById('betSlipContainer').classList.add('hidden');
 }
 
 function calculateProfit() {
-let stake = parseFloat(document.getElementById('betStake').value) || 0;
-let profit = stake * (activeBet.odds - 1);
-document.getElementById('betProfit').innerText = profit.toFixed(2);
+    let stake = parseFloat(document.getElementById('betStake').value) || 0;
+    let profit = stake * (activeBet.odds - 1);
+    document.getElementById('betProfit').innerText = profit.toFixed(2);
 }
 
 function submitBet(username) {
-let stake = parseFloat(document.getElementById('betStake').value) || 0;
-let currentBal = parseFloat('${points}') || 0;
+    let stake = parseFloat(document.getElementById('betStake').value) || 0;
+    let currentBal = parseFloat('${points}') || 0;
 
-if (stake <= 0) {
-alert('Please enter a valid stake amount!');
-return;
-}
-if (stake > currentBal) {
-alert('Insufficient balance to place this bet!');
-return;
-}
+    if (stake <= 0) {
+        alert('Please enter a valid stake amount!');
+        return;
+    }
+    if (stake > currentBal) {
+        alert('Insufficient balance to place this bet!');
+        return;
+    }
 
-alert('Bet Placed Successfully! Stake: ' + stake + ' points on ' + activeBet.selection);
-let newBal = currentBal - stake;
-document.getElementById('clientBalance').innerText = newBal.toLocaleString();
-closeBetSlip();
+    alert('Bet Placed Successfully! Stake: ' + stake + ' points on ' + activeBet.selection);
+    let newBal = currentBal - stake;
+    document.getElementById('clientBalance').innerText = newBal.toLocaleString();
+    closeBetSlip();
 }
 </script>
 </body>
