@@ -84,8 +84,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false }
 }));
-// RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
 
+// RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'YOUR_RAPIDAPI_KEY_HERE';
 let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
 
@@ -107,6 +107,7 @@ async function fetchRapidApiSportsData() {
   } catch (err) {
     console.log("RapidAPI Fetch Notice (Using live engine fallback):", err.message);
   }
+}
 
 fetchRapidApiSportsData();
 setInterval(fetchRapidApiSportsData, 15000);
@@ -277,7 +278,6 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 }
             });
 
-            // REALTIME SEARCH HANDLER
             let searchTimeout = null;
             function handleSearchInput(val) {
                 clearTimeout(searchTimeout);
@@ -960,7 +960,6 @@ app.get('/api/user-detail', async (req, res) => {
         res.json({ success: false });
     }
 });
-
 
 // CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH LIVE ODDS & INTERACTIVE BET SLIP
 function renderClientInterface(username, points, exposure) {
