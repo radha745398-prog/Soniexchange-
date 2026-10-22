@@ -85,7 +85,8 @@ app.use(session({
 }));
 
 // RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'YOUR_RAPIDAPI_KEY_HERE';
+const RAPIDAPI_KEY = '269384970fmsh3bc319f6f386606p1959e4jc75b4ec7';
+
 let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
 
 async function fetchRapidApiSportsData() {
