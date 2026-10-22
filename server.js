@@ -935,141 +935,276 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (EXACTLY MATCHING YOUR SCREENSHOT)
+
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH LIVE ODDS & INTERACTIVE BET SLIP
 function renderClientInterface(username, points, exposure) {
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Soniexchange - Home</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-            .odds-back { background-color: #72bbef; color: #000000; font-weight: bold; }
-            .odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; }
-            .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
-            .casino-card:hover { transform: scale(1.02); }
-        </style>
-    </head>
-    <body class="text-xs">
-        <!-- CLIENT HEADER BAR -->
-        <header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-bars text-sm cursor-pointer"></i>
-                <span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
-            </div>
-            <div class="flex items-center space-x-3 text-[11px]">
-                <i class="fa-solid fa-magnifying-glass text-xs cursor-pointer"></i>
-                <div class="text-right">
-                    <div>Balance: <span class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
-                    <div class="text-[10px] text-gray-300">Exp: <span class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
-                </div>
-            </div>
-        </header>
+return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soniexchange - Live Exchange & Betting</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
+.odds-back { background-color: #72bbef; color: #000000; font-weight: bold; cursor: pointer; transition: background-color 0.1s; }
+.odds-back:hover { background-color: #5fa8df; }
+.odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; cursor: pointer; transition: background-color 0.1s; }
+.odds-lay:hover { background-color: #f58da3; }
+.casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
+.casino-card:hover { transform: scale(1.02); }
+</style>
+</head>
+<body class="text-xs pb-20">
+<!-- CLIENT HEADER BAR -->
+<header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700 sticky top-0 z-40">
+<div class="flex items-center space-x-3">
+<i class="fa-solid fa-bars text-sm cursor-pointer"></i>
+<span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
+</div>
+<div class="flex items-center space-x-3 text-[11px]">
+<div class="text-right">
+<div>Balance: <span id="clientBalance" class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
+<div class="text-[10px] text-gray-300">Exp: <span id="clientExposure" class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
+</div>
+</div>
+</header>
 
-        <!-- TICKER MARQUEE -->
-        <div class="bg-[#162a3a] text-gray-300 px-3 py-1 text-[10px] flex items-center border-b border-gray-800">
-            <marquee class="font-semibold">Newly Launched Matka Market in Our Exchange | Welcome to Soniexchange!</marquee>
-        </div>
+<!-- MULTI-SPORT REAL-TIME LIVE TICKER BAR -->
+<div class="bg-[#162a3a] text-cyan-300 px-3 py-2 text-[11px] flex items-center border-b border-gray-800 space-x-3 shadow-inner">
+<span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">LIVE ALL</span>
+<div class="overflow-hidden whitespace-nowrap w-full">
+<div class="inline-block font-semibold text-white space-x-8">
+<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov) [Rate: <span class="market-price">1.90</span>]</span>
+<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87') [Rate: <span class="market-price">2.10</span>]</span>
+<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5 [Rate: <span class="market-price">1.75</span>]</span>
+<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9) [Rate: <span class="market-price">1.55</span>]</span>
+</div>
+</div>
+</div>
 
-        <!-- CATEGORIES BAR -->
-        <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
-            <span class="text-red-500 cursor-pointer">CRASH</span>
-            <span class="cursor-pointer">LOTTERY</span>
-            <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
-            <span class="cursor-pointer">OUR CASINO</span>
-            <span class="cursor-pointer">LIVE CASINO</span>
-            <span class="cursor-pointer">SLOTS</span>
-            <span class="cursor-pointer">FANTASY</span>
-        </div>
+<!-- CATEGORIES BAR -->
+<div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
+<span class="text-red-500 cursor-pointer">CRASH</span>
+<span class="cursor-pointer">LOTTERY</span>
 
-        <!-- SPORTS ICONS BAR -->
-        <div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
-            <div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
-        </div>
+<span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
+<span class="cursor-pointer">OUR CASINO</span>
+<span class="cursor-pointer">LIVE CASINO</span>
+<span class="cursor-pointer">SLOTS</span>
+<span class="cursor-pointer">FANTASY</span>
+</div>
 
-        <!-- MATCH ODDS ROWS -->
-        <div class="p-1 space-y-1">
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Mumbai Indians (w) - Kolkata Knight Riders (w)</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.90</div>
-                    <div class="odds-lay py-1 rounded-xs">1.92</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.10</div>
-                    <div class="odds-lay py-1 rounded-xs">2.12</div>
-                </div>
-            </div>
+<!-- SPORTS ICONS BAR -->
+<div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
+<div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
+<div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
+<div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
+<div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
+<div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
+</div>
 
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Pakistan T10 v Bangladesh T10</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.85</div>
-                    <div class="odds-lay py-1 rounded-xs">1.87</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.15</div>
-                    <div class="odds-lay py-1 rounded-xs">2.18</div>
-                </div>
-            </div>
-        </div>
+<!-- LIVE MATCH ODDS ROWS -->
+<div class="p-2 space-y-2">
+<!-- MATCH 1: CRICKET -->
+<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-cyan-300">🏏 Mumbai Indians (w) vs Kolkata Knight Riders (w)</span>
+<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE STREAMING</span>
+</div>
+<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Mumbai Indians (w)', 'BACK', 1.90)">1.90</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Mumbai Indians (w)', 'LAY', 1.92)">1.92</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Kolkata Knight Riders (w)', 'BACK', 2.10)">2.10</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Kolkata Knight Riders (w)', 'LAY', 2.12)">2.12</div>
+</div>
+</div>
 
-        <!-- CASINO CARDS GRID -->
-        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
-                <span class="text-[10px] font-bold block mt-1">MATKA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
-                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
-                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
-                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
-                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
-                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
-                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
-                <span class="text-[10px] font-bold block mt-1">POKER</span>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
+<!-- MATCH 2: FOOTBALL -->
+<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-green-300">⚽ Real Madrid vs Barcelona</span>
+<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE (87')</span>
+</div>
+<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Real Madrid', 'BACK', 1.75)">1.75</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Real Madrid', 'LAY', 1.78)">1.78</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">3.20</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">3.25</div>
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('Barcelona', 'BACK', 2.45)">2.45</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('Barcelona', 'LAY', 2.50)">2.50</div>
+</div>
+</div>
+
+<!-- MATCH 3: TENNIS -->
+<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
+<div class="flex justify-between items-center mb-1">
+
+<span class="font-bold text-cyan-300">🎾 N. Djokovic vs C. Alcaraz</span>
+<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
+</div>
+<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('N. Djokovic', 'BACK', 1.65)">1.65</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('N. Djokovic', 'LAY', 1.68)">1.68</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('C. Alcaraz', 'BACK', 2.30)">2.30</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('C. Alcaraz', 'LAY', 2.35)">2.35</div>
+</div>
+</div>
+
+<!-- MATCH 4: TABLE TENNIS -->
+<div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-pink-300">🏓 M. Fan vs D. Ovtcharov</span>
+<span class="text-[9px] text-green-400 font-bold animate-pulse">● LIVE</span>
+</div>
+<div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('M. Fan', 'BACK', 1.50)">1.50</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('M. Fan', 'LAY', 1.53)">1.53</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
+<div class="odds-back py-1.5 rounded" onclick="openBetSlip('D. Ovtcharov', 'BACK', 2.70)">2.70</div>
+<div class="odds-lay py-1.5 rounded" onclick="openBetSlip('D. Ovtcharov', 'LAY', 2.75)">2.75</div>
+</div>
+</div>
+</div>
+
+<!-- CASINO CARDS GRID -->
+<div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
+<span class="text-[10px] font-bold block mt-1">MATKA</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
+<span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
+<span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
+<span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
+
+<span class="text-[10px] font-bold block mt-1">ROULETTE</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
+<span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
+<span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
+<span class="text-[10px] font-bold block mt-1">BACCARAT</span>
+</div>
+<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+<div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
+<span class="text-[10px] font-bold block mt-1">POKER</span>
+</div>
+</div>
+
+<!-- INTERACTIVE BET SLIP -->
+<div id="betSlipContainer" class="fixed bottom-0 left-0 right-0 bg-[#1e3a4c] border-t-2 border-cyan-500 p-3 shadow-2xl hidden z-50">
+<div class="max-w-xl mx-auto flex flex-col space-y-2">
+<div class="flex justify-between items-center text-white font-bold">
+<span id="betTitle" class="text-cyan-300">Place Bet</span>
+<button onclick="closeBetSlip()" class="text-red-400 hover:text-white cursor-pointer px-2">✕ Close</button>
+</div>
+<div class="flex items-center space-x-2 text-xs">
+<div class="bg-[#0d1e2b] px-3 py-1 rounded text-white flex-1">
+Selection: <span id="betSelection" class="font-bold text-yellow-400"></span> (<span id="betType" class="font-bold"></span>)
+</div>
+<div class="bg-[#0d1e2b] px-3 py-1 rounded text-white">
+Odds: <span id="betOdds" class="font-bold text-cyan-300">0.00</span>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<input type="number" id="betStake" placeholder="Enter Stake (Points)" class="w-full bg-white text-black px-3 py-1.5 rounded font-bold text-xs focus:outline-none" oninput="calculateProfit()">
+<button onclick="submitBet('${username}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-1.5 rounded cursor-pointer uppercase shadow">Place Bet</button>
+</div>
+<div class="text-[10px] text-gray-300 flex justify-between">
+<span>Potential Profit: <span id="betProfit" class="text-green-400 font-bold">0.00</span></span>
+<span>Available Balance: <span class="text-green-400 font-bold">${Number(points || 0).toLocaleString()}</span></span>
+</div>
+</div>
+</div>
+
+<!-- 15ms ODDS ENGINE & BETTING SCRIPT -->
+<script>
+let activeBet = { selection: '', type: '', odds: 0 };
+
+function runHyperSpeedOddsEngine() {
+const elements = document.querySelectorAll('.odds-back, .odds-lay, .market-price');
+elements.forEach(el => {
+let val = parseFloat(el.innerText);
+
+if (!isNaN(val)) {
+let delta = (Math.random() * 0.02 - 0.01);
+let updated = Math.max(1.01, (val + delta)).toFixed(2);
+el.innerText = updated;
+el.style.transition = "background-color 0.005s ease-in-out";
+el.style.backgroundColor = delta > 0 ? "#86efac" : "#faa9ba";
+setTimeout(() => { el.style.backgroundColor = ""; }, 12);
+}
+});
+}
+setInterval(runHyperSpeedOddsEngine, 15);
+
+function openBetSlip(selection, type, odds) {
+activeBet = { selection, type, odds };
+document.getElementById('betSelection').innerText = selection;
+document.getElementById('betType').innerText = type;
+document.getElementById('betType').className = type === 'BACK' ? 'font-bold text-blue-400' : 'font-bold text-pink-400';
+document.getElementById('betOdds').innerText = odds;
+document.getElementById('betStake').value = '';
+document.getElementById('betProfit').innerText = '0.00';
+document.getElementById('betSlipContainer').classList.remove('hidden');
+}
+
+function closeBetSlip() {
+document.getElementById('betSlipContainer').classList.add('hidden');
+}
+
+function calculateProfit() {
+let stake = parseFloat(document.getElementById('betStake').value) || 0;
+let profit = stake * (activeBet.odds - 1);
+document.getElementById('betProfit').innerText = profit.toFixed(2);
+}
+
+function submitBet(username) {
+let stake = parseFloat(document.getElementById('betStake').value) || 0;
+let currentBal = parseFloat('${points}') || 0;
+
+if (stake <= 0) {
+alert('Please enter a valid stake amount!');
+return;
+}
+if (stake > currentBal) {
+alert('Insufficient balance to place this bet!');
+return;
+}
+
+alert('Bet Placed Successfully! Stake: ' + stake + ' points on ' + activeBet.selection);
+let newBal = currentBal - stake;
+document.getElementById('clientBalance').innerText = newBal.toLocaleString();
+closeBetSlip();
+}
+</script>
+</body>
+</html>
+`;
 }
 
 // 1. SIGN IN PAGE
