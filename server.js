@@ -13,14 +13,13 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// TELEGRAM BOT CONFIGURATION (UPDATED WITH YOUR NEW BOT TOKEN)
+// TELEGRAM BOT CONFIGURATION
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
 let bot = null;
 try {
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     
-    // Listen for Telegram /start and /connect commands
     bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
       const text = msg.text ? msg.text.trim() : '';
@@ -50,7 +49,7 @@ try {
               await updateDoc(userRef, {
                 telegramChatId: chatId.toString(),
                 telegramEnabled: true,
-                telegramCode: null // clear code after successful link
+                telegramCode: null
               });
               bot.sendMessage(chatId, `Success! Your account (${targetDocId}) is now successfully linked with Telegram. 2FA is enabled.`);
             }
@@ -113,7 +112,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR & SIDEBAR FUNCTION WITH AUTO-COMPLETE SEARCH
+// TOP HEADER BAR & SIDEBAR FUNCTION
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -156,7 +155,6 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
                     </form>
-                    <!-- BLUE DROPDOWN BOX FOR MATCHED USERS -->
                     <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
                 </div>
             </div>
@@ -937,6 +935,143 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (EXACTLY MATCHING YOUR SCREENSHOT)
+function renderClientInterface(username, points, exposure) {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Soniexchange - Home</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
+            .odds-back { background-color: #72bbef; color: #000000; font-weight: bold; }
+            .odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; }
+            .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
+            .casino-card:hover { transform: scale(1.02); }
+        </style>
+    </head>
+    <body class="text-xs">
+        <!-- CLIENT HEADER BAR -->
+        <header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-bars text-sm cursor-pointer"></i>
+                <span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
+            </div>
+            <div class="flex items-center space-x-3 text-[11px]">
+                <i class="fa-solid fa-magnifying-glass text-xs cursor-pointer"></i>
+                <div class="text-right">
+                    <div>Balance: <span class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
+                    <div class="text-[10px] text-gray-300">Exp: <span class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- TICKER MARQUEE -->
+        <div class="bg-[#162a3a] text-gray-300 px-3 py-1 text-[10px] flex items-center border-b border-gray-800">
+            <marquee class="font-semibold">Newly Launched Matka Market in Our Exchange | Welcome to Soniexchange!</marquee>
+        </div>
+
+        <!-- CATEGORIES BAR -->
+        <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
+            <span class="text-red-500 cursor-pointer">CRASH</span>
+            <span class="cursor-pointer">LOTTERY</span>
+            <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
+            <span class="cursor-pointer">OUR CASINO</span>
+            <span class="cursor-pointer">LIVE CASINO</span>
+            <span class="cursor-pointer">SLOTS</span>
+            <span class="cursor-pointer">FANTASY</span>
+        </div>
+
+        <!-- SPORTS ICONS BAR -->
+        <div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
+            <div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
+        </div>
+
+        <!-- MATCH ODDS ROWS -->
+        <div class="p-1 space-y-1">
+            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-cyan-300">Mumbai Indians (w) - Kolkata Knight Riders (w)</span>
+                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
+                    <div class="odds-back py-1 rounded-xs">1.90</div>
+                    <div class="odds-lay py-1 rounded-xs">1.92</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="odds-back py-1 rounded-xs">2.10</div>
+                    <div class="odds-lay py-1 rounded-xs">2.12</div>
+                </div>
+            </div>
+
+            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-cyan-300">Pakistan T10 v Bangladesh T10</span>
+                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
+                    <div class="odds-back py-1 rounded-xs">1.85</div>
+                    <div class="odds-lay py-1 rounded-xs">1.87</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="odds-back py-1 rounded-xs">2.15</div>
+                    <div class="odds-lay py-1 rounded-xs">2.18</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CASINO CARDS GRID -->
+        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
+                <span class="text-[10px] font-bold block mt-1">MATKA</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
+                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
+                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
+                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
+                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
+                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
+                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
+                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
+                <span class="text-[10px] font-bold block mt-1">POKER</span>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
@@ -974,7 +1109,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY & 2FA REDIRECTION CHECK)
+// 2. FIXED LOGIN PROCESS
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -995,12 +1130,9 @@ app.post('/login-process', async (req, res) => {
             return res.redirect('/');
         }
 
-        // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
 
-            // If Telegram is enabled (and Google Auth is not primary or user prefers Telegram), 
-            // we can also generate and send a Telegram OTP right away if bot is active!
             if (user.telegramEnabled && user.telegramChatId && bot) {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
@@ -1017,7 +1149,6 @@ app.post('/login-process', async (req, res) => {
         req.session.loggedInUser = user.username;
         req.session.userRole = user.role;
 
-        // FIXED: SAVE MASTER ADMIN PERMANENTLY IN SESSION MEMORY
         if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
             req.session.masterAdmin = user.username;
         }
@@ -1026,7 +1157,6 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
-        // REDIRECT TO BLANK DASHBOARD ON LOGIN
         res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
@@ -1034,7 +1164,7 @@ app.post('/login-process', async (req, res) => {
     }
 });
 
-// 2.1 MASTER IMPERSONATION ROUTE (FIXED FOR UNLIMITED SWITCHING AFTER MOBILE BACK)
+// 2.1 MASTER IMPERSONATION ROUTE
 app.get('/admin/impersonate/:targetUser', async (req, res) => {
     const loggedInUser = req.session.loggedInUser;
     const masterAdmin = req.session.masterAdmin;
@@ -1042,7 +1172,6 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     const targetUser = req.params.targetUser;
 
     try {
-        // FIXED: ALLOW IF MASTER ADMIN SESSION OR FALLBACK URL ADMIN MATCHES
         const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
                                    (loggedInUser === 'Soniexchange') || 
                                    (userRole === 'ADMIN') || 
@@ -1059,7 +1188,6 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
             return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
         }
 
-        // FIXED: PRESERVE MASTER ADMIN MEMORY WHILE SWITCHING CURRENT SESSION
         req.session.loggedInUser = targetUser;
         req.session.userRole = targetSnap.data().role || 'Client';
         req.session.masterAdmin = masterAdmin || 'Soniexchange';
@@ -1072,7 +1200,7 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     }
 });
 
-// 2.2 LOGIN OTP VERIFICATION PAGE (FOR 2FA USERS - SUPPORTS GOOGLE AUTH, TELEGRAM, OR BOTH)
+// 2.2 LOGIN OTP VERIFICATION PAGE
 app.get('/login/verify-otp', async (req, res) => {
     const username = req.query.username || '';
     
@@ -1155,7 +1283,7 @@ app.post('/api/login/resend-telegram-otp', async (req, res) => {
     res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
 });
 
-// 2.3 LOGIN OTP VERIFICATION API (SUPPORTS BOTH GOOGLE AUTH & TELEGRAM)
+// 2.3 LOGIN OTP VERIFICATION API
 app.post('/api/login/verify-otp', async (req, res) => {
     const { username, token } = req.body;
     try {
@@ -1169,7 +1297,6 @@ app.post('/api/login/verify-otp', async (req, res) => {
         const user = docSnap.data();
         let verified = false;
 
-        // 1. Check Google Authenticator Token if enabled
         if (user.gauthEnabled && user.gauthSecret) {
             verified = speakeasy.totp.verify({
                 secret: user.gauthSecret,
@@ -1179,7 +1306,6 @@ app.post('/api/login/verify-otp', async (req, res) => {
             });
         }
 
-        // 2. Check Telegram OTP if enabled and not yet verified by Google Auth
         if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
             if (token.trim() === req.session.pendingTelegramOtp.trim()) {
                 verified = true;
@@ -1238,7 +1364,7 @@ app.get('/change-temporary-password', (req, res) => {
     `);
 });
 
-// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION
+// 4. API FOR FIRST TIME PASSWORD & TRANSACTION PASSWORD GENERATION
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1308,7 +1434,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
     }
 });
 
-// 20. SECURE AUTH VERIFICATION PAGE ROUTE (WITH FULL WORKING BACKEND LOGIC FOR GOOGLE AUTH & TELEGRAM)
+// 20. SECURE AUTH VERIFICATION PAGE ROUTE
 app.get('/admin/secureauth', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -1317,7 +1443,6 @@ app.get('/admin/secureauth', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
-        // Generate Speakeasy Secret for Google Authenticator if not present
         let secretBase32 = currentUser.gauthSecret;
         if (!secretBase32) {
             const secret = speakeasy.generateSecret({ name: `Soniexchange (${loggedInUser})` });
@@ -1600,14 +1725,159 @@ app.post('/api/update-manual-password', async (req, res) => {
     }
 });
 
-// 7. DASHBOARD ROUTE (CLEAN / BLANK LANDING PAGE AFTER LOGIN)
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (EXACTLY MATCHING YOUR SCREENSHOT)
+function renderClientInterface(username, points, exposure) {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Soniexchange - Home</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
+            .odds-back { background-color: #72bbef; color: #000000; font-weight: bold; }
+            .odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; }
+            .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
+            .casino-card:hover { transform: scale(1.02); }
+        </style>
+    </head>
+    <body class="text-xs">
+        <!-- CLIENT HEADER BAR -->
+        <header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-bars text-sm cursor-pointer"></i>
+                <span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
+            </div>
+            <div class="flex items-center space-x-3 text-[11px]">
+                <i class="fa-solid fa-magnifying-glass text-xs cursor-pointer"></i>
+                <div class="text-right">
+                    <div>Balance: <span class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
+                    <div class="text-[10px] text-gray-300">Exp: <span class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- TICKER MARQUEE -->
+        <div class="bg-[#162a3a] text-gray-300 px-3 py-1 text-[10px] flex items-center border-b border-gray-800">
+            <marquee class="font-semibold">Newly Launched Matka Market in Our Exchange | Welcome to Soniexchange!</marquee>
+        </div>
+
+        <!-- CATEGORIES BAR -->
+        <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
+            <span class="text-red-500 cursor-pointer">CRASH</span>
+            <span class="cursor-pointer">LOTTERY</span>
+            <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
+            <span class="cursor-pointer">OUR CASINO</span>
+            <span class="cursor-pointer">LIVE CASINO</span>
+            <span class="cursor-pointer">SLOTS</span>
+            <span class="cursor-pointer">FANTASY</span>
+        </div>
+
+        <!-- SPORTS ICONS BAR -->
+        <div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
+            <div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
+            <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
+        </div>
+
+        <!-- MATCH ODDS ROWS -->
+        <div class="p-1 space-y-1">
+            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-cyan-300">Mumbai Indians (w) - Kolkata Knight Riders (w)</span>
+                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
+                    <div class="odds-back py-1 rounded-xs">1.90</div>
+                    <div class="odds-lay py-1 rounded-xs">1.92</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="odds-back py-1 rounded-xs">2.10</div>
+                    <div class="odds-lay py-1 rounded-xs">2.12</div>
+                </div>
+            </div>
+
+            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-cyan-300">Pakistan T10 v Bangladesh T10</span>
+                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
+                    <div class="odds-back py-1 rounded-xs">1.85</div>
+                    <div class="odds-lay py-1 rounded-xs">1.87</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
+                    <div class="odds-back py-1 rounded-xs">2.15</div>
+                    <div class="odds-lay py-1 rounded-xs">2.18</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CASINO CARDS GRID -->
+        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
+                <span class="text-[10px] font-bold block mt-1">MATKA</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
+                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
+                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
+                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
+                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
+                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
+                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
+                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
+            </div>
+            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
+                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
+                <span class="text-[10px] font-bold block mt-1">POKER</span>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
+
+// 7. DASHBOARD ROUTE (AUTOMATIC ROUTING FOR CLIENT VS MASTER/ADMIN)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
-        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+        
+        if (!docSnap.exists()) return res.redirect('/');
+        const user = docSnap.data();
 
+        // 1. CLIENT LOGIN -> SHOW SPORTS & CASINO INTERFACE
+        if (user.role === 'Client') {
+            return res.send(renderClientInterface(user.username, user.points, user.exposure));
+        }
+
+        // 2. MASTER / SUPER / ADMIN LOGIN -> SHOW BLANK HEADER DASHBOARD
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -1620,7 +1890,7 @@ app.get('/dashboard', async (req, res) => {
                 <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
-                ${getHeaderAndSidebar(loggedInUser, role)}
+                ${getHeaderAndSidebar(loggedInUser, user.role)}
                 <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
                     <!-- BLANK SCREEN BODY AFTER LOGIN -->
                 </main>
@@ -1784,7 +2054,7 @@ app.get('/users', async (req, res) => {
 // 9. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const tab = req.query.tab || 'active'; // 'active' or 'deactive'
+    const tab = req.query.tab || 'active';
 
     try {
         const userRef = doc(db, 'users', loggedInUser);
@@ -2588,7 +2858,7 @@ app.get('/logout', (req, res) => {
     }
 });
 
-// 19. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
+// 19. ADMIN SELF-BALANCE UPDATE API
 app.post('/api/admin/update-balance', async (req, res) => {
     const { loggedInUser, newBalance, txnPassword } = req.body;
     const amount = Number(newBalance);
