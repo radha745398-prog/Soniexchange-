@@ -85,7 +85,7 @@ app.use(session({
 }));
 
 // RAPIDAPI & FREE MATCH ENGINE FETCH SETUP
-const RAPIDAPI_KEY = '269384970fmsh3bc319f6f386606p1959e4jc75b4ec7';
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '269384970fmsh3bc319f6f386606p1959e4jc75b4ec7';
 
 let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
 
@@ -110,7 +110,7 @@ async function fetchRapidApiSportsData() {
 }
 
 fetchRapidApiSportsData();
-setInterval(fetchRapidApiSportsData, 15000);
+setInterval(fetchRapidApiSportsData, 30000); // Stable background fetch (no blinking)
 
 // AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
@@ -961,7 +961,7 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH LIVE ODDS & INTERACTIVE BET SLIP
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH STABLE STABLE INTERACTIVE BET SLIP
 function renderClientInterface(username, points, exposure) {
 return `
 <!DOCTYPE html>
@@ -974,9 +974,9 @@ return `
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-.odds-back { background-color: #72bbef; color: #000000; font-weight: bold; cursor: pointer; transition: background-color 0.1s; }
+.odds-back { background-color: #72bbef; color: #000000; font-weight: bold; cursor: pointer; }
 .odds-back:hover { background-color: #5fa8df; }
-.odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; cursor: pointer; transition: background-color 0.1s; }
+.odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; cursor: pointer; }
 .odds-lay:hover { background-color: #f58da3; }
 .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
 .casino-card:hover { transform: scale(1.02); }
@@ -1002,10 +1002,10 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 <span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">LIVE ALL</span>
 <div class="overflow-hidden whitespace-nowrap w-full">
 <div class="inline-block font-semibold text-white space-x-8">
-<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov) [Rate: <span class="market-price">1.90</span>]</span>
-<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87') [Rate: <span class="market-price">2.10</span>]</span>
-<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5 [Rate: <span class="market-price">1.75</span>]</span>
-<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9) [Rate: <span class="market-price">1.55</span>]</span>
+<span>🏏 <b class="text-yellow-400">Cricket:</b> IND vs AUS - Live 182/4 (19.4 Ov)</span>
+<span>⚽ <b class="text-green-400">Football:</b> Real Madrid vs Barcelona - 2:1 (87')</span>
+<span>🎾 <b class="text-cyan-400">Tennis:</b> N. Djokovic vs C. Alcaraz - 6-4, 5-5</span>
+<span>🏓 <b class="text-pink-400">Table Tennis:</b> M. Fan vs D. Ovtcharov - Set 5 (10-9)</span>
 </div>
 </div>
 </div>
@@ -1163,26 +1163,9 @@ Odds: <span id="betOdds" class="font-bold text-cyan-300">0.00</span>
 </div>
 </div>
 
-<!-- 15ms ODDS ENGINE & BETTING SCRIPT -->
+<!-- STABLE BETTING SCRIPT (NO BLINKING) -->
 <script>
 let activeBet = { selection: '', type: '', odds: 0 };
-
-function runHyperSpeedOddsEngine() {
-const elements = document.querySelectorAll('.odds-back, .odds-lay, .market-price');
-elements.forEach(el => {
-let val = parseFloat(el.innerText);
-
-if (!isNaN(val)) {
-let delta = (Math.random() * 0.02 - 0.01);
-let updated = Math.max(1.01, (val + delta)).toFixed(2);
-el.innerText = updated;
-el.style.transition = "background-color 0.005s ease-in-out";
-el.style.backgroundColor = delta > 0 ? "#86efac" : "#faa9ba";
-setTimeout(() => { el.style.backgroundColor = ""; }, 12);
-}
-});
-}
-setInterval(runHyperSpeedOddsEngine, 15);
 
 function openBetSlip(selection, type, odds) {
 activeBet = { selection, type, odds };
@@ -1349,7 +1332,6 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
         req.session.userRole = targetSnap.data().role || 'Client';
         req.session.masterAdmin = masterAdmin || 'Soniexchange';
 
-        console.log(`Master Admin impersonated into client ID: ${targetUser}`);
         res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
     } catch(err) {
         console.error(err);
@@ -1795,7 +1777,6 @@ app.post('/api/secureauth/google/verify', async (req, res) => {
 
         if (verified) {
             await updateDoc(userRef, { gauthEnabled: true });
-            console.log(`Google Authenticator enabled successfully for ${username}`);
         }
 
         res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
