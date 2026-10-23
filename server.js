@@ -85,6 +85,64 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false }
 }));
+// ================= SPORTBEX TRIAL API PROXY ROUTES =================
+const axios = require('axios'); // Agar top par axios require nahi hai to
+const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
+const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
+
+const getSportbexHeaders = () => ({
+  'sportbex-api-key': SPORTBEX_API_KEY,
+  'Content-Type': 'application/json'
+});
+
+// 1. Competitions
+app.get('/api/sportbex/competitions/:sportId', async (req, res) => {
+  try {
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/competition-list/${req.params.sportId}`, {
+      headers: getSportbexHeaders()
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch competitions' });
+  }
+});
+
+// 2. Events List
+app.get('/api/sportbex/events/:competitionId', async (req, res) => {
+  try {
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/event-list/${req.params.competitionId}`, {
+      headers: getSportbexHeaders()
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch events' });
+  }
+});
+
+// 3. Diamond Live Odds (Blue/Pink Boxes)
+app.get('/api/sportbex/odds/:marketId', async (req, res) => {
+  try {
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/all-odds-v3/${req.params.marketId}`, {
+      headers: getSportbexHeaders()
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch odds' });
+  }
+});
+
+// 4. Fancy & Bookmaker Odds
+app.get('/api/sportbex/fancy/:eventId', async (req, res) => {
+  try {
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/fancy-odds/${req.params.eventId}`, {
+      headers: getSportbexHeaders()
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch fancy odds' });
+  }
+});
+// ====================================================================
 
 // AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
