@@ -1740,14 +1740,15 @@ app.get('/dashboard', async (req, res) => {
                     <div class="text-center py-4 text-xs text-gray-600">Loading Live Matches from Sportbex API...</div>
                 </div>
 
-                <!-- Casino Grid Banner Section -->
+                                <!-- Casino Grid Banner Section -->
                 <div class="p-1 font-bold text-xs bg-gray-800 text-yellow-400 mt-2">OUR POPULAR CASINO & GAMES</div>
                 <div class="casino-grid">
-                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/jhandimunda.jpg" alt="Jhandi Munda"></div>
-                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/numberking.jpg" alt="Number King"></div>
-                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/teenpatti.jpg" alt="Teen Patti"></div>
-                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/joker.jpg" alt="Teen Patti Joker"></div>
+                    <div class="casino-card bg-purple-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🎰 Jhandi Munda</div>
+                    <div class="casino-card bg-red-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🎲 Number King</div>
+                    <div class="casino-card bg-green-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🃏 Teen Patti</div>
+                    <div class="casino-card bg-blue-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">♠️ Joker 20-20</div>
                 </div>
+
 
                 <!-- Live Bet Slip Drawer -->
                 <div id="betSlipBox" class="betslip-drawer">
