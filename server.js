@@ -1668,178 +1668,249 @@ app.get('/dashboard', async (req, res) => {
         const role = userData.role || 'Client';
 
         // AGAR CLIENT LOGIN HUA HAI TO TARZANEXCH / DIAMOND MATCHES & BETSLIP UI SHOW KARO
-        if (role === 'Client') {
-            return res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Soniexchange - Home</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    body { background-color: #e9ecef; font-family: Arial, sans-serif; margin: 0; padding-bottom: 200px; }
-                    .header-top { background: #0077b6; color: white; padding: 6px 10px; }
-                    .nav-sports { background: #1c2833; color: white; display: flex; overflow-x: auto; }
-                    .nav-sports-item { padding: 8px 14px; text-align: center; font-size: 11px; font-weight: bold; min-width: 70px; border-right: 1px solid #2c3e50; cursor: pointer; }
-                    .nav-sports-item.active { background: #2c3e50; border-bottom: 3px solid #0077b6; }
-                    
-                    /* Match Card Odds */
-                    .match-card { background: white; margin-bottom: 4px; border-bottom: 1px solid #ccc; }
-                    .match-header { font-size: 12px; font-weight: bold; padding: 6px 10px; color: #111; display: flex; justify-content: space-between; align-items: center; }
-                    .match-time { font-size: 10px; color: #666; font-weight: normal; }
-                    
-                    .odds-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; background: #ddd; padding: 2px 8px 6px 8px; }
-                    .odds-header { text-align: center; font-size: 11px; font-weight: bold; padding: 2px; }
-                    .box-lock { background: #555; color: white; display: flex; justify-content: center; align-items: center; padding: 8px 0; border-radius: 2px; font-size: 12px; }
-                    .box-back { background: #72bbef; color: black; font-weight: bold; text-align: center; padding: 6px 0; border-radius: 2px; cursor: pointer; }
-                    .box-lay { background: #faa9ba; color: black; font-weight: bold; text-align: center; padding: 6px 0; border-radius: 2px; cursor: pointer; }
+                if (role === 'Client') {
+            return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoniExchange - Pro Betting Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .nav-sports::-webkit-scrollbar { display: none; }
+        .nav-sports { -ms-overflow-style: none; scrollbar-width: none; }
+        .casino-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+        @media(min-width: 768px) { .casino-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 pb-20">
 
-                    /* Casino Cards Grid */
-                    .casino-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 6px; background: #111; }
-                    .casino-card { position: relative; border-radius: 4px; overflow: hidden; background: #222; }
-                    .casino-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+    <!-- Top Header Navbar -->
+    <div class="bg-[#1c2833] text-white px-3 py-2 flex justify-between items-center shadow-md sticky top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <span class="font-bold text-yellow-400 tracking-wider text-sm"><i class="fa-solid fa-bolt mr-1"></i> SONIEXCHANGE</span>
+        </div>
+        <div class="flex items-center space-x-3 text-xs">
+            <div class="bg-gray-800 px-2 py-1 rounded border border-gray-700">
+                Bal: ₹<span id="userBalanceDisplay" class="font-bold text-green-400">${Number(userData.points || 0).toLocaleString()}</span>
+            </div>
+            <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded font-bold">Logout</a>
+        </div>
+    </div>
 
-                    /* Bet Slip Drawer */
-                    .betslip-drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #111827; border-top: 3px solid #0077b6; padding: 12px; display: none; z-index: 9999; color: white; }
-                    .stake-btn { background: #374151; color: white; padding: 6px; border-radius: 4px; font-weight: bold; text-align: center; cursor: pointer; }
-                </style>
-            </head>
-            <body>
+    <!-- Ticker Marquee -->
+    <div class="bg-[#0077b6] text-white px-2 py-1 text-xs font-semibold flex items-center">
+        <i class="fa-solid fa-bullhorn mr-2 text-yellow-300"></i>
+        <marquee>Welcome to SoniExchange! Live Cricket, Tennis, Football, Table Tennis & Live Casino Games are fully active.</marquee>
+    </div>
 
-                <!-- Top Header -->
-                <div class="header-top flex justify-between items-center text-xs sticky top-0 z-50">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-house text-sm"></i>
-                        <span class="font-extrabold text-sm tracking-wide">SONIEXCHANGE</span>
-                    </div>
-                    <div class="text-right">
-                        <div>Balance: <b id="userBalanceDisplay">${Number(userData.points || 0).toLocaleString()}</b></div>
-                        <div class="text-[10px]">Exp: <b id="userExpDisplay">${Number(userData.exposure || 0).toLocaleString()}</b> | Demo</div>
-                    </div>
+    <!-- Sports Category Navigation Tabs -->
+    <div class="nav-sports flex bg-[#1c2833] text-white text-xs font-bold overflow-x-auto whitespace-nowrap py-1.5 px-2 space-x-4 border-t border-gray-700">
+        <div onclick="switchSport(4, 'Cricket')" class="sport-tab cursor-pointer px-3 py-1 bg-yellow-500 text-black rounded transition">🏏 Cricket</div>
+        <div onclick="switchSport(1, 'Football')" class="sport-tab cursor-pointer px-3 py-1 hover:bg-gray-700 rounded transition">⚽ Football</div>
+        <div onclick="switchSport(2, 'Tennis')" class="sport-tab cursor-pointer px-3 py-1 hover:bg-gray-700 rounded transition">🎾 Tennis</div>
+        <div onclick="switchSport(5, 'Table Tennis')" class="sport-tab cursor-pointer px-3 py-1 hover:bg-gray-700 rounded transition">🏓 Table Tennis</div>
+        <div onclick="switchSport(3, 'Horse Racing')" class="sport-tab cursor-pointer px-3 py-1 hover:bg-gray-700 rounded transition">🐎 Horse Racing</div>
+        <div onclick="switchSport(6, 'Greyhound')" class="sport-tab cursor-pointer px-3 py-1 hover:bg-gray-700 rounded transition">🐕 Greyhound</div>
+    </div>
+
+    <div class="p-2 max-w-4xl mx-auto">
+        <!-- Live Matches & Odds Container -->
+        <div id="liveMatchesList" class="my-1">
+            <div class="text-center py-6 text-xs text-gray-500 font-bold">Loading Live Markets & Odds...</div>
+        </div>
+
+        <!-- Casino & Live Games Section -->
+        <div class="mt-4">
+            <div class="p-1.5 font-bold text-xs bg-gray-800 text-yellow-400 rounded-t flex justify-between items-center">
+                <span>🎰 LIVE CASINO & ARCADE GAMES</span>
+                <span class="text-[10px] text-white bg-red-600 px-1.5 py-0.5 rounded animate-pulse">HOT</span>
+            </div>
+            <div class="casino-grid bg-gray-900 p-2 rounded-b">
+                <div onclick="openCasino('Jhandi Munda')" class="bg-gradient-to-br from-purple-900 to-indigo-900 text-white p-4 text-center font-bold text-xs rounded shadow cursor-pointer hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-dice text-yellow-400 text-lg mb-1 block"></i> Jhandi Munda
                 </div>
-
-                <!-- Ticker Banner -->
-                <div class="bg-[#005b8e] text-white px-2 py-1 text-[11px] flex items-center italic">
-                    <i class="fa-solid fa-bolt mr-2 text-yellow-400"></i>
-                    <marquee>Welcome to Soniexchange! Live Cricket, Tennis, Casino & Aviator Games Active.</marquee>
+                <div onclick="openCasino('Teen Patti')" class="bg-gradient-to-br from-red-900 to-rose-900 text-white p-4 text-center font-bold text-xs rounded shadow cursor-pointer hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-clone text-yellow-400 text-lg mb-1 block"></i> Teen Patti
                 </div>
-
-                <!-- Sports Menu Navigation -->
-                <div class="nav-sports">
-                    <div class="nav-sports-item active"><i class="fa-solid fa-baseball-bat-ball block text-sm mb-1"></i> CRICKET</div>
-                    <div class="nav-sports-item"><i class="fa-solid fa-futbol block text-sm mb-1"></i> FOOTBALL</div>
-                    <div class="nav-sports-item"><i class="fa-solid fa-baseball block text-sm mb-1"></i> TENNIS</div>
-                    <div class="nav-sports-item"><i class="fa-solid fa-horse block text-sm mb-1"></i> HORSE RACING</div>
-                    <div class="nav-sports-item"><i class="fa-solid fa-dog block text-sm mb-1"></i> GREYHOUND</div>
+                <div onclick="openCasino('Roulette')" class="bg-gradient-to-br from-blue-900 to-cyan-900 text-white p-4 text-center font-bold text-xs rounded shadow cursor-pointer hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-circle-dot text-yellow-400 text-lg mb-1 block"></i> Roulette
                 </div>
-
-                <!-- Live Cricket Matches List -->
-                <div id="liveMatchesList" class="my-1">
-                    <div class="text-center py-4 text-xs text-gray-600">Loading Live Matches from Sportbex API...</div>
+                <div onclick="openCasino('Aviator / Crash')" class="bg-gradient-to-br from-amber-900 to-orange-900 text-white p-4 text-center font-bold text-xs rounded shadow cursor-pointer hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-rocket text-yellow-400 text-lg mb-1 block"></i> Crash / Aviator
                 </div>
+            </div>
+        </div>
+    </div>
 
-                                <!-- Casino Grid Banner Section -->
-                <div class="p-1 font-bold text-xs bg-gray-800 text-yellow-400 mt-2">OUR POPULAR CASINO & GAMES</div>
-                <div class="casino-grid">
-                    <div class="casino-card bg-purple-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🎰 Jhandi Munda</div>
-                    <div class="casino-card bg-red-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🎲 Number King</div>
-                    <div class="casino-card bg-green-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">🃏 Teen Patti</div>
-                    <div class="casino-card bg-blue-900 text-white p-5 text-center font-bold text-xs flex items-center justify-center h-24 rounded shadow cursor-pointer">♠️ Joker 20-20</div>
-                </div>
+    <!-- Live Bet Slip Drawer -->
+    <div id="betSlipBox" class="fixed bottom-0 left-0 right-0 bg-[#111827] border-t-4 border-[#0077b6] p-3 hidden z-50 text-white shadow-2xl max-w-lg mx-auto">
+        <div class="flex justify-between items-center text-xs mb-2 border-b border-gray-700 pb-1">
+            <span id="slipMatchTitle" class="font-bold text-yellow-400">Bet Slip</span>
+            <button onclick="closeSlip()" class="text-red-500 font-bold text-sm px-1">✕</button>
+        </div>
+        <div class="flex justify-between items-center text-xs mb-2">
+            <span>Selection: <b id="slipTeamName" class="text-green-400">Team A</b></span>
+            <span>Rate: <b id="slipOddsRate" class="text-blue-400">1.90</b></span>
+        </div>
+        <input type="number" id="stakeAmount" placeholder="Enter Stake Amount" class="w-full p-2 bg-gray-800 border border-gray-600 text-white rounded text-xs font-bold mb-2 focus:outline-none focus:border-yellow-400">
+        <div class="grid grid-cols-4 gap-2 mb-2">
+            <div onclick="setStake(100)" class="bg-gray-700 hover:bg-gray-600 p-1.5 text-center rounded font-bold text-xs cursor-pointer">100</div>
+            <div onclick="setStake(500)" class="bg-gray-700 hover:bg-gray-600 p-1.5 text-center rounded font-bold text-xs cursor-pointer">500</div>
+            <div onclick="setStake(1000)" class="bg-gray-700 hover:bg-gray-600 p-1.5 text-center rounded font-bold text-xs cursor-pointer">1000</div>
+            <div onclick="setStake(5000)" class="bg-gray-700 hover:bg-gray-600 p-1.5 text-center rounded font-bold text-xs cursor-pointer">5000</div>
+        </div>
+        <button onclick="placeBetNow()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs uppercase tracking-wider">Confirm Bet</button>
+    </div>
 
+    <script>
+        let userBal = ${Number(userData.points || 0)};
+        let selectedOdds = 1.90;
+        let activeSportId = 4;
 
-                <!-- Live Bet Slip Drawer -->
-                <div id="betSlipBox" class="betslip-drawer">
-                    <div class="flex justify-between items-center text-xs mb-2 border-b border-gray-700 pb-1">
-                        <span id="slipMatchTitle" class="font-bold text-yellow-400">Bet Slip</span>
-                        <button onclick="closeSlip()" class="text-red-500 font-bold text-sm">✕</button>
-                    </div>
-                    <div class="flex justify-between items-center text-xs mb-2">
-                        <span>Rate: <b id="slipOddsRate" class="text-blue-400">1.90</b></span>
-                        <span>Selection: <b id="slipTeamName" class="text-green-400">Team A</b></span>
-                    </div>
-                    <input type="number" id="stakeAmount" placeholder="Enter Amount" class="w-full p-2 bg-gray-800 border border-gray-600 text-white rounded text-xs font-bold mb-2 focus:outline-none">
-                    <div class="grid grid-cols-4 gap-2 mb-2">
-                        <div class="stake-btn" onclick="setStake(100)">100</div>
-                        <div class="stake-btn" onclick="setStake(500)">500</div>
-                        <div class="stake-btn" onclick="setStake(1000)">1000</div>
-                        <div class="stake-btn" onclick="setStake(5000)">5000</div>
-                    </div>
-                    <button onclick="placeBetNow()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs">CONFIRM BET</button>
-                </div>
+        function switchSport(sportId, sportName) {
+            activeSportId = sportId;
+            document.querySelectorAll('.sport-tab').forEach(tab => {
+                tab.classList.remove('bg-yellow-500', 'text-black');
+                tab.classList.add('hover:bg-gray-700');
+            });
+            event.currentTarget.classList.add('bg-yellow-500', 'text-black');
+            event.currentTarget.classList.remove('hover:bg-gray-700');
+            loadLiveMatches();
+        }
 
-                <script>
-                    let userBal = ${Number(userData.points || 0)};
-                    let selectedOdds = 1.90;
+        async function loadLiveMatches() {
+            const container = document.getElementById('liveMatchesList');
+            container.innerHTML = `<div class="text-center py-6 text-xs text-gray-500 font-bold">Fetching Live Markets...</div>`;
+            
+            try {
+                const res = await fetch(`/api/sportbex/events/${activeSportId}`);
+                const data = await res.json();
 
-                    async function loadLiveMatches() {
-                        try {
-                            const res = await fetch('/api/sportbex/events/4');
-                            const data = await res.json();
-                            const container = document.getElementById('liveMatchesList');
+                let matches = [];
+                if (Array.isArray(data) && data.length > 0) matches = data;
+                else if (data && data.result) matches = data.result;
 
-                            if (data && data.length > 0) {
-                                container.innerHTML = data.map(m => \`
-                                    <div class="match-card">
-                                        <div class="match-header">
-                                            <div>
-                                                \${m.eventName || m.name || 'Cricket Match'}
-                                                <div class="match-time">\${m.eventDate || 'LIVE NOW'}</div>
-                                            </div>
-                                            <div class="text-green-600">● LIVE</div>
-                                        </div>
-                                        <div class="odds-grid">
-                                            <div class="odds-header">1</div>
-                                            <div class="odds-header">X</div>
-                                            <div class="odds-header">2</div>
-                                            
-                                            <div class="box-back" onclick="openSlip('\${m.eventName || 'Match'}', 'Back', 1.90)">1.90</div>
-                                            <div class="box-lay" onclick="openSlip('\${m.eventName || 'Match'}', 'Lay', 1.92)">1.92</div>
-                                            <div class="box-lock"><i class="fa-solid fa-lock"></i></div>
-                                        </div>
+                if (matches && matches.length > 0) {
+                    container.innerHTML = matches.map(m => {
+                        const mName = m.eventName || m.name || (m.event ? m.event.name : 'Live Pro Match');
+                        return `
+                            <div class="bg-white mb-2 shadow-sm border border-gray-300 rounded overflow-hidden">
+                                <div class="bg-[#1c2833] text-white px-2 py-1.5 text-xs font-bold flex justify-between items-center">
+                                    <span>\${mName}</span>
+                                    <span class="text-green-400 bg-green-900/40 px-1.5 py-0.5 rounded text-[10px] animate-pulse">● LIVE</span>
+                                </div>
+                                <div class="grid grid-cols-12 bg-gray-100 text-[11px] font-bold text-gray-700 py-1 border-b border-gray-200 text-center">
+                                    <div class="col-span-6 text-left px-2">Match Odds</div>
+                                    <div class="col-span-3 bg-[#72bbef]/30 text-blue-900">BACK</div>
+                                    <div class="col-span-3 bg-[#faa9ba]/30 text-red-900">LAY</div>
+                                </div>
+                                <div class="grid grid-cols-12 items-center border-b border-gray-200 py-1 text-xs">
+                                    <div class="col-span-6 px-2 font-bold text-gray-800">Team 1</div>
+                                    <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                        <div onclick="openSlip('\${mName} - Team 1', 'Back', 1.85)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">1.85</div>
+                                        <div onclick="openSlip('\${mName} - Team 1', 'Back', 1.86)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">1.86</div>
                                     </div>
-                                \`).join('');
-                            } else {
-                                container.innerHTML = '<div class="text-center py-3 text-xs text-gray-600">No active live matches found at the moment.</div>';
-                            }
-                        } catch(err) {
-                            console.error(err);
-                        }
-                    }
+                                    <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                        <div onclick="openSlip('\${mName} - Team 1', 'Lay', 1.87)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">1.87</div>
+                                        <div onclick="openSlip('\${mName} - Team 1', 'Lay', 1.88)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">1.88</div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-12 items-center py-1 text-xs bg-gray-50">
+                                    <div class="col-span-6 px-2 font-bold text-gray-800">Team 2</div>
+                                    <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                        <div onclick="openSlip('\${mName} - Team 2', 'Back', 2.10)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">2.10</div>
+                                        <div onclick="openSlip('\${mName} - Team 2', 'Back', 2.12)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">2.12</div>
+                                    </div>
+                                    <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                        <div onclick="openSlip('\${mName} - Team 2', 'Lay', 2.14)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">2.14</div>
+                                        <div onclick="openSlip('\${mName} - Team 2', 'Lay', 2.16)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer hover:opacity-90">2.16</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    // Pro Fallback Display so panel never looks empty during trial/off-hours
+                    container.innerHTML = `
+                        <div class="bg-white mb-2 shadow-sm border border-gray-300 rounded overflow-hidden">
+                            <div class="bg-[#1c2833] text-white px-2 py-1.5 text-xs font-bold flex justify-between items-center">
+                                <span>Live International League Match</span>
+                                <span class="text-green-400 bg-green-900/40 px-1.5 py-0.5 rounded text-[10px] animate-pulse">● LIVE</span>
+                            </div>
+                            <div class="grid grid-cols-12 bg-gray-100 text-[11px] font-bold text-gray-700 py-1 border-b border-gray-200 text-center">
+                                <div class="col-span-6 text-left px-2">Match Odds</div>
+                                <div class="col-span-3 bg-[#72bbef]/30 text-blue-900">BACK</div>
+                                <div class="col-span-3 bg-[#faa9ba]/30 text-red-900">LAY</div>
+                            </div>
+                            <div class="grid grid-cols-12 items-center border-b border-gray-200 py-1 text-xs">
+                                <div class="col-span-6 px-2 font-bold text-gray-800">Team Alpha <span class="text-[10px] text-green-600 block">In-Play</span></div>
+                                <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Alpha', 'Back', 1.90)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer">1.90</div>
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Alpha', 'Back', 1.92)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer">1.92</div>
+                                </div>
+                                <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Alpha', 'Lay', 1.94)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer">1.94</div>
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Alpha', 'Lay', 1.96)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer">1.96</div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-12 items-center py-1 text-xs bg-gray-50">
+                                <div class="col-span-6 px-2 font-bold text-gray-800">Team Beta</div>
+                                <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Beta', 'Back', 2.02)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer">2.02</div>
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Beta', 'Back', 2.04)" class="bg-[#72bbef] text-center py-1 rounded font-bold cursor-pointer">2.04</div>
+                                </div>
+                                <div class="col-span-3 grid grid-cols-2 gap-1 px-1">
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Beta', 'Lay', 2.06)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer">2.06</div>
+                                    <div onclick="openSlip('Team Alpha vs Team Beta - Team Beta', 'Lay', 2.08)" class="bg-[#faa9ba] text-center py-1 rounded font-bold cursor-pointer">2.08</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch(err) {
+                console.error('Error fetching live matches:', err);
+            }
+        }
 
-                    function openSlip(matchName, type, rate) {
-                        selectedOdds = rate;
-                        document.getElementById('slipMatchTitle').innerText = matchName + ' (' + type + ')';
-                        document.getElementById('slipOddsRate').innerText = rate;
-                        document.getElementById('betSlipBox').style.display = 'block';
-                    }
+        function openSlip(matchName, type, rate) {
+            selectedOdds = rate;
+            document.getElementById('slipMatchTitle').innerText = matchName + ' (' + type + ')';
+            document.getElementById('slipTeamName').innerText = matchName;
+            document.getElementById('slipOddsRate').innerText = rate;
+            document.getElementById('betSlipBox').style.display = 'block';
+        }
 
-                    function closeSlip() {
-                        document.getElementById('betSlipBox').style.display = 'none';
-                    }
+        function closeSlip() {
+            document.getElementById('betSlipBox').style.display = 'none';
+        }
 
-                    function setStake(val) {
-                        document.getElementById('stakeAmount').value = val;
-                    }
+        function setStake(val) {
+            document.getElementById('stakeAmount').value = val;
+        }
 
-                    function placeBetNow() {
-                        let stake = parseFloat(document.getElementById('stakeAmount').value) || 0;
-                        if (stake <= 0) return alert('Enter a valid bet amount!');
-                        if (stake > userBal) return alert('Insufficient Balance!');
+        function openCasino(gameName) {
+            alert(`Opening Live Casino Game: ${gameName} (Demo Mode Active)`);
+        }
 
-                        userBal -= stake;
-                        document.getElementById('userBalanceDisplay').innerText = userBal.toLocaleString();
-                        alert('Bet Placed Successfully! Amount: ₹' + stake);
-                        closeSlip();
-                    }
+        function placeBetNow() {
+            let stake = parseFloat(document.getElementById('stakeAmount').value) || 0;
+            if (stake <= 0) return alert('Please enter a valid stake amount!');
+            if (stake > userBal) return alert('Insufficient Balance in Wallet!');
 
-                    loadLiveMatches();
-                </script>
-            </body>
-            </html>
-            `);
+            userBal -= stake;
+            document.getElementById('userBalanceDisplay').innerText = userBal.toLocaleString();
+            alert('Bet Placed Successfully! Amount: ₹' + stake);
+            closeSlip();
+        }
+
+        loadLiveMatches();
+    </script>
+</body>
+</html>
+
+
         }
 
         // ADMIN / MASTER ID HO TO ORIGINAL ADMIN PANEL SHOW KARO
