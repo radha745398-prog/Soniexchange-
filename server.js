@@ -1658,20 +1658,195 @@ app.post('/api/update-manual-password', async (req, res) => {
     }
 });
 
-// 7. DASHBOARD ROUTE (CLEAN / BLANK LANDING PAGE AFTER LOGIN)
+// 7. DASHBOARD ROUTE (CLIENT PAR TARZANEXCH GAME UI, ADMIN PAR MANAGEMENT)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
-        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
+        const userData = docSnap.exists() ? docSnap.data() : { role: 'Client', points: 0 };
+        const role = userData.role || 'Client';
 
-        res.send(`
+        // AGAR CLIENT LOGIN HUA HAI TO TARZANEXCH / DIAMOND MATCHES & BETSLIP UI SHOW KARO
+        if (role === 'Client') {
+            return res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Soniexchange - Home</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    body { background-color: #e9ecef; font-family: Arial, sans-serif; margin: 0; padding-bottom: 200px; }
+                    .header-top { background: #0077b6; color: white; padding: 6px 10px; }
+                    .nav-sports { background: #1c2833; color: white; display: flex; overflow-x: auto; }
+                    .nav-sports-item { padding: 8px 14px; text-align: center; font-size: 11px; font-weight: bold; min-width: 70px; border-right: 1px solid #2c3e50; cursor: pointer; }
+                    .nav-sports-item.active { background: #2c3e50; border-bottom: 3px solid #0077b6; }
+                    
+                    /* Match Card Odds */
+                    .match-card { background: white; margin-bottom: 4px; border-bottom: 1px solid #ccc; }
+                    .match-header { font-size: 12px; font-weight: bold; padding: 6px 10px; color: #111; display: flex; justify-content: space-between; align-items: center; }
+                    .match-time { font-size: 10px; color: #666; font-weight: normal; }
+                    
+                    .odds-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; background: #ddd; padding: 2px 8px 6px 8px; }
+                    .odds-header { text-align: center; font-size: 11px; font-weight: bold; padding: 2px; }
+                    .box-lock { background: #555; color: white; display: flex; justify-content: center; align-items: center; padding: 8px 0; border-radius: 2px; font-size: 12px; }
+                    .box-back { background: #72bbef; color: black; font-weight: bold; text-align: center; padding: 6px 0; border-radius: 2px; cursor: pointer; }
+                    .box-lay { background: #faa9ba; color: black; font-weight: bold; text-align: center; padding: 6px 0; border-radius: 2px; cursor: pointer; }
+
+                    /* Casino Cards Grid */
+                    .casino-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 6px; background: #111; }
+                    .casino-card { position: relative; border-radius: 4px; overflow: hidden; background: #222; }
+                    .casino-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+
+                    /* Bet Slip Drawer */
+                    .betslip-drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #111827; border-top: 3px solid #0077b6; padding: 12px; display: none; z-index: 9999; color: white; }
+                    .stake-btn { background: #374151; color: white; padding: 6px; border-radius: 4px; font-weight: bold; text-align: center; cursor: pointer; }
+                </style>
+            </head>
+            <body>
+
+                <!-- Top Header -->
+                <div class="header-top flex justify-between items-center text-xs sticky top-0 z-50">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-house text-sm"></i>
+                        <span class="font-extrabold text-sm tracking-wide">SONIEXCHANGE</span>
+                    </div>
+                    <div class="text-right">
+                        <div>Balance: <b id="userBalanceDisplay">${Number(userData.points || 0).toLocaleString()}</b></div>
+                        <div class="text-[10px]">Exp: <b id="userExpDisplay">${Number(userData.exposure || 0).toLocaleString()}</b> | Demo</div>
+                    </div>
+                </div>
+
+                <!-- Ticker Banner -->
+                <div class="bg-[#005b8e] text-white px-2 py-1 text-[11px] flex items-center italic">
+                    <i class="fa-solid fa-bolt mr-2 text-yellow-400"></i>
+                    <marquee>Welcome to Soniexchange! Live Cricket, Tennis, Casino & Aviator Games Active.</marquee>
+                </div>
+
+                <!-- Sports Menu Navigation -->
+                <div class="nav-sports">
+                    <div class="nav-sports-item active"><i class="fa-solid fa-baseball-bat-ball block text-sm mb-1"></i> CRICKET</div>
+                    <div class="nav-sports-item"><i class="fa-solid fa-futbol block text-sm mb-1"></i> FOOTBALL</div>
+                    <div class="nav-sports-item"><i class="fa-solid fa-baseball block text-sm mb-1"></i> TENNIS</div>
+                    <div class="nav-sports-item"><i class="fa-solid fa-horse block text-sm mb-1"></i> HORSE RACING</div>
+                    <div class="nav-sports-item"><i class="fa-solid fa-dog block text-sm mb-1"></i> GREYHOUND</div>
+                </div>
+
+                <!-- Live Cricket Matches List -->
+                <div id="liveMatchesList" class="my-1">
+                    <div class="text-center py-4 text-xs text-gray-600">Loading Live Matches from Sportbex API...</div>
+                </div>
+
+                <!-- Casino Grid Banner Section -->
+                <div class="p-1 font-bold text-xs bg-gray-800 text-yellow-400 mt-2">OUR POPULAR CASINO & GAMES</div>
+                <div class="casino-grid">
+                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/jhandimunda.jpg" alt="Jhandi Munda"></div>
+                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/numberking.jpg" alt="Number King"></div>
+                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/teenpatti.jpg" alt="Teen Patti"></div>
+                    <div class="casino-card"><img src="https://v3.speedp2p.com/assets/images/casino/joker.jpg" alt="Teen Patti Joker"></div>
+                </div>
+
+                <!-- Live Bet Slip Drawer -->
+                <div id="betSlipBox" class="betslip-drawer">
+                    <div class="flex justify-between items-center text-xs mb-2 border-b border-gray-700 pb-1">
+                        <span id="slipMatchTitle" class="font-bold text-yellow-400">Bet Slip</span>
+                        <button onclick="closeSlip()" class="text-red-500 font-bold text-sm">✕</button>
+                    </div>
+                    <div class="flex justify-between items-center text-xs mb-2">
+                        <span>Rate: <b id="slipOddsRate" class="text-blue-400">1.90</b></span>
+                        <span>Selection: <b id="slipTeamName" class="text-green-400">Team A</b></span>
+                    </div>
+                    <input type="number" id="stakeAmount" placeholder="Enter Amount" class="w-full p-2 bg-gray-800 border border-gray-600 text-white rounded text-xs font-bold mb-2 focus:outline-none">
+                    <div class="grid grid-cols-4 gap-2 mb-2">
+                        <div class="stake-btn" onclick="setStake(100)">100</div>
+                        <div class="stake-btn" onclick="setStake(500)">500</div>
+                        <div class="stake-btn" onclick="setStake(1000)">1000</div>
+                        <div class="stake-btn" onclick="setStake(5000)">5000</div>
+                    </div>
+                    <button onclick="placeBetNow()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded text-xs">CONFIRM BET</button>
+                </div>
+
+                <script>
+                    let userBal = ${Number(userData.points || 0)};
+                    let selectedOdds = 1.90;
+
+                    async function loadLiveMatches() {
+                        try {
+                            const res = await fetch('/api/sportbex/events/4');
+                            const data = await res.json();
+                            const container = document.getElementById('liveMatchesList');
+
+                            if (data && data.length > 0) {
+                                container.innerHTML = data.map(m => \`
+                                    <div class="match-card">
+                                        <div class="match-header">
+                                            <div>
+                                                \${m.eventName || m.name || 'Cricket Match'}
+                                                <div class="match-time">\${m.eventDate || 'LIVE NOW'}</div>
+                                            </div>
+                                            <div class="text-green-600">● LIVE</div>
+                                        </div>
+                                        <div class="odds-grid">
+                                            <div class="odds-header">1</div>
+                                            <div class="odds-header">X</div>
+                                            <div class="odds-header">2</div>
+                                            
+                                            <div class="box-back" onclick="openSlip('\${m.eventName || 'Match'}', 'Back', 1.90)">1.90</div>
+                                            <div class="box-lay" onclick="openSlip('\${m.eventName || 'Match'}', 'Lay', 1.92)">1.92</div>
+                                            <div class="box-lock"><i class="fa-solid fa-lock"></i></div>
+                                        </div>
+                                    </div>
+                                \`).join('');
+                            } else {
+                                container.innerHTML = '<div class="text-center py-3 text-xs text-gray-600">No active live matches found at the moment.</div>';
+                            }
+                        } catch(err) {
+                            console.error(err);
+                        }
+                    }
+
+                    function openSlip(matchName, type, rate) {
+                        selectedOdds = rate;
+                        document.getElementById('slipMatchTitle').innerText = matchName + ' (' + type + ')';
+                        document.getElementById('slipOddsRate').innerText = rate;
+                        document.getElementById('betSlipBox').style.display = 'block';
+                    }
+
+                    function closeSlip() {
+                        document.getElementById('betSlipBox').style.display = 'none';
+                    }
+
+                    function setStake(val) {
+                        document.getElementById('stakeAmount').value = val;
+                    }
+
+                    function placeBetNow() {
+                        let stake = parseFloat(document.getElementById('stakeAmount').value) || 0;
+                        if (stake <= 0) return alert('Enter a valid bet amount!');
+                        if (stake > userBal) return alert('Insufficient Balance!');
+
+                        userBal -= stake;
+                        document.getElementById('userBalanceDisplay').innerText = userBal.toLocaleString();
+                        alert('Bet Placed Successfully! Amount: ₹' + stake);
+                        closeSlip();
+                    }
+
+                    loadLiveMatches();
+                </script>
+            </body>
+            </html>
+            `);
+        }
+
+        // ADMIN / MASTER ID HO TO ORIGINAL ADMIN PANEL SHOW KARO
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
                 <title>Dashboard</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1680,7 +1855,10 @@ app.get('/dashboard', async (req, res) => {
             <body class="min-h-screen flex flex-col text-xs">
                 ${getHeaderAndSidebar(loggedInUser, role)}
                 <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
-                    <!-- BLANK SCREEN BODY AFTER LOGIN -->
+                    <div class="bg-white p-6 rounded shadow border border-gray-300">
+                        <h2 class="text-sm font-bold text-gray-800">Welcome Admin, ${loggedInUser}!</h2>
+                        <p class="text-gray-600 text-xs mt-1">Select <b>List of Clients</b> or <b>Soni View</b> from top bar to manage accounts.</p>
+                    </div>
                 </main>
                 ${getModalsHTML(loggedInUser)}
                 ${getModalScriptsJS()}
