@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
@@ -11,6 +12,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+
+// SPORTBEX MULTI-SPORT API CONFIGURATION (PURA CONTROL SPORTBEX PAR)
+const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
+const SPORTBEX_API_KEY = process.env.SPORTBEX_API_KEY || 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
 
 // TELEGRAM BOT CONFIGURATION
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
@@ -84,34 +89,69 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// RAPIDAPI & GLOBAL LIVE MATCH ENGINE FETCH SETUP
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '269384970fmsh3bc319f6f386606p1959e4jc75b4ec7';
+// ==========================================
+// SPORTBEX MULTI-SPORT LIVE DATA PROXY ROUTES
+// ==========================================
 
-let liveMatchesCache = { cricket: [], football: [], tennis: [], tabletennis: [] };
-
-async function fetchRapidApiSportsData() {
+// 1. Get Competitions / Leagues by Sport ID (Cricket: 4, Football: 1, Tennis: 2)
+app.get('/api/sportbex/competitions/:sportId', async (req, res) => {
   try {
-    if (RAPIDAPI_KEY && RAPIDAPI_KEY !== 'YOUR_RAPIDAPI_KEY_HERE') {
-      const response = await fetch('https://cricket-live-line1.p.rapidapi.com/matches', {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'cricket-live-line1.p.rapidapi.com'
-        }
-      });
-      const data = await response.json();
-      if (data) {
-        // Handle array or object response from RapidAPI securely
-        liveMatchesCache.cricket = Array.isArray(data) ? data : (data.matches || data.data || [data]);
-      }
+    const { sportId } = req.params;
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/competition-list/${sportId}`, {
+      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
+    });
+    res.json({ success: true, portal: 'Soniexchange', data: response.data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. Get Live Match Odds (Back / Lay for Blue & Pink boxes)
+app.get('/api/sportbex/odds/:eventId', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/odds/${eventId}`, {
+      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
+    });
+    res.json({ success: true, portal: 'Soniexchange', odds: response.data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3. Get Cricket Fancy Sessions (Bookmaker & Fancy)
+app.get('/api/sportbex/fancy/:eventId', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/fancy/${eventId}`, {
+      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
+    });
+    res.json({ success: true, portal: 'Soniexchange', fancy: response.data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// SPORTBEX LIVE MATCH ENGINE (RAPIDAPI REMOVED COMPLETELY)
+let liveMatchesCache = { cricket: [], football: [], tennis: [] };
+
+async function fetchSportbexLiveMatches() {
+  try {
+    // Fetching live competitions/matches directly from Sportbex Cricket (Sport ID: 4)
+    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/competition-list/4`, {
+      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
+    });
+    if (response.data) {
+      const rawData = response.data.data || response.data;
+      liveMatchesCache.cricket = Array.isArray(rawData) ? rawData : [rawData];
     }
   } catch (err) {
-    console.log("RapidAPI Fetch Notice (Using live engine fallback):", err.message);
+    console.log("Sportbex Live Match Fetch Notice:", err.message);
   }
 }
 
-fetchRapidApiSportsData();
-setInterval(fetchRapidApiSportsData, 15000); // Background fetch to keep live odds updated
+fetchSportbexLiveMatches();
+setInterval(fetchSportbexLiveMatches, 15000);
 
 // API ENDPOINT TO SERVE LIVE MATCHES TO CLIENT PANEL
 app.get('/api/live-matches', (req, res) => {
@@ -193,7 +233,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
             </div>
         </header>
 
-        <!-- 39 SPORTS SIDEBAR MENU -->
+        <!-- SPORTS SIDEBAR MENU -->
         <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl border-r" style="z-index: 999999;">
             <div class="p-3 bg-[#0077b6] text-white flex justify-between items-center">
                 <span class="font-bold text-sm">Sports</span>
@@ -932,7 +972,7 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH DYNAMIC RAPIDAPI LIVE CRICKET MATCHES
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH SPORTBEX LIVE MATCHES
 function renderClientInterface(username, points, exposure) {
 return `
 <!DOCTYPE html>
@@ -968,12 +1008,12 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 </div>
 </header>
 
-<!-- MULTI-SPORT REAL-TIME LIVE TICKER BAR -->
+<!-- SPORTBEX REAL-TIME LIVE TICKER BAR -->
 <div class="bg-[#162a3a] text-cyan-300 px-3 py-2 text-[11px] flex items-center border-b border-gray-800 space-x-3 shadow-inner">
-<span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">LIVE ALL</span>
+<span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">SPORTBEX LIVE</span>
 <div class="overflow-hidden whitespace-nowrap w-full">
 <div id="liveTickerText" class="inline-block font-semibold text-white space-x-8">
-🏏 Synchronizing global live cricket matches, odds, and commentary...
+🏏 Synchronizing global live cricket matches & odds directly via Sportbex API...
 </div>
 </div>
 </div>
@@ -991,7 +1031,7 @@ body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff
 
 <!-- DYNAMIC LIVE CRICKET MATCHES CONTAINER -->
 <div id="dynamicMatchesContainer" class="p-2 space-y-2">
-<div class="text-center text-gray-400 p-4">Loading live matches from RapidAPI...</div>
+<div class="text-center text-gray-400 p-4">Loading live matches from Sportbex Engine...</div>
 </div>
 
 <!-- CASINO CARDS GRID -->
@@ -1048,7 +1088,7 @@ Odds: <span id="betOdds" class="font-bold text-cyan-300">0.00</span>
 </div>
 </div>
 
-<!-- DYNAMIC LIVE FETCH & STABLE BETTING SCRIPT -->
+<!-- SPORTBEX LIVE FETCH & STABLE BETTING SCRIPT -->
 <script>
 let activeBet = { selection: '', type: '', odds: 0 };
 
@@ -1060,14 +1100,14 @@ async function fetchAndRenderLiveMatches() {
         let html = '';
         if (data && data.cricket && data.cricket.length > 0) {
             data.cricket.forEach(m => {
-                let matchTitle = m.matchname || m.title || m.name || 'Live Cricket Match';
+                let matchTitle = m.name || m.competitionName || m.title || 'Live Cricket Match';
                 let team1 = m.team1 || m.t1 || 'Team A';
                 let team2 = m.team2 || m.t2 || 'Team B';
                 let b1 = m.b1 || m.back1 || '1.90';
                 let l1 = m.l1 || m.lay1 || '1.92';
                 let b2 = m.b2 || m.back2 || '2.10';
                 let l2 = m.l2 || m.lay2 || '2.12';
-                let statusText = m.status || m.remark || '● LIVE';
+                let statusText = m.status || '● LIVE';
 
                 html += \`
                 <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
@@ -1086,9 +1126,9 @@ async function fetchAndRenderLiveMatches() {
                 </div>\`;
             });
             document.getElementById('dynamicMatchesContainer').innerHTML = html;
-            document.getElementById('liveTickerText').innerText = "🏏 Global live matches & odds successfully updated from RapidAPI!";
+            document.getElementById('liveTickerText').innerText = "🏏 Sportbex live matches & odds successfully updated!";
         } else {
-            document.getElementById('dynamicMatchesContainer').innerHTML = '<div class="text-center text-gray-400 p-4">No live cricket matches found right now. Check back shortly.</div>';
+            document.getElementById('dynamicMatchesContainer').innerHTML = '<div class="text-center text-gray-400 p-4">No live cricket matches found right now via Sportbex API.</div>';
         }
     } catch (err) {
         console.error("Error fetching live matches:", err);
@@ -1096,7 +1136,7 @@ async function fetchAndRenderLiveMatches() {
 }
 
 fetchAndRenderLiveMatches();
-setInterval(fetchAndRenderLiveMatches, 15000); // Stable background polling without page blinking
+setInterval(fetchAndRenderLiveMatches, 15000);
 
 function openBetSlip(selection, type, odds) {
     activeBet = { selection, type, odds };
