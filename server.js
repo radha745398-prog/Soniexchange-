@@ -1,6 +1,5 @@
-const express = require('express');
+Const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 const session = require('express-session');
@@ -8,22 +7,20 @@ const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const TelegramBot = require('node-telegram-bot-api');
+
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-// SPORTBEX MULTI-SPORT API CONFIGURATION (PURA CONTROL SPORTBEX PAR)
-const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
-const SPORTBEX_API_KEY = process.env.SPORTBEX_API_KEY || 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
-
-// TELEGRAM BOT CONFIGURATION
+// TELEGRAM BOT CONFIGURATION (UPDATED WITH YOUR NEW BOT TOKEN)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8995592600:AAHO69c3MT29W-sJP3_8kpzDQ2NAC2cc2Zg';
 let bot = null;
 try {
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     
+    // Listen for Telegram /start and /connect commands
     bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
       const text = msg.text ? msg.text.trim() : '';
@@ -53,7 +50,7 @@ try {
               await updateDoc(userRef, {
                 telegramChatId: chatId.toString(),
                 telegramEnabled: true,
-                telegramCode: null
+                telegramCode: null // clear code after successful link
               });
               bot.sendMessage(chatId, `Success! Your account (${targetDocId}) is now successfully linked with Telegram. 2FA is enabled.`);
             }
@@ -89,75 +86,6 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// ==========================================
-// SPORTBEX MULTI-SPORT LIVE DATA PROXY ROUTES
-// ==========================================
-
-// 1. Get Competitions / Leagues by Sport ID (Cricket: 4, Football: 1, Tennis: 2)
-app.get('/api/sportbex/competitions/:sportId', async (req, res) => {
-  try {
-    const { sportId } = req.params;
-    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/competition-list/${sportId}`, {
-      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
-    });
-    res.json({ success: true, portal: 'Soniexchange', data: response.data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 2. Get Live Match Odds (Back / Lay for Blue & Pink boxes)
-app.get('/api/sportbex/odds/:eventId', async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/odds/${eventId}`, {
-      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
-    });
-    res.json({ success: true, portal: 'Soniexchange', odds: response.data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 3. Get Cricket Fancy Sessions (Bookmaker & Fancy)
-app.get('/api/sportbex/fancy/:eventId', async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const response = await axios.get(`${SPORTBEX_BASE_URL}/fancy/${eventId}`, {
-      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
-    });
-    res.json({ success: true, portal: 'Soniexchange', fancy: response.data });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// SPORTBEX LIVE MATCH ENGINE (RAPIDAPI REMOVED COMPLETELY)
-let liveMatchesCache = { cricket: [], football: [], tennis: [] };
-
-async function fetchSportbexLiveMatches() {
-  try {
-    // Fetching live competitions/matches directly from Sportbex Cricket (Sport ID: 4)
-    const response = await axios.get(`${SPORTBEX_BASE_URL}/betfair/competition-list/4`, {
-      headers: { 'sportbex-api-key': SPORTBEX_API_KEY }
-    });
-    if (response.data) {
-      const rawData = response.data.data || response.data;
-      liveMatchesCache.cricket = Array.isArray(rawData) ? rawData : [rawData];
-    }
-  } catch (err) {
-    console.log("Sportbex Live Match Fetch Notice:", err.message);
-  }
-}
-
-fetchSportbexLiveMatches();
-setInterval(fetchSportbexLiveMatches, 15000);
-
-// API ENDPOINT TO SERVE LIVE MATCHES TO CLIENT PANEL
-app.get('/api/live-matches', (req, res) => {
-    res.json(liveMatchesCache);
-});
-
 // AUTO-INITIALIZE MASTER ADMIN ON FIREBASE
 async function initMasterAdmin() {
   try {
@@ -185,7 +113,7 @@ async function initMasterAdmin() {
 }
 initMasterAdmin();
 
-// TOP HEADER BAR & SIDEBAR FUNCTION
+// TOP HEADER BAR & SIDEBAR FUNCTION WITH AUTO-COMPLETE SEARCH
 function getHeaderAndSidebar(loggedInUser, userRole) {
     return `
         <!-- TOP NAVBAR -->
@@ -228,22 +156,58 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
                     </form>
+                    <!-- BLUE DROPDOWN BOX FOR MATCHED USERS -->
                     <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
                 </div>
             </div>
         </header>
 
-        <!-- SPORTS SIDEBAR MENU -->
+        <!-- 39 SPORTS SIDEBAR MENU -->
         <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl border-r" style="z-index: 999999;">
             <div class="p-3 bg-[#0077b6] text-white flex justify-between items-center">
                 <span class="font-bold text-sm">Sports</span>
                 <button type="button" id="sidebarCloseBtn" class="text-white hover:text-gray-200 cursor-pointer"><i class="fa-solid fa-xmark text-base pointer-events-none"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
-                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Mixed Martial Arts</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Golf</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boxing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Beach Volleyball</span> <span>+</span></div>
                 <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Table Tennis</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Futsal</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Horse Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>E Games</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>MotoGP</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Chess</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Volleyball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Ice Hockey</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Badminton</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cycling</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motorbikes</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Athletics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Basketball 3X3</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Sumo</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Virtual sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Handball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Politics</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Motor Sports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Baseball</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby Union</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Rugby League</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Darts</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>American Football</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Snooker</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Soccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esports</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Greyhound Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Kabaddi</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Boat Racing</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Esoccer</span> <span>+</span></div>
+                <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Wrestling</span> <span>+</span></div>
             </div>
         </aside>
 
@@ -289,6 +253,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 }
             });
 
+            // REALTIME SEARCH HANDLER
             let searchTimeout = null;
             function handleSearchInput(val) {
                 clearTimeout(searchTimeout);
@@ -972,217 +937,6 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION WITH SPORTBEX LIVE MATCHES
-function renderClientInterface(username, points, exposure) {
-return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soniexchange - Live Exchange & Betting</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-.odds-back { background-color: #72bbef; color: #000000; font-weight: bold; cursor: pointer; }
-.odds-back:hover { background-color: #5fa8df; }
-.odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; cursor: pointer; }
-.odds-lay:hover { background-color: #f58da3; }
-.casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
-.casino-card:hover { transform: scale(1.02); }
-</style>
-</head>
-<body class="text-xs pb-20">
-<!-- CLIENT HEADER BAR -->
-<header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700 sticky top-0 z-40">
-<div class="flex items-center space-x-3">
-<i class="fa-solid fa-bars text-sm cursor-pointer"></i>
-<span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
-</div>
-<div class="flex items-center space-x-3 text-[11px]">
-<div class="text-right">
-<div>Balance: <span id="clientBalance" class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
-<div class="text-[10px] text-gray-300">Exp: <span id="clientExposure" class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
-</div>
-</div>
-</header>
-
-<!-- SPORTBEX REAL-TIME LIVE TICKER BAR -->
-<div class="bg-[#162a3a] text-cyan-300 px-3 py-2 text-[11px] flex items-center border-b border-gray-800 space-x-3 shadow-inner">
-<span class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase animate-pulse">SPORTBEX LIVE</span>
-<div class="overflow-hidden whitespace-nowrap w-full">
-<div id="liveTickerText" class="inline-block font-semibold text-white space-x-8">
-🏏 Synchronizing global live cricket matches & odds directly via Sportbex API...
-</div>
-</div>
-</div>
-
-<!-- CATEGORIES BAR -->
-<div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
-<span class="text-red-500 cursor-pointer">CRASH</span>
-<span class="cursor-pointer">LOTTERY</span>
-<span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">CRICKET (LIVE & UPCOMING)</span>
-<span class="cursor-pointer">OUR CASINO</span>
-<span class="cursor-pointer">LIVE CASINO</span>
-<span class="cursor-pointer">SLOTS</span>
-<span class="cursor-pointer">FANTASY</span>
-</div>
-
-<!-- DYNAMIC LIVE CRICKET MATCHES CONTAINER -->
-<div id="dynamicMatchesContainer" class="p-2 space-y-2">
-<div class="text-center text-gray-400 p-4">Loading live matches from Sportbex Engine...</div>
-</div>
-
-<!-- CASINO CARDS GRID -->
-<div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
-<span class="text-[10px] font-bold block mt-1">MATKA</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
-<span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
-<span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
-<span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-<span class="text-[10px] font-bold block mt-1">ROULETTE</span>
-</div>
-<div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-<div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
-<span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-</div>
-</div>
-
-<!-- INTERACTIVE BET SLIP -->
-<div id="betSlipContainer" class="fixed bottom-0 left-0 right-0 bg-[#1e3a4c] border-t-2 border-cyan-500 p-3 shadow-2xl hidden z-50">
-<div class="max-w-xl mx-auto flex flex-col space-y-2">
-<div class="flex justify-between items-center text-white font-bold">
-<span id="betTitle" class="text-cyan-300">Place Bet</span>
-<button onclick="closeBetSlip()" class="text-red-400 hover:text-white cursor-pointer px-2">✕ Close</button>
-</div>
-<div class="flex items-center space-x-2 text-xs">
-<div class="bg-[#0d1e2b] px-3 py-1 rounded text-white flex-1">
-Selection: <span id="betSelection" class="font-bold text-yellow-400"></span> (<span id="betType" class="font-bold"></span>)
-</div>
-<div class="bg-[#0d1e2b] px-3 py-1 rounded text-white">
-Odds: <span id="betOdds" class="font-bold text-cyan-300">0.00</span>
-</div>
-</div>
-<div class="flex items-center space-x-2">
-<input type="number" id="betStake" placeholder="Enter Stake (Points)" class="w-full bg-white text-black px-3 py-1.5 rounded font-bold text-xs focus:outline-none" oninput="calculateProfit()">
-<button onclick="submitBet('${username}')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-1.5 rounded cursor-pointer uppercase shadow">Place Bet</button>
-</div>
-<div class="text-[10px] text-gray-300 flex justify-between">
-<span>Potential Profit: <span id="betProfit" class="text-green-400 font-bold">0.00</span></span>
-<span>Available Balance: <span class="text-green-400 font-bold">${Number(points || 0).toLocaleString()}</span></span>
-</div>
-</div>
-</div>
-
-<!-- SPORTBEX LIVE FETCH & STABLE BETTING SCRIPT -->
-<script>
-let activeBet = { selection: '', type: '', odds: 0 };
-
-async function fetchAndRenderLiveMatches() {
-    try {
-        const res = await fetch('/api/live-matches');
-        const data = await res.json();
-        
-        let html = '';
-        if (data && data.cricket && data.cricket.length > 0) {
-            data.cricket.forEach(m => {
-                let matchTitle = m.name || m.competitionName || m.title || 'Live Cricket Match';
-                let team1 = m.team1 || m.t1 || 'Team A';
-                let team2 = m.team2 || m.t2 || 'Team B';
-                let b1 = m.b1 || m.back1 || '1.90';
-                let l1 = m.l1 || m.lay1 || '1.92';
-                let b2 = m.b2 || m.back2 || '2.10';
-                let l2 = m.l2 || m.lay2 || '2.12';
-                let statusText = m.status || '● LIVE';
-
-                html += \`
-                <div class="bg-[#162a3a] rounded border border-gray-800 p-2 text-[11px]">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-cyan-300">🏏 \${matchTitle}</span>
-                        <span class="text-[9px] text-green-400 font-bold animate-pulse">\${statusText}</span>
-                    </div>
-                    <div class="grid grid-cols-6 gap-1 text-center text-[10px] items-center">
-                        <div class="odds-back py-1.5 rounded" onclick="openBetSlip('\${team1}', 'BACK', \${b1})">\${team1}<br>\${b1}</div>
-                        <div class="odds-lay py-1.5 rounded" onclick="openBetSlip('\${team1}', 'LAY', \${l1})">\${l1}</div>
-                        <div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-                        <div class="bg-[#1f364a] py-1 text-gray-400 rounded">-</div>
-                        <div class="odds-back py-1.5 rounded" onclick="openBetSlip('\${team2}', 'BACK', \${b2})">\${team2}<br>\${b2}</div>
-                        <div class="odds-lay py-1.5 rounded" onclick="openBetSlip('\${team2}', 'LAY', \${l2})">\${l2}</div>
-                    </div>
-                </div>\`;
-            });
-            document.getElementById('dynamicMatchesContainer').innerHTML = html;
-            document.getElementById('liveTickerText').innerText = "🏏 Sportbex live matches & odds successfully updated!";
-        } else {
-            document.getElementById('dynamicMatchesContainer').innerHTML = '<div class="text-center text-gray-400 p-4">No live cricket matches found right now via Sportbex API.</div>';
-        }
-    } catch (err) {
-        console.error("Error fetching live matches:", err);
-    }
-}
-
-fetchAndRenderLiveMatches();
-setInterval(fetchAndRenderLiveMatches, 15000);
-
-function openBetSlip(selection, type, odds) {
-    activeBet = { selection, type, odds };
-    document.getElementById('betSelection').innerText = selection;
-    document.getElementById('betType').innerText = type;
-    document.getElementById('betType').className = type === 'BACK' ? 'font-bold text-blue-400' : 'font-bold text-pink-400';
-    document.getElementById('betOdds').innerText = odds;
-    document.getElementById('betStake').value = '';
-    document.getElementById('betProfit').innerText = '0.00';
-    document.getElementById('betSlipContainer').classList.remove('hidden');
-}
-
-function closeBetSlip() {
-    document.getElementById('betSlipContainer').classList.add('hidden');
-}
-
-function calculateProfit() {
-    let stake = parseFloat(document.getElementById('betStake').value) || 0;
-    let profit = stake * (activeBet.odds - 1);
-    document.getElementById('betProfit').innerText = profit.toFixed(2);
-}
-
-function submitBet(username) {
-    let stake = parseFloat(document.getElementById('betStake').value) || 0;
-    let currentBal = parseFloat('${points}') || 0;
-
-    if (stake <= 0) {
-        alert('Please enter a valid stake amount!');
-        return;
-    }
-    if (stake > currentBal) {
-        alert('Insufficient balance to place this bet!');
-        return;
-    }
-
-    alert('Bet Placed Successfully! Stake: ' + stake + ' points on ' + activeBet.selection);
-    let newBal = currentBal - stake;
-    document.getElementById('clientBalance').innerText = newBal.toLocaleString();
-    closeBetSlip();
-}
-</script>
-</body>
-</html>
-`;
-}
-
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
@@ -1220,7 +974,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// 2. FIXED LOGIN PROCESS
+// 2. FIXED LOGIN PROCESS (SAVING MASTER ADMIN IN SESSION MEMORY & 2FA REDIRECTION CHECK)
 app.post('/login-process', async (req, res) => {
     let { username, password } = req.body;
     username = username ? username.trim() : '';
@@ -1241,9 +995,12 @@ app.post('/login-process', async (req, res) => {
             return res.redirect('/');
         }
 
+        // CHECK IF GOOGLE AUTH OR TELEGRAM 2FA IS ENABLED
         if (user.gauthEnabled === true || user.telegramEnabled === true) {
             req.session.pendingAuthUser = user.username;
 
+            // If Telegram is enabled (and Google Auth is not primary or user prefers Telegram), 
+            // we can also generate and send a Telegram OTP right away if bot is active!
             if (user.telegramEnabled && user.telegramChatId && bot) {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
@@ -1260,6 +1017,7 @@ app.post('/login-process', async (req, res) => {
         req.session.loggedInUser = user.username;
         req.session.userRole = user.role;
 
+        // FIXED: SAVE MASTER ADMIN PERMANENTLY IN SESSION MEMORY
         if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
             req.session.masterAdmin = user.username;
         }
@@ -1268,6 +1026,7 @@ app.post('/login-process', async (req, res) => {
             return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
         }
 
+        // REDIRECT TO BLANK DASHBOARD ON LOGIN
         res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
     } catch(err) {
         console.error(err);
@@ -1275,7 +1034,7 @@ app.post('/login-process', async (req, res) => {
     }
 });
 
-// 2.1 MASTER IMPERSONATION ROUTE
+// 2.1 MASTER IMPERSONATION ROUTE (FIXED FOR UNLIMITED SWITCHING AFTER MOBILE BACK)
 app.get('/admin/impersonate/:targetUser', async (req, res) => {
     const loggedInUser = req.session.loggedInUser;
     const masterAdmin = req.session.masterAdmin;
@@ -1283,6 +1042,7 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     const targetUser = req.params.targetUser;
 
     try {
+        // FIXED: ALLOW IF MASTER ADMIN SESSION OR FALLBACK URL ADMIN MATCHES
         const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
                                    (loggedInUser === 'Soniexchange') || 
                                    (userRole === 'ADMIN') || 
@@ -1299,10 +1059,12 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
             return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
         }
 
+        // FIXED: PRESERVE MASTER ADMIN MEMORY WHILE SWITCHING CURRENT SESSION
         req.session.loggedInUser = targetUser;
         req.session.userRole = targetSnap.data().role || 'Client';
         req.session.masterAdmin = masterAdmin || 'Soniexchange';
 
+        console.log(`Master Admin impersonated into client ID: ${targetUser}`);
         res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
     } catch(err) {
         console.error(err);
@@ -1310,7 +1072,7 @@ app.get('/admin/impersonate/:targetUser', async (req, res) => {
     }
 });
 
-// 2.2 LOGIN OTP VERIFICATION PAGE
+// 2.2 LOGIN OTP VERIFICATION PAGE (FOR 2FA USERS - SUPPORTS GOOGLE AUTH, TELEGRAM, OR BOTH)
 app.get('/login/verify-otp', async (req, res) => {
     const username = req.query.username || '';
     
@@ -1393,7 +1155,7 @@ app.post('/api/login/resend-telegram-otp', async (req, res) => {
     res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
 });
 
-// 2.3 LOGIN OTP VERIFICATION API
+// 2.3 LOGIN OTP VERIFICATION API (SUPPORTS BOTH GOOGLE AUTH & TELEGRAM)
 app.post('/api/login/verify-otp', async (req, res) => {
     const { username, token } = req.body;
     try {
@@ -1407,6 +1169,7 @@ app.post('/api/login/verify-otp', async (req, res) => {
         const user = docSnap.data();
         let verified = false;
 
+        // 1. Check Google Authenticator Token if enabled
         if (user.gauthEnabled && user.gauthSecret) {
             verified = speakeasy.totp.verify({
                 secret: user.gauthSecret,
@@ -1416,6 +1179,7 @@ app.post('/api/login/verify-otp', async (req, res) => {
             });
         }
 
+        // 2. Check Telegram OTP if enabled and not yet verified by Google Auth
         if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
             if (token.trim() === req.session.pendingTelegramOtp.trim()) {
                 verified = true;
@@ -1474,7 +1238,7 @@ app.get('/change-temporary-password', (req, res) => {
     `);
 });
 
-// 4. API FOR FIRST TIME PASSWORD & TRANSACTION PASSWORD GENERATION
+// 4. API FOR FIRST TIME PASSWORD & 6-DIGIT TRANSACTION PASSWORD GENERATION
 app.post('/api/update-temporary-password', async (req, res) => {
     const { username, newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
@@ -1544,7 +1308,7 @@ app.post('/api/update-temporary-password', async (req, res) => {
     }
 });
 
-// 20. SECURE AUTH VERIFICATION PAGE ROUTE
+// 20. SECURE AUTH VERIFICATION PAGE ROUTE (WITH FULL WORKING BACKEND LOGIC FOR GOOGLE AUTH & TELEGRAM)
 app.get('/admin/secureauth', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
 
@@ -1553,6 +1317,7 @@ app.get('/admin/secureauth', async (req, res) => {
         const docSnap = await getDoc(userRef);
         const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
 
+        // Generate Speakeasy Secret for Google Authenticator if not present
         let secretBase32 = currentUser.gauthSecret;
         if (!secretBase32) {
             const secret = speakeasy.generateSecret({ name: `Soniexchange (${loggedInUser})` });
@@ -1748,6 +1513,7 @@ app.post('/api/secureauth/google/verify', async (req, res) => {
 
         if (verified) {
             await updateDoc(userRef, { gauthEnabled: true });
+            console.log(`Google Authenticator enabled successfully for ${username}`);
         }
 
         res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}`);
@@ -1834,22 +1600,14 @@ app.post('/api/update-manual-password', async (req, res) => {
     }
 });
 
-// 7. DASHBOARD ROUTE (AUTOMATIC ROUTING FOR CLIENT VS MASTER/ADMIN)
+// 7. DASHBOARD ROUTE (CLEAN / BLANK LANDING PAGE AFTER LOGIN)
 app.get('/dashboard', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
     try {
         const userRef = doc(db, 'users', loggedInUser);
         const docSnap = await getDoc(userRef);
-        
-        if (!docSnap.exists()) return res.redirect('/');
-        const user = docSnap.data();
+        const role = docSnap.exists() ? docSnap.data().role : 'ADMIN';
 
-        // 1. CLIENT LOGIN -> SHOW SPORTS & CASINO INTERFACE
-        if (user.role === 'Client') {
-            return res.send(renderClientInterface(user.username, user.points, user.exposure));
-        }
-
-        // 2. MASTER / SUPER / ADMIN LOGIN -> SHOW BLANK HEADER DASHBOARD
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -1862,7 +1620,7 @@ app.get('/dashboard', async (req, res) => {
                 <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
             </head>
             <body class="min-h-screen flex flex-col text-xs">
-                ${getHeaderAndSidebar(loggedInUser, user.role)}
+                ${getHeaderAndSidebar(loggedInUser, role)}
                 <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
                     <!-- BLANK SCREEN BODY AFTER LOGIN -->
                 </main>
@@ -2026,7 +1784,7 @@ app.get('/users', async (req, res) => {
 // 9. EXACT NEW SCREENSHOT VIEW (/soni-view)
 app.get('/soni-view', async (req, res) => {
     const loggedInUser = req.query.username || 'Soniexchange';
-    const tab = req.query.tab || 'active';
+    const tab = req.query.tab || 'active'; // 'active' or 'deactive'
 
     try {
         const userRef = doc(db, 'users', loggedInUser);
@@ -2830,7 +2588,7 @@ app.get('/logout', (req, res) => {
     }
 });
 
-// 19. ADMIN SELF-BALANCE UPDATE API
+// 19. ADMIN SELF-BALANCE UPDATE API (STRICTLY FOR SONIEXCHANGE)
 app.post('/api/admin/update-balance', async (req, res) => {
     const { loggedInUser, newBalance, txnPassword } = req.body;
     const amount = Number(newBalance);
