@@ -995,38 +995,69 @@ function renderClientInterface(username, points, exposure) {
             <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
         </div>
 
-        <!-- MATCH ODDS ROWS -->
-        <div class="p-1 space-y-1">
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Mumbai Indians (w) - Kolkata Knight Riders (w)</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.90</div>
-                    <div class="odds-lay py-1 rounded-xs">1.92</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.10</div>
-                    <div class="odds-lay py-1 rounded-xs">2.12</div>
-                </div>
+                <!-- DYNAMIC SPORTBEX MULTI-API HUB -->
+        <div class="p-2 space-y-2">
+            <!-- API Selector Dropdown -->
+            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
+                <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
+                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#111e28] text-white text-[11px] p-1.5 rounded-xs border border-gray-700 focus:outline-none">
+                    <option value="/api/sportbex/cricket/live-matches">Live Matches</option>
+                    <option value="/api/sportbex/cricket/upcoming-series">Upcoming Series</option>
+                    <option value="/api/sportbex/cricket/series">All Series</option>
+                    <option value="/api/sportbex/cricket/trending-players">Trending Players</option>
+                    <option value="/api/sportbex/cricket/icc-rankings">ICC Rankings</option>
+                </select>
             </div>
 
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-cyan-300">Pakistan T10 v Bangladesh T10</span>
-                    <span class="text-[9px] text-green-400 font-bold">● LIVE</span>
-                </div>
-                <div class="grid grid-cols-6 gap-1 text-center text-[10px]">
-                    <div class="odds-back py-1 rounded-xs">1.85</div>
-                    <div class="odds-lay py-1 rounded-xs">1.87</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="bg-[#1f364a] py-1 text-gray-400 rounded-xs">-</div>
-                    <div class="odds-back py-1 rounded-xs">2.15</div>
-                    <div class="odds-lay py-1 rounded-xs">2.18</div>
+            <!-- Dynamic Data Display Container -->
+            <div id="dynamicApiContainer" class="space-y-1">
+                <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-3 text-[11px] text-center text-gray-400">
+                    Loading SportBex Feed...
                 </div>
             </div>
         </div>
+
+        <script>
+            async function switchSportbexFeed() {
+                const select = document.getElementById('sportbexEndpointSelect');
+                const container = document.getElementById('dynamicApiContainer');
+                const endpoint = select ? select.value : '/api/sportbex/cricket/live-matches';
+
+                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-400">Fetching data...</div>';
+
+                try {
+                    const res = await fetch(endpoint);
+                    const result = await res.json();
+                    
+                    const items = Array.isArray(result) ? result : (result.data || result.matches || result.list || [result]);
+
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-300">No data found in this category.</div>';
+                        return;
+                    }
+
+                    container.innerHTML = items.slice(0, 15).map(item => `
+                        <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-cyan-300">${item.matchName || item.name || item.title || item.seriesName || 'Cricket Update'}</span>
+                                <span class="text-[9px] text-green-400 font-bold">● ACTIVE</span>
+                            </div>
+                            <div class="text-[10px] text-gray-300">
+                                ${item.status || item.venue || item.date || JSON.stringify(item).substring(0, 60) + '...'}
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error('API Fetch Error:', err);
+                    container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-red-400">Failed to load feed data.</div>';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                switchSportbexFeed();
+            });
+        </script>
+
 
         <!-- CASINO CARDS GRID -->
         <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
