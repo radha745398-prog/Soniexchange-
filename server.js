@@ -1017,46 +1017,51 @@ function renderClientInterface(username, points, exposure) {
             </div>
         </div>
 
-        <script>
-            async function switchSportbexFeed() {
-                const select = document.getElementById('sportbexEndpointSelect');
-                const container = document.getElementById('dynamicApiContainer');
-                const endpoint = select ? select.value : '/api/sportbex/cricket/live-matches';
+                <script>
+            function switchSportbexFeed() {
+                var select = document.getElementById('sportbexEndpointSelect');
+                var container = document.getElementById('dynamicApiContainer');
+                var endpoint = select ? select.value : '/api/sportbex/cricket/live-matches';
 
                 container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-400">Fetching data...</div>';
 
-                try {
-                    const res = await fetch(endpoint);
-                    const result = await res.json();
-                    
-                    const items = Array.isArray(result) ? result : (result.data || result.matches || result.list || [result]);
+                fetch(endpoint)
+                    .then(function(res) { return res.json(); })
+                    .then(function(result) {
+                        var items = Array.isArray(result) ? result : (result.data || result.matches || result.list || [result]);
 
-                    if (!items || items.length === 0) {
-                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-300">No data found in this category.</div>';
-                        return;
-                    }
+                        if (!items || items.length === 0) {
+                            container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-300">No data found in this category.</div>';
+                            return;
+                        }
 
-                    container.innerHTML = items.slice(0, 15).map(item => `
-                        <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px]">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-bold text-cyan-300">${item.matchName || item.name || item.title || item.seriesName || 'Cricket Update'}</span>
-                                <span class="text-[9px] text-green-400 font-bold">● ACTIVE</span>
-                            </div>
-                            <div class="text-[10px] text-gray-300">
-                                ${item.status || item.venue || item.date || JSON.stringify(item).substring(0, 60) + '...'}
-                            </div>
-                        </div>
-                    `).join('');
-                } catch (err) {
-                    console.error('API Fetch Error:', err);
-                    container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-red-400">Failed to load feed data.</div>';
-                }
+                        var htmlContent = '';
+                        for (var i = 0; i < Math.min(items.length, 15); i++) {
+                            var item = items[i];
+                            var title = item.matchName || item.name || item.title || item.seriesName || 'Cricket Update';
+                            var desc = item.status || item.venue || item.date || 'Active Feed';
+
+                            htmlContent += '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] mb-1">' +
+                                '<div class="flex justify-between items-center mb-1">' +
+                                '<span class="font-bold text-cyan-300">' + title + '</span>' +
+                                '<span class="text-[9px] text-green-400 font-bold">● ACTIVE</span>' +
+                                '</div>' +
+                                '<div class="text-[10px] text-gray-300">' + desc + '</div>' +
+                                '</div>';
+                        }
+                        container.innerHTML = htmlContent;
+                    })
+                    .catch(function(err) {
+                        console.error('API Fetch Error:', err);
+                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-red-400">Failed to load feed data.</div>';
+                    });
             }
 
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', function() {
                 switchSportbexFeed();
             });
         </script>
+
 
 
         <!-- CASINO CARDS GRID -->
