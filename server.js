@@ -1,4 +1,4 @@
-const express = require('express');
+Const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
@@ -935,7 +935,7 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (EXACTLY MATCHING YOUR SCREENSHOT)
+// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (SPORTBEX DYNAMIC HUB)
 function renderClientInterface(username, points, exposure) {
     return `
     <!DOCTYPE html>
@@ -948,8 +948,6 @@ function renderClientInterface(username, points, exposure) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
             body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-            .odds-back { background-color: #72bbef; color: #000000; font-weight: bold; }
-            .odds-lay { background-color: #faa9ba; color: #000000; font-weight: bold; }
             .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
             .casino-card:hover { transform: scale(1.02); }
         </style>
@@ -995,7 +993,7 @@ function renderClientInterface(username, points, exposure) {
             <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
         </div>
 
-                <!-- DYNAMIC SPORTBEX MULTI-API HUB -->
+        <!-- DYNAMIC SPORTBEX MULTI-API HUB -->
         <div class="p-2 space-y-2">
             <!-- API Selector Dropdown -->
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
@@ -1017,7 +1015,7 @@ function renderClientInterface(username, points, exposure) {
             </div>
         </div>
 
-                <script>
+        <script>
             function switchSportbexFeed() {
                 var select = document.getElementById('sportbexEndpointSelect');
                 var container = document.getElementById('dynamicApiContainer');
@@ -1061,8 +1059,6 @@ function renderClientInterface(username, points, exposure) {
                 switchSportbexFeed();
             });
         </script>
-
-
 
         <!-- CASINO CARDS GRID -->
         <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
@@ -1760,52 +1756,6 @@ app.post('/api/update-manual-password', async (req, res) => {
         res.redirect(`/change-password?username=${encodeURIComponent(username)}`);
     }
 });
-
-
-
-        <!-- CASINO CARDS GRID -->
-        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
-                <span class="text-[10px] font-bold block mt-1">MATKA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
-                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
-                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
-                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
-                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
-                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
-                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
-                <span class="text-[10px] font-bold block mt-1">POKER</span>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-}
 
 // 7. DASHBOARD ROUTE (AUTOMATIC ROUTING FOR CLIENT VS MASTER/ADMIN)
 app.get('/dashboard', async (req, res) => {
