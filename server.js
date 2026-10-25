@@ -2797,6 +2797,7 @@ app.post('/api/admin/update-balance', async (req, res) => {
 });
 
 
+
 // ================= SPORTBEX TRIAL API PROXY INTEGRATION =================
 const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
 const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
@@ -2805,7 +2806,6 @@ app.get('/api/sportbex-proxy', async (req, res) => {
   try {
     let targetPath = req.query.path || '/live-score/cricket/series';
     
-    // Ensure the path properly handles prefix matching for trial API
     if (!targetPath.startsWith('/live-score') && !targetPath.startsWith('/cricket')) {
       targetPath = '/live-score' + targetPath;
     }
@@ -2825,6 +2825,23 @@ app.get('/api/sportbex-proxy', async (req, res) => {
   } catch (err) {
     console.error("SportBex Proxy Error:", err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// === YAHAN NICHE YE DEBUG TEST ROUTE DALNA HAI ===
+app.get('/api/test-sportbex', async (req, res) => {
+  try {
+    const testUrl = 'https://trial-api.sportbex.com/api/live-score/cricket/series';
+    const response = await fetch(testUrl, {
+      headers: {
+        'sportbex-api-key': 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y',
+        'Content-Type': 'application/json'
+      }
+    });
+    const text = await response.text();
+    res.send(`Status: ${response.status} | Response: ${text}`);
+  } catch (err) {
+    res.status(500).send("Error: " + err.message);
   }
 });
 
