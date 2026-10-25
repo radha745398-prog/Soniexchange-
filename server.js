@@ -1000,11 +1000,12 @@ function renderClientInterface(username, points, exposure) {
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
                 <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
-    <option value="/api/sportbex-proxy?path=/live-score/cricket/series">Get Series</option>
-    <option value="/api/sportbex-proxy?path=/live-score/cricket/upcoming-series">Get Upcoming Series</option>
-    <option value="/api/sportbex-proxy?path=/live-score/cricket/trending-players">Get Trending Players</option>
-    <option value="/api/sportbex-proxy?path=/live-score/cricket/icc-rankings">Get ICC Rankings</option>
+    <option value="/api/sportbex-proxy?path=/cricket/series">Get Series</option>
+    <option value="/api/sportbex-proxy?path=/cricket/upcoming-series">Get Upcoming Series</option>
+    <option value="/api/sportbex-proxy?path=/cricket/trending-players">Get Trending Players</option>
+    <option value="/api/sportbex-proxy?path=/cricket/icc-rankings">Get ICC Rankings</option>
 </select>
+
  
             </div>
 
@@ -2815,6 +2816,7 @@ app.get('/api/sportbex-proxy', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // =========================================================================
 
