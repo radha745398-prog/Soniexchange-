@@ -999,13 +999,13 @@ function renderClientInterface(username, points, exposure) {
             <!-- API Selector Dropdown -->
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
                 <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
-                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
-                    <option value="/api/sportbex/cricket/series">Get Series</option>
-                    <option value="/api/sportbex/cricket/upcoming-series">Get Upcoming Series</option>
-                    <option value="/api/sportbex/cricket/trending-players">Get Trending Players</option>
-                    <option value="/api/sportbex/cricket/icc-rankings">Get ICC Rankings</option>
-                    <option value="/api/sportbex/betfair/competitions/4">Get Betfair Competitions (Cricket)</option>
-                </select>
+               <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/series">Get Series</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/upcoming-series">Get Upcoming Series</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/trending-players">Get Trending Players</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/icc-rankings">Get ICC Rankings</option>
+</select>
+ 
             </div>
 
             <!-- Dynamic Data Display Container -->
@@ -2798,41 +2798,23 @@ app.post('/api/admin/update-balance', async (req, res) => {
 const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
 const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
 
-const getSportbexHeaders = () => ({
-  'sportbex-api-key': SPORTBEX_API_KEY,
-  'Content-Type': 'application/json'
-});
-
-async function proxySportbex(endpointPath, req, res) {
+app.get('/api/sportbex-proxy', async (req, res) => {
   try {
-    let finalUrl = `${SPORTBEX_BASE_URL}${endpointPath}`;
-    for (const [key, value] of Object.entries(req.params)) {
-      finalUrl = finalUrl.replace(`:${key}`, value);
-    }
-    const response = await fetch(finalUrl, { headers: getSportbexHeaders() });
+    const targetPath = req.query.path || '/live-score/cricket/series';
+    const finalUrl = `${SPORTBEX_BASE_URL}${targetPath}`;
+    const response = await fetch(finalUrl, {
+      headers: {
+        'sportbex-api-key': SPORTBEX_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error("SportBex API Error:", err.message);
-    res.status(500).json({ error: 'Failed to fetch from SportBex API', details: err.message });
+    console.error("SportBex Proxy Error:", err.message);
+    res.status(500).json({ error: err.message });
   }
-}
-
-app.get('/api/sportbex/cricket/series', (req, res) => proxySportbex('/live-score/cricket/series', req, res));
-app.get('/api/sportbex/cricket/upcoming-series', (req, res) => proxySportbex('/live-score/cricket/upcoming-series', req, res));
-app.get('/api/sportbex/cricket/series-matches/:seriesId', (req, res) => proxySportbex('/live-score/cricket/series-matches/:seriesId', req, res));
-app.get('/api/sportbex/cricket/point-table/:seriesId', (req, res) => proxySportbex('/live-score/cricket/point-table/:seriesId', req, res));
-app.get('/api/sportbex/cricket/match-data/:matchId', (req, res) => proxySportbex('/live-score/cricket/match-data/:matchId', req, res));
-app.get('/api/sportbex/cricket/live-matches', (req, res) => proxySportbex('/live-score/cricket/live-matches', req, res));
-app.get('/api/sportbex/cricket/live-match-details/:matchId', (req, res) => proxySportbex('/live-score/cricket/live-match-details/:matchId', req, res));
-app.get('/api/sportbex/cricket/scorecard/:matchId', (req, res) => proxySportbex('/live-score/cricket/scorecard/:matchId', req, res));
-app.get('/api/sportbex/cricket/match-info/:matchId', (req, res) => proxySportbex('/live-score/cricket/match-info/:matchId', req, res));
-app.get('/api/sportbex/cricket/squad/:matchId', (req, res) => proxySportbex('/live-score/cricket/squad/:matchId', req, res));
-app.get('/api/sportbex/cricket/highlights/:matchId', (req, res) => proxySportbex('/live-score/cricket/highlights/:matchId', req, res));
-app.get('/api/sportbex/cricket/commentary/:matchId', (req, res) => proxySportbex('/live-score/cricket/commentary/:matchId', req, res));
-app.get('/api/sportbex/cricket/trending-players', (req, res) => proxySportbex('/live-score/cricket/trending-players', req, res));
-app.get('/api/sportbex/cricket/player-info/:playerId', (req, res) => proxySportbex('/live-score/cricket/player-info/:playerId', req, res));
-app.get('/api/sportbex/cricket/icc-rankings', (req, res) => proxySportbex('/live-score/cricket/icc-rankings', req, res));
+});
 
 // =========================================================================
 
