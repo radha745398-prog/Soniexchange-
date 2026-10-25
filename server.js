@@ -999,6 +999,11 @@ function renderClientInterface(username, points, exposure) {
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
                 <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
                 <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
+                    <option value="/api/sportbex-proxy?path=/live-score/cricket/series">Get Series</option>
+                    <option value="/api/sportbex-proxy?path=/live-score/cricket/upcoming-series">Get Upcoming Series</option>
+                    <option value="/api/sportbex-proxy?path=/live-score/cricket/all-live-matches">Get All Live Matches</option>
+                    <option value="/api/sportbex-proxy?path=/live-score/cricket/trending-players">Get Trending Players</option>
+                    <option value="/api/sportbex-proxy?path=/live-score/cricket/icc-rankings">Get ICC Rankings</option>
                     <option value="/api/sportbex-proxy?path=/betfair/competition-list/4">Get Cricket Competitions</option>
                     <option value="/api/sportbex-proxy?path=/betfair/match-list/4">Get Cricket Matches</option>
                 </select>
@@ -1016,34 +1021,35 @@ function renderClientInterface(username, points, exposure) {
             function switchSportbexFeed() {
                 var select = document.getElementById('sportbexEndpointSelect');
                 var container = document.getElementById('dynamicApiContainer');
-                var endpoint = select ? select.value : '/api/sportbex-proxy?path=/betfair/competition-list/4';
+                var endpoint = select ? select.value : '/api/sportbex-proxy?path=/live-score/cricket/all-live-matches';
 
-                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400">Loading Sportbex feed...</div>';
+                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400 text-center">Fetching Sportbex feed data...</div>';
 
                 fetch(endpoint)
                     .then(function(res) { return res.json(); })
                     .then(function(result) {
-                        var items = Array.isArray(result) ? result : (result.data || result.result || []);
+                        var items = Array.isArray(result) ? result : (result.data || result.result || result.matches || result.series || result.list || result.ranking || [result]);
                         
                         if (!items || items.length === 0) {
-                            container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400">No data available</div>';
+                            container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400 text-center">No live data found for this selection.</div>';
                             return;
                         }
                         
                         var htmlContent = '<div class="flex flex-col gap-1.5 p-1">';
                         for (var i = 0; i < items.length; i++) {
                             var item = items[i];
-                            var compName = item.competition ? item.competition.name : (item.name || 'Unknown Match');
-                            var region = item.competitionRegion || 'International';
-                            var marketCount = item.marketCount || 0;
+                            var title = item.name || item.matchName || item.title || item.seriesName || (item.competition ? item.competition.name : null) || item.team || item.player || 'Match Event';
+                            var subtitle = item.status || item.venue || item.competitionRegion || item.date || item.matchDate || item.season || (item.marketCount ? ('Markets: ' + item.marketCount) : 'Active Market');
 
                             htmlContent += \`
-                              <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2.5 text-[11px] flex justify-between items-center text-white">
+                              <div onclick="alert('Viewing: \${title.replace(/'/g, "")}')" class="bg-[#162a3a] hover:bg-[#1f3a50] rounded-xs border border-gray-800 p-2.5 text-[11px] flex justify-between items-center text-white cursor-pointer transition shadow-sm">
                                 <div>
-                                  <div class="font-bold text-yellow-400 text-xs">\${compName}</div>
-                                  <div class="text-[10px] text-gray-400 mt-0.5">Region: \${region} | Markets: \${marketCount}</div>
+                                  <div class="font-bold text-yellow-400 text-xs">\${title}</div>
+                                  <div class="text-[10px] text-gray-300 mt-0.5">\${subtitle}</div>
                                 </div>
-                                <span class="bg-green-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">ACTIVE</span>
+                                <div class="flex items-center space-x-1">
+                                    <span class="bg-red-600 animate-pulse text-white text-[9px] px-1.5 py-0.5 rounded font-bold">LIVE ●</span>
+                                </div>
                               </div>
                             \`;
                         }
@@ -1052,7 +1058,7 @@ function renderClientInterface(username, points, exposure) {
                     })
                     .catch(function(err) {
                         console.error("SportBex Fetch Error:", err);
-                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-red-400">Failed to load data</div>';
+                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-red-400 text-center">Failed to load data. Please check connection.</div>';
                     });
             }
 
@@ -2799,7 +2805,11 @@ const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
 
 app.get('/api/sportbex-proxy', async (req, res) => {
   try {
-    const targetPath = req.query.path || '/betfair/competition-list/4';
+    let targetPath = req.query.path || '/live-score/cricket/all-live-matches';
+    if (!targetPath.startsWith('/live-score') && !targetPath.startsWith('/betfair') && !targetPath.startsWith('/cricket')) {
+      targetPath = '/live-score' + (targetPath.startsWith('/') ? '' : '/') + targetPath;
+    }
+    
     const finalUrl = `${SPORTBEX_BASE_URL}${targetPath}`;
     console.log("Proxying request to:", finalUrl);
     
