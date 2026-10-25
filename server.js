@@ -993,17 +993,18 @@ function renderClientInterface(username, points, exposure) {
             <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
         </div>
 
+
         <!-- DYNAMIC SPORTBEX MULTI-API HUB -->
         <div class="p-2 space-y-2">
             <!-- API Selector Dropdown -->
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
                 <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
-                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#111e28] text-white text-[11px] p-1.5 rounded-xs border border-gray-700 focus:outline-none">
-                    <option value="/api/sportbex/cricket/live-matches">Live Matches</option>
-                    <option value="/api/sportbex/cricket/upcoming-series">Upcoming Series</option>
-                    <option value="/api/sportbex/cricket/series">All Series</option>
-                    <option value="/api/sportbex/cricket/trending-players">Trending Players</option>
-                    <option value="/api/sportbex/cricket/icc-rankings">ICC Rankings</option>
+                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
+                    <option value="/api/sportbex/cricket/series">Get Series</option>
+                    <option value="/api/sportbex/cricket/upcoming-series">Get Upcoming Series</option>
+                    <option value="/api/sportbex/cricket/trending-players">Get Trending Players</option>
+                    <option value="/api/sportbex/cricket/icc-rankings">Get ICC Rankings</option>
+                    <option value="/api/sportbex/betfair/competitions/4">Get Betfair Competitions (Cricket)</option>
                 </select>
             </div>
 
@@ -1015,13 +1016,13 @@ function renderClientInterface(username, points, exposure) {
             </div>
         </div>
 
-                <script>
+        <script>
             function switchSportbexFeed() {
                 var select = document.getElementById('sportbexEndpointSelect');
                 var container = document.getElementById('dynamicApiContainer');
-                var endpoint = select ? select.value : '/api/sportbex/cricket/live-matches';
+                var endpoint = select ? select.value : '/api/sportbex/cricket/series';
 
-                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-400">Fetching data...</div>';
+                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-center text-gray-400">Fetching live data...</div>';
 
                 fetch(endpoint)
                     .then(function(res) { return res.json(); })
@@ -1036,10 +1037,8 @@ function renderClientInterface(username, points, exposure) {
                         var htmlContent = '';
                         for (var i = 0; i < Math.min(items.length, 15); i++) {
                             var item = items[i];
-                            
-                            // Saare possible keys check kar rahe hain taaki data miss na ho
-                            var title = item.matchName || item.name || item.title || item.seriesName || item.team || item.player || (item.toString ? item.toString() : 'Cricket Update');
-                            var desc = item.status || item.venue || item.date || item.teamName || item.matches || JSON.stringify(item);
+                            var title = item.name || item.matchName || item.title || item.seriesName || item.competitionName || item.team || item.player || 'SportBex Update';
+                            var desc = item.status || item.venue || item.date || item.matchDate || item.season || JSON.stringify(item);
 
                             htmlContent += '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] mb-1">' +
                                 '<div class="flex justify-between items-center mb-1">' +
