@@ -999,11 +999,12 @@ function renderClientInterface(username, points, exposure) {
             <!-- API Selector Dropdown -->
             <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
                 <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
-               <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
-    <option value="/api/sportbex-proxy?path=/cricket/series">Get Series</option>
-    <option value="/api/sportbex-proxy?path=/cricket/upcoming-series">Get Upcoming Series</option>
-    <option value="/api/sportbex-proxy?path=/cricket/trending-players">Get Trending Players</option>
-    <option value="/api/sportbex-proxy?path=/cricket/icc-rankings">Get ICC Rankings</option>
+               
+<select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/series">Get Series</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/upcoming-series">Get Upcoming Series</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/trending-players">Get Trending Players</option>
+    <option value="/api/sportbex-proxy?path=/live-score/cricket/icc-rankings">Get ICC Rankings</option>
 </select>
 
  
@@ -2795,20 +2796,30 @@ app.post('/api/admin/update-balance', async (req, res) => {
     }
 });
 
+
 // ================= SPORTBEX TRIAL API PROXY INTEGRATION =================
 const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
 const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
 
 app.get('/api/sportbex-proxy', async (req, res) => {
   try {
-    const targetPath = req.query.path || '/live-score/cricket/series';
+    let targetPath = req.query.path || '/live-score/cricket/series';
+    
+    // Ensure the path properly handles prefix matching for trial API
+    if (!targetPath.startsWith('/live-score') && !targetPath.startsWith('/cricket')) {
+      targetPath = '/live-score' + targetPath;
+    }
+    
     const finalUrl = `${SPORTBEX_BASE_URL}${targetPath}`;
+    console.log("Proxying request to:", finalUrl);
+
     const response = await fetch(finalUrl, {
       headers: {
         'sportbex-api-key': SPORTBEX_API_KEY,
         'Content-Type': 'application/json'
       }
     });
+    
     const data = await response.json();
     res.json(data);
   } catch (err) {
