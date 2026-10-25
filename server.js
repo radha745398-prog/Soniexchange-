@@ -1018,7 +1018,7 @@ function renderClientInterface(username, points, exposure) {
         </div>
 
         <script>
-            function switchSportbexFeed() {
+function switchSportbexFeed() {
   var select = document.getElementById('sportbexEndpointSelect');
   var container = document.getElementById('dynamicApiContainer');
   var endpoint = select ? select.value : '/api/sportbex-proxy?path=/betfair/competition-list/4';
@@ -1059,13 +1059,13 @@ function renderClientInterface(username, points, exposure) {
       console.error("SportBex Fetch Error:", err);
       container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-red-400">Failed to load data</div>';
     });
+}
 
+document.addEventListener('DOMContentLoaded', function() {
+  switchSportbexFeed();
+});
+</script>
 
-
-            document.addEventListener('DOMContentLoaded', function() {
-                switchSportbexFeed();
-            });
-        </script>
 
 
         <!-- CASINO CARDS GRID -->
@@ -2802,6 +2802,8 @@ app.post('/api/admin/update-balance', async (req, res) => {
 
 
 
+
+// ================= SPORTBEX TRIAL API PROXY INTEGRATION =================
 const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
 const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
 
@@ -2809,14 +2811,15 @@ app.get('/api/sportbex-proxy', async (req, res) => {
   try {
     const targetPath = req.query.path || '/betfair/competition-list/4';
     const finalUrl = `${SPORTBEX_BASE_URL}${targetPath}`;
-
+    console.log("Proxying request to:", finalUrl);
+    
     const response = await fetch(finalUrl, {
       headers: {
         'sportbex-api-key': SPORTBEX_API_KEY,
         'Content-Type': 'application/json'
       }
     });
-
+    
     const data = await response.json();
     res.json(data);
   } catch (err) {
