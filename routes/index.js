@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 const { db, bot } = require('../config/firebase');
 const { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
 
@@ -121,5 +122,24 @@ router.get('/logout', (req, res) => {
     });
 });
 
-module.exports = router;
+// --- TEST API ROUTE FOR MATCHES (Provider: Cheeta/Kunal) ---
+router.get('/api/fetch-matches', async (req, res) => {
+    try {
+        const API_BASE_URL = 'http://103.189.172.254:8887';
+        const response = await axios.get(`${API_BASE_URL}/get-series-redis`);
+        
+        res.json({
+            success: true,
+            message: "Data fetched successfully from provider API",
+            data: response.data
+        });
+    } catch (error) {
+        console.error("API Fetch Error:", error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 
+module.exports = router;
