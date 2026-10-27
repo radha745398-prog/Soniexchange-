@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const TelegramBot = require('node-telegram-bot-api');
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -126,7 +127,7 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                     <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Assign Agent</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Market Analysis</a>
-                    <a href="#" class="hover:underline py-0.5 px-1">Live Market ▾</a>
+                    <a href="/live-market?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-bold text-yellow-300">Live Market ▾</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Live Virtual Market ▾</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Reports ▾</a>
                     <a href="#" class="hover:underline py-0.5 px-1">Multi Login</a>
@@ -931,6 +932,74 @@ app.get('/api/user-detail', async (req, res) => {
     } catch(err) {
         console.error(err);
         res.json({ success: false });
+    }
+});
+
+// LIVE MARKET TRIAL API ROUTE (INTEGRATED)
+app.get('/live-market', async (req, res) => {
+    const loggedInUser = req.query.username || 'Soniexchange';
+    try {
+        const userRef = doc(db, 'users', loggedInUser);
+        const docSnap = await getDoc(userRef);
+        const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+
+        // Fetching data from trial API endpoint: http://103.189.172.254:8887/get-series-redis
+        let apiData = [];
+        try {
+            const response = await axios.get('http://103.189.172.254:8887/get-series-redis', { timeout: 5000 });
+            apiData = response.data;
+        } catch (apiErr) {
+            console.error("Trial API fetch error:", apiErr.message);
+        }
+
+        let contentHTML = '';
+        if (Array.isArray(apiData) && apiData.length > 0) {
+            contentHTML = apiData.map(item => `
+                <div class="bg-white p-3 rounded shadow-xs border border-gray-200 flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-bold text-[#0077b6]">Sport:</span> ${item.sportName || 'N/A'} (ID: ${item.sportId || '-'})<br>
+                        <span class="font-semibold text-gray-700">Competition:</span> ${item.competitionName || 'N/A'} (ID: ${item.competitionId || '-'})
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-gray-100 px-2 py-1 rounded text-[10px] font-bold">Region: ${item.competitionRegion || 'GLOBAL'}</span><br>
+                        <span class="text-gray-500 text-[10px]">Market Count: ${item.marketCount || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            contentHTML = `<div class="p-4 bg-white text-center text-gray-500 rounded border">No live market data available right now from trial API or API is offline.</div>`;
+        }
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Live Market - Soniexchange</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; }</style>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs">
+                ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+                <main class="flex-1 p-4 max-w-6xl mx-auto w-full space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-satellite-dish text-[#0077b6] mr-1"></i> Live Market Trial Feed</h2>
+                        <a href="/live-market?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0077b6] hover:bg-[#005b8e] text-white px-3 py-1 rounded text-xs font-bold shadow-xs">Refresh Feed</a>
+                    </div>
+                    <div class="space-y-2">
+                        ${contentHTML}
+                    </div>
+                </main>
+                ${getModalsHTML(loggedInUser)}
+                ${getModalScriptsJS()}
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        console.error(err);
+        res.redirect('/');
     }
 });
 
