@@ -251,7 +251,6 @@ function getHeaderAndSidebar(loggedInUser, userRole) {
                 }
             });
 
-            // REALTIME SEARCH HANDLER
             let searchTimeout = null;
             function handleSearchInput(val) {
                 clearTimeout(searchTimeout);
@@ -935,182 +934,6 @@ app.get('/api/user-detail', async (req, res) => {
     }
 });
 
-// CLIENT EXCHANGE & CASINO INTERFACE FUNCTION (SPORTBEX DYNAMIC HUB)
-function renderClientInterface(username, points, exposure) {
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Soniexchange - Home</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #0d1e2b; color: #ffffff; margin: 0; }
-            .casino-card { border-radius: 4px; overflow: hidden; border: 1px solid #1a3348; transition: transform 0.2s; }
-            .casino-card:hover { transform: scale(1.02); }
-        </style>
-    </head>
-    <body class="text-xs">
-        <!-- CLIENT HEADER BAR -->
-        <header class="bg-[#1f364a] text-white px-3 py-1.5 flex justify-between items-center border-b border-gray-700">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-bars text-sm cursor-pointer"></i>
-                <span class="font-italic italic font-bold text-base text-white tracking-wide">Soniexchange</span>
-            </div>
-            <div class="flex items-center space-x-3 text-[11px]">
-                <i class="fa-solid fa-magnifying-glass text-xs cursor-pointer"></i>
-                <div class="text-right">
-                    <div>Balance: <span class="font-bold text-green-400">${Number(points || 0).toLocaleString()}</span></div>
-                    <div class="text-[10px] text-gray-300">Exp: <span class="text-red-400">${Number(exposure || 0).toLocaleString()}</span> | ${username} <a href="/logout" class="text-red-400 ml-1 hover:underline">(Logout)</a></div>
-                </div>
-            </div>
-        </header>
-
-        <!-- TICKER MARQUEE -->
-        <div class="bg-[#162a3a] text-gray-300 px-3 py-1 text-[10px] flex items-center border-b border-gray-800">
-            <marquee class="font-semibold">Newly Launched Matka Market in Our Exchange | Welcome to Soniexchange!</marquee>
-        </div>
-
-        <!-- CATEGORIES BAR -->
-        <div class="bg-[#0b1723] px-2 py-1 flex items-center space-x-4 text-[10px] font-bold overflow-x-auto whitespace-nowrap border-b border-gray-800 text-gray-300">
-            <span class="text-red-500 cursor-pointer">CRASH</span>
-            <span class="cursor-pointer">LOTTERY</span>
-            <span class="text-cyan-400 border-b-2 border-cyan-400 pb-0.5 cursor-pointer">SPORTS</span>
-            <span class="cursor-pointer">OUR CASINO</span>
-            <span class="cursor-pointer">LIVE CASINO</span>
-            <span class="cursor-pointer">SLOTS</span>
-            <span class="cursor-pointer">FANTASY</span>
-        </div>
-
-        <!-- SPORTS ICONS BAR -->
-        <div class="bg-[#162a3a] py-1.5 px-2 flex justify-around items-center text-[9px] text-center border-b border-gray-800">
-            <div class="cursor-pointer"><i class="fa-solid fa-baseball text-sm block mb-0.5 text-cyan-400"></i>CRICKET</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-football text-sm block mb-0.5"></i>FOOTBALL</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-table-tennis-paddle-ball text-sm block mb-0.5"></i>TENNIS</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-horse text-sm block mb-0.5"></i>HORSE RACING</div>
-            <div class="cursor-pointer"><i class="fa-solid fa-basketball text-sm block mb-0.5"></i>BASKETBALL</div>
-        </div>
-
-        <!-- DYNAMIC SPORTBEX MULTI-API HUB -->
-        <div class="p-2 space-y-2">
-            <!-- API Selector Dropdown -->
-            <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2">
-                <label class="block text-[10px] text-cyan-300 font-bold mb-1">SELECT SPORTBEX FEED:</label>
-                <select id="sportbexEndpointSelect" onchange="switchSportbexFeed()" class="w-full bg-[#0f2230] text-white border border-gray-700 rounded-xs p-1 text-[11px]">
-                    <option value="/api/sportbex-proxy?path=/live-score/cricket/series">Get Series</option>
-                    <option value="/api/sportbex-proxy?path=/live-score/cricket/upcoming-series">Get Upcoming Series</option>
-                    <option value="/api/sportbex-proxy?path=/live-score/cricket/all-live-matches">Get All Live Matches</option>
-                    <option value="/api/sportbex-proxy?path=/live-score/cricket/trending-players">Get Trending Players</option>
-                    <option value="/api/sportbex-proxy?path=/live-score/cricket/icc-rankings">Get ICC Rankings</option>
-                    <option value="/api/sportbex-proxy?path=/betfair/competition-list/4">Get Cricket Competitions</option>
-                    <option value="/api/sportbex-proxy?path=/betfair/match-list/4">Get Cricket Matches</option>
-                </select>
-            </div>
-
-            <!-- Dynamic Data Display Container -->
-            <div id="dynamicApiContainer" class="space-y-1">
-                <div class="bg-[#162a3a] rounded-xs border border-gray-800 p-3 text-[11px] text-center text-gray-400">
-                    Loading SportBex Feed...
-                </div>
-            </div>
-        </div>
-
-        <script>
-            function switchSportbexFeed() {
-                var select = document.getElementById('sportbexEndpointSelect');
-                var container = document.getElementById('dynamicApiContainer');
-                var endpoint = select ? select.value : '/api/sportbex-proxy?path=/live-score/cricket/all-live-matches';
-
-                container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400 text-center">Fetching Sportbex feed data...</div>';
-
-                fetch(endpoint)
-                    .then(function(res) { return res.json(); })
-                    .then(function(result) {
-                        var items = Array.isArray(result) ? result : (result.data || result.result || result.matches || result.series || result.list || result.ranking || [result]);
-                        
-                        if (!items || items.length === 0) {
-                            container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-gray-400 text-center">No live data found for this selection.</div>';
-                            return;
-                        }
-                        
-                        var htmlContent = '<div class="flex flex-col gap-1.5 p-1">';
-                        for (var i = 0; i < items.length; i++) {
-                            var item = items[i];
-                            var title = item.name || item.matchName || item.title || item.seriesName || (item.competition ? item.competition.name : null) || item.team || item.player || 'Match Event';
-                            var subtitle = item.status || item.venue || item.competitionRegion || item.date || item.matchDate || item.season || (item.marketCount ? ('Markets: ' + item.marketCount) : 'Active Market');
-
-                            htmlContent += \`
-                              <div onclick="alert('Viewing: \${title.replace(/'/g, "")}')" class="bg-[#162a3a] hover:bg-[#1f3a50] rounded-xs border border-gray-800 p-2.5 text-[11px] flex justify-between items-center text-white cursor-pointer transition shadow-sm">
-                                <div>
-                                  <div class="font-bold text-yellow-400 text-xs">\${title}</div>
-                                  <div class="text-[10px] text-gray-300 mt-0.5">\${subtitle}</div>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <span class="bg-red-600 animate-pulse text-white text-[9px] px-1.5 py-0.5 rounded font-bold">LIVE ●</span>
-                                </div>
-                              </div>
-                            \`;
-                        }
-                        htmlContent += '</div>';
-                        container.innerHTML = htmlContent;
-                    })
-                    .catch(function(err) {
-                        console.error("SportBex Fetch Error:", err);
-                        container.innerHTML = '<div class="bg-[#162a3a] rounded-xs border border-gray-800 p-2 text-[11px] text-red-400 text-center">Failed to load data. Please check connection.</div>';
-                    });
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-                switchSportbexFeed();
-            });
-        </script>
-
-        <!-- CASINO CARDS GRID -->
-        <div class="p-1 grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-2">
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-emerald-900 rounded flex items-center justify-center font-bold text-yellow-400 text-xs shadow-inner">MATKA MARKET</div>
-                <span class="text-[10px] font-bold block mt-1">MATKA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-amber-800 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">DOLI DANA</div>
-                <span class="text-[10px] font-bold block mt-1">DOLIDANA</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-yellow-700 rounded flex items-center justify-center font-bold text-black text-xs shadow-inner">MOGAMBO</div>
-                <span class="text-[10px] font-bold block mt-1">MOGAMBO</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-green-700 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">LUCKY 6</div>
-                <span class="text-[10px] font-bold block mt-1">LUCKY 6</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-purple-900 rounded flex items-center justify-center font-bold text-pink-300 text-xs shadow-inner">VIP ROULETTE</div>
-                <span class="text-[10px] font-bold block mt-1">ROULETTE</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-red-900 rounded flex items-center justify-center font-bold text-white text-xs shadow-inner">TEENPATTI 20-20</div>
-                <span class="text-[10px] font-bold block mt-1">TEENPATTI</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-indigo-900 rounded flex items-center justify-center font-bold text-cyan-300 text-xs shadow-inner">DRAGON TIGER</div>
-                <span class="text-[10px] font-bold block mt-1">DRAGON TIGER</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-blue-900 rounded flex items-center justify-center font-bold text-yellow-300 text-xs shadow-inner">BACCARAT</div>
-                <span class="text-[10px] font-bold block mt-1">BACCARAT</span>
-            </div>
-            <div class="casino-card bg-[#162a3a] text-center p-1.5 cursor-pointer">
-                <div class="h-20 bg-slate-800 rounded flex items-center justify-center font-bold text-green-400 text-xs shadow-inner">POKER 1-DAY</div>
-                <span class="text-[10px] font-bold block mt-1">POKER</span>
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-}
-
 // 1. SIGN IN PAGE
 app.get('/', (req, res) => {
     res.send(`
@@ -1774,12 +1597,6 @@ app.get('/dashboard', async (req, res) => {
         if (!docSnap.exists()) return res.redirect('/');
         const user = docSnap.data();
 
-        // 1. CLIENT LOGIN -> SHOW SPORTS & CASINO INTERFACE
-        if (user.role === 'Client') {
-            return res.send(renderClientInterface(user.username, user.points, user.exposure));
-        }
-
-        // 2. MASTER / SUPER / ADMIN LOGIN -> SHOW BLANK HEADER DASHBOARD
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -2798,36 +2615,6 @@ app.post('/api/admin/update-balance', async (req, res) => {
         res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     }
 });
-
-// ================= SPORTBEX TRIAL API PROXY INTEGRATION =================
-const SPORTBEX_API_KEY = 'ASaywLpUmIL2wf2wstI9qtaA7eyN9h2nBJlAj93Y';
-const SPORTBEX_BASE_URL = 'https://trial-api.sportbex.com/api';
-
-app.get('/api/sportbex-proxy', async (req, res) => {
-  try {
-    let targetPath = req.query.path || '/live-score/cricket/all-live-matches';
-    if (!targetPath.startsWith('/live-score') && !targetPath.startsWith('/betfair') && !targetPath.startsWith('/cricket')) {
-      targetPath = '/live-score' + (targetPath.startsWith('/') ? '' : '/') + targetPath;
-    }
-    
-    const finalUrl = `${SPORTBEX_BASE_URL}${targetPath}`;
-    console.log("Proxying request to:", finalUrl);
-    
-    const response = await fetch(finalUrl, {
-      headers: {
-        'sportbex-api-key': SPORTBEX_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error("SportBex Proxy Error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-// =========================================================================
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
