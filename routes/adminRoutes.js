@@ -84,7 +84,7 @@ function setupAdminRoutes(db, getBotInstance) {
                         <input type="hidden" name="clientUsername" id="modalClientUsername">
                         <div><label class="block font-semibold">Amount:</label><input type="number" name="amount" required class="w-full border p-1 rounded"></div>
                         <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
-                        <button type="submit" class="bg-[#0077b6] text-white px-3 py-1.5 rounded font-bold">Submit Deposit</button>
+                        <button type="submit" class="bg-[#0077b6] text-white px-3 py-1.5 rounded font-bold cursor-pointer">Submit Deposit</button>
                     </form>
                 </div>
             </div>
@@ -159,7 +159,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE WITH EXPANDABLE SUMMARY & PDF) ---
+    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE WITH DEFAULT HIDDEN SUMMARY & PDF) ---
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -235,7 +235,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
 
-                    <!-- EXPANDABLE SUMMARY BANNER WITH ARROW -->
+                    <!-- EXPANDABLE SUMMARY BANNER (DEFAULT HIDDEN) -->
                     <div class="bg-[#0077b6] text-white shadow-md">
                         <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
                             <button type="button" class="text-white text-xs focus:outline-none cursor-pointer">
@@ -243,8 +243,14 @@ function setupAdminRoutes(db, getBotInstance) {
                             </button>
                         </div>
                         <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
+                            <div class="flex justify-between py-0.5"><span>Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
                             <div class="flex justify-between py-0.5"><span>Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">-1000</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
                             <div class="flex justify-between py-0.5"><span>Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5"><span>Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
                             <div class="flex justify-between py-0.5"><span>My Profit/Loss:</span><span class="font-semibold">0</span></div>
                         </div>
                     </div>
@@ -362,7 +368,7 @@ function setupAdminRoutes(db, getBotInstance) {
                         <div><label class="block font-semibold">User Password:</label><input type="password" name="password" required class="w-full border p-1 rounded"></div>
                         <div><label class="block font-semibold">Credit Reference:</label><input type="number" name="creditRef" required class="w-full border p-1 rounded"></div>
                         <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
-                        <button type="submit" class="bg-[#0077b6] text-white px-4 py-2 rounded font-bold">Create Account</button>
+                        <button type="submit" class="bg-[#0077b6] text-white px-4 py-2 rounded font-bold cursor-pointer">Create Account</button>
                     </form>
                 </main>
             </body>
