@@ -325,7 +325,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold">Add Account</a>
                         </div>
 
-                        <!-- ACTIVE / DEACTIVE USER TABS WITH BORDER LINE -->
+                        <!-- ACTIVE / DEACTIVE USER TABS -->
                         <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
                             <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
                                 Active Users
@@ -473,32 +473,140 @@ function setupAdminRoutes(db, getBotInstance) {
         res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     });
 
+    // --- ADD ACCOUNT / INSERT USER ROUTE MATCHED WITH LEGACY UI ---
     router.get('/insertuser', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Add Account</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
-                ${getHeaderAndSidebar(loggedInUser, 'ADMIN')}
-                <main class="flex-1 p-3 max-w-6xl mx-auto w-full">
-                    <h2 class="text-base font-bold text-gray-800 mb-3">Add Account</h2>
-                    <form action="/api/clients/create" method="POST" class="bg-white p-4 border rounded space-y-3">
-                        <input type="hidden" name="createdBy" value="${loggedInUser}">
-                        <div><label class="block font-semibold">Client Name:</label><input type="text" name="clientName" required class="w-full border p-1 rounded"></div>
-                        <div><label class="block font-semibold">User Password:</label><input type="password" name="password" required class="w-full border p-1 rounded"></div>
-                        <div><label class="block font-semibold">Credit Reference:</label><input type="number" name="creditRef" required class="w-full border p-1 rounded"></div>
-                        <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
-                        <button type="submit" class="bg-[#0077b6] text-white px-4 py-2 rounded font-bold cursor-pointer">Create Account</button>
-                    </form>
-                </main>
-            </body>
-            </html>
-        `);
+        try {
+            const userRef = doc(db, 'users', loggedInUser);
+            const docSnap = await getDoc(userRef);
+            const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Add Account</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                </head>
+                <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
+                    ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                    <main class="flex-1 p-3 max-w-5xl mx-auto w-full">
+                        <h2 class="text-base font-bold text-gray-800 mb-3">Add Account</h2>
+
+                        <form action="/api/clients/create" method="POST" class="space-y-4 bg-white p-4 border rounded shadow-xs">
+                            <input type="hidden" name="createdBy" value="${loggedInUser}">
+
+                            <!-- Personal Detail Section -->
+                            <div class="border rounded overflow-hidden">
+                                <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Personal Detail</div>
+                                <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50">
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Client Name:</label>
+                                        <input type="text" name="clientName" required placeholder="Client Username" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                        <span class="text-[10px] text-red-500">The username must only contain alpha-numeric characters.</span>
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">User Password:</label>
+                                        <input type="password" name="password" required placeholder="Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Retype Password:</label>
+                                        <input type="password" name="retypePassword" required placeholder="Retype Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Full Name:</label>
+                                        <input type="text" name="fullName" placeholder="Full Name" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">City:</label>
+                                        <input type="text" name="city" placeholder="City" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Phone:</label>
+                                        <input type="text" name="phone" placeholder="Phone Number" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Detail Section -->
+                            <div class="border rounded overflow-hidden">
+                                <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Account Detail</div>
+                                <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50">
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Account Type:</label>
+                                        <select name="accountType" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                            <option value="Client">Client</option>
+                                            <option value="Master">Master</option>
+                                            <option value="Super">Super Master</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-gray-700 mb-1">Credit Reference:</label>
+                                        <input type="number" name="creditRef" required placeholder="Credit Reference" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Commission Settings Section -->
+                            <div class="border rounded overflow-hidden">
+                                <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Commission Settings</div>
+                                <div class="p-3 space-y-2 bg-gray-50/50">
+                                    <div class="flex justify-between items-center border-b pb-1.5">
+                                        <span class="font-semibold text-gray-700">Upline</span>
+                                        <span class="text-gray-600 font-semibold">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-b pb-1.5">
+                                        <span class="font-semibold text-gray-700">Downline</span>
+                                        <input type="number" name="downlineComm" value="0" class="border border-gray-300 p-1 rounded w-24 text-right bg-white">
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-gray-700">Our</span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Partnership Section -->
+                            <div class="border rounded overflow-hidden">
+                                <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Partnership</div>
+                                <div class="p-3 space-y-2 bg-gray-50/50">
+                                    <div class="flex justify-between items-center border-b pb-1.5">
+                                        <span class="font-semibold text-gray-700">Upline</span>
+                                        <span class="text-gray-600 font-semibold">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-b pb-1.5">
+                                        <span class="font-semibold text-gray-700">Downline</span>
+                                        <input type="number" name="downlinePartner" value="0" class="border border-gray-300 p-1 rounded w-24 text-right bg-white">
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-gray-700">Our</span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Password & Submit -->
+                            <div class="flex flex-col items-end space-y-2 pt-2">
+                                <div class="w-full md:w-72">
+                                    <label class="block font-semibold text-gray-700 mb-1">Transaction Password:</label>
+                                    <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                                </div>
+                                <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-5 py-2 rounded font-bold cursor-pointer shadow-sm">
+                                    Create Account
+                                </button>
+                            </div>
+                        </form>
+                    </main>
+                </body>
+                </html>
+            `);
+        } catch(err) {
+            console.error(err);
+            res.redirect('/soni-view?username=' + encodeURIComponent(loggedInUser));
+        }
     });
 
     return router;
