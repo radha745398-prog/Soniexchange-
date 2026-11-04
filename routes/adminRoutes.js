@@ -5,7 +5,6 @@ const { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = re
 
 function setupAdminRoutes(db, getBotInstance) {
 
-    // --- HTML TEMPLATE HELPERS ---
     function getHeaderAndSidebar(loggedInUser, userRole) {
         return `
             <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
@@ -89,7 +88,6 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
-            <!-- ADMIN BALANCE / POINT UPDATE MODAL WITH TXN PASSWORD -->
             ${loggedInUser === 'Soniexchange' ? `
             <div id="adminBalanceModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-sm mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
@@ -163,7 +161,6 @@ function setupAdminRoutes(db, getBotInstance) {
         `;
     }
 
-    // --- 7. DASHBOARD ROUTE (BLANK SCREEN AFTER LOGIN) ---
     router.get('/dashboard', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         try {
@@ -194,7 +191,6 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE) ---
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -216,14 +212,12 @@ function setupAdminRoutes(db, getBotInstance) {
                 querySnapshot.forEach((docItem) => allUsersList.push({ id: docItem.id, ...docItem.data() }));
             }
 
-            let usersList = allUsersList.filter(u => tab === 'active' ? (u.userActive !== false) : (u.userActive === false));
-            usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
-
-            let totalCR = 0, totalBalance = 0, totalPL = 0, totalExposure = 0, totalAvailBal = 0, totalExpLimit = 0;
-            usersList.forEach(u => {
-                const cr = Number(u.creditRef || 0), bal = Number(u.points || 0), exp = Number(u.exposure || 0), limit = Number(u.exposureLimit || 0);
-                totalCR += cr; totalBalance += Math.abs(bal); totalPL += (bal - cr); totalExposure += exp; totalAvailBal += (bal - exp); totalExpLimit += limit;
+            let usersList = allUsersList.filter(u => {
+                const isActive = u.userActive !== false;
+                return tab === 'active' ? isActive : !isActive;
             });
+
+            usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
             let tableRows = usersList.length === 0 ? `
                 <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
@@ -266,6 +260,25 @@ function setupAdminRoutes(db, getBotInstance) {
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+                    <style>
+                        .tab-active-box {
+                            background-color: #ffffff;
+                            border-top: 1px solid #d1d5db;
+                            border-left: 1px solid #d1d5db;
+                            border-right: 1px solid #d1d5db;
+                            border-bottom: 1px solid #ffffff;
+                            color: #1f2937;
+                            font-weight: 600;
+                            margin-bottom: -1px;
+                            z-index: 10;
+                        }
+                        .tab-inactive-link {
+                            background-color: transparent;
+                            border: 1px solid transparent;
+                            color: #0077b6;
+                            font-weight: 600;
+                        }
+                    </style>
                 </head>
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
@@ -310,6 +323,16 @@ function setupAdminRoutes(db, getBotInstance) {
                         <div class="flex justify-between items-center mb-2">
                             <h2 class="text-base font-bold text-gray-800">Account List</h2>
                             <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold">Add Account</a>
+                        </div>
+
+                        <!-- ACTIVE / DEACTIVE USER TABS WITH BORDER LINE -->
+                        <div class="relative flex items-center border-b border-gray-300 mb-3 text-[11px]">
+                            <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=active" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'active' ? 'tab-active-box' : 'tab-inactive-link'}">
+                                Active Users
+                            </a>
+                            <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}&tab=deactive" class="px-3 py-1.5 rounded-t-xs cursor-pointer ${tab === 'deactive' ? 'tab-active-box' : 'tab-inactive-link'}">
+                                Deactive Users
+                            </a>
                         </div>
 
                         <!-- EXCEL, PDF, & SEARCH BUTTONS -->
@@ -414,7 +437,6 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- ADMIN SELF-BALANCE UPDATE API WITH TRANSACTION PASSWORD ---
     router.post('/api/admin/update-balance', async (req, res) => {
         const { loggedInUser, newBalance, txnPassword } = req.body;
         const amount = Number(newBalance);
@@ -446,13 +468,11 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- 8. USERS LIST ROUTE ---
     router.get('/users', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     });
 
-    // --- 10. INSERT USER ROUTE ---
     router.get('/insertuser', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         res.send(`
