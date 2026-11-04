@@ -1,365 +1,268 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const speakeasy = require('speakeasy');
-const { doc, getDoc, updateDoc } = require('firebase/firestore');
+const QRCode = require('qrcode');
+const { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = require('firebase/firestore');
 
 function setupAdminRoutes(db, getBotInstance) {
-    // 1. SIGN IN PAGE
-    router.get('/', (req, res) => {
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Sign In</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
-                <div class="flex flex-col items-center justify-center w-full max-w-sm">
-                    <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full">
-                        <div class="flex items-center justify-center mb-6">
-                            <div class="border-t border-gray-300 flex-grow mr-3"></div>
-                            <span class="text-gray-600 text-sm font-semibold">Sign In</span>
-                            <div class="border-t border-gray-300 flex-grow ml-3"></div>
+
+    // --- HTML TEMPLATE HELPERS ---
+    function getHeaderAndSidebar(loggedInUser, userRole) {
+        return `
+            <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
+                <div class="flex items-center space-x-2">
+                    <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="font-bold text-white text-[12px] pr-1 cursor-pointer hover:text-gray-200">Soni</a>
+                    <button type="button" id="sidebarToggleBtn" class="text-white hover:bg-black/20 px-1 py-0.5 rounded focus:outline-none cursor-pointer">
+                        <i class="fa-solid fa-bars text-xs pointer-events-none"></i>
+                    </button>
+                    <nav class="flex items-center space-x-2 font-normal text-[11px]">
+                        <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
+                        <a href="#" class="hover:underline py-0.5 px-1">Assign Agent</a>
+                        <a href="#" class="hover:underline py-0.5 px-1">Market Analysis</a>
+                        <a href="/live-market?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-bold text-yellow-300">Live Market ▾</a>
+                        <a href="#" class="hover:underline py-0.5 px-1">Live Virtual Market ▾</a>
+                        <a href="#" class="hover:underline py-0.5 px-1">Reports ▾</a>
+                        <a href="#" class="hover:underline py-0.5 px-1">Multi Login</a>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-2 ml-4 relative">
+                    <div class="relative inline-block text-left" id="userMenuDropdown">
+                        <button type="button" id="userMenuBtn" class="font-normal text-white text-[11px] hover:text-gray-200 focus:outline-none flex items-center space-x-1 cursor-pointer">
+                            <span>${loggedInUser} ▾</span>
+                        </button>
+                        <div id="userMenuContent" class="hidden absolute right-0 mt-1 w-44 bg-[#1e3a4c] text-white rounded-xs shadow-xl border border-gray-600 py-1 text-[11px] z-50">
+                            <a href="/admin/secureauth?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Secure Auth Verification</a>
+                            <a href="/change-password?username=${encodeURIComponent(loggedInUser)}" class="block px-3 py-1.5 hover:bg-[#2b4c63] border-b border-gray-600/50">Change Password</a>
+                            <a href="/logout" class="block px-3 py-1.5 hover:bg-red-600 font-semibold">Logout</a>
                         </div>
-                        <form action="/login-process" method="POST" class="space-y-4" autocomplete="off">
-                            <div>
-                                <input type="text" name="username" required placeholder="Username" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
-                            </div>
-                            <div>
-                                <input type="password" name="password" required placeholder="Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
-                            </div>
-                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow">
-                                Login →
-                            </button>
+                    </div>
+                    <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
+                    <div class="relative ml-1">
+                        <form onsubmit="return false;" class="flex items-center">
+                            <input type="text" id="headerSearchInput" placeholder="Search..." autocomplete="off" oninput="handleSearchInput(this.value)" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
+                            <span class="absolute right-1.5 text-gray-600 text-[11px] pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
                         </form>
+                        <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
                     </div>
                 </div>
-            </body>
-            </html>
-        `);
-    });
+            </header>
 
-    // 2. FIXED LOGIN PROCESS
-    router.post('/login-process', async (req, res) => {
-        let { username, password } = req.body;
-        username = username ? username.trim() : '';
-        password = password ? password.trim() : '';
+            <aside id="sportsSidebar" class="w-64 bg-white text-gray-800 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl border-r" style="z-index: 999999;">
+                <div class="p-3 bg-[#0077b6] text-white flex justify-between items-center">
+                    <span class="font-bold text-sm">Sports</span>
+                    <button type="button" id="sidebarCloseBtn" class="text-white hover:text-gray-200 cursor-pointer"><i class="fa-solid fa-xmark text-base pointer-events-none"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
+                    <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
+                    <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
+                    <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
+                </div>
+            </aside>
+            <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 hidden" style="z-index: 999998;"></div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const toggleBtn = document.getElementById('sidebarToggleBtn');
+                    const closeBtn = document.getElementById('sidebarCloseBtn');
+                    const sidebar = document.getElementById('sportsSidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    if (toggleBtn) toggleBtn.onclick = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); };
+                    if (closeBtn) closeBtn.onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
+                    if (overlay) overlay.onclick = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
 
-        try {
-            const userRef = doc(db, 'users', username);
-            const docSnap = await getDoc(userRef);
-
-            if (!docSnap.exists()) {
-                return res.redirect('/');
-            }
-
-            const user = docSnap.data();
-            const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password).catch(() => false));
-
-            if (!isMatch) {
-                return res.redirect('/');
-            }
-
-            if (user.gauthEnabled === true || user.telegramEnabled === true) {
-                req.session.pendingAuthUser = user.username;
-                const bot = getBotInstance();
-
-                if (user.telegramEnabled && user.telegramChatId && bot) {
-                    const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                    req.session.pendingTelegramOtp = teleOtp;
-                    try {
-                        await bot.sendMessage(user.telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*. Valid for this login attempt.`, { parse_mode: 'Markdown' });
-                    } catch (err) {
-                        console.error("Failed to send telegram OTP:", err);
+                    const userBtn = document.getElementById('userMenuBtn');
+                    const userContent = document.getElementById('userMenuContent');
+                    if (userBtn && userContent) {
+                        userBtn.addEventListener('click', (e) => { e.stopPropagation(); userContent.classList.toggle('hidden'); });
+                        document.addEventListener('click', (e) => { if (!userContent.contains(e.target) && !userBtn.contains(e.target)) userContent.classList.add('hidden'); });
                     }
-                }
+                });
+            </script>
+        `;
+    }
 
-                return res.redirect(`/login/verify-otp?username=${encodeURIComponent(user.username)}`);
-            }
-
-            req.session.loggedInUser = user.username;
-            req.session.userRole = user.role;
-
-            if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
-                req.session.masterAdmin = user.username;
-            }
-
-            if (user.mustChangePassword === true) {
-                return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
-            }
-
-            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
-        } catch(err) {
-            console.error(err);
-            res.redirect('/');
-        }
-    });
-
-    // 2.1 MASTER IMPERSONATION ROUTE
-    router.get('/admin/impersonate/:targetUser', async (req, res) => {
-        const loggedInUser = req.session.loggedInUser;
-        const masterAdmin = req.session.masterAdmin;
-        const userRole = req.session.userRole;
-        const targetUser = req.params.targetUser;
-
-        try {
-            const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
-                                       (loggedInUser === 'Soniexchange') || 
-                                       (userRole === 'ADMIN') || 
-                                       (req.query.admin === 'Soniexchange');
-
-            if (!isMasterAuthorized) {
-                return res.redirect('/');
-            }
-
-            const targetRef = doc(db, 'users', targetUser);
-            const targetSnap = await getDoc(targetRef);
-
-            if (!targetSnap.exists()) {
-                return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
-            }
-
-            req.session.loggedInUser = targetUser;
-            req.session.userRole = targetSnap.data().role || 'Client';
-            req.session.masterAdmin = masterAdmin || 'Soniexchange';
-
-            console.log(`Master Admin impersonated into client ID: ${targetUser}`);
-            res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
-        } catch(err) {
-            console.error(err);
-            res.redirect(`/soni-view?username=Soniexchange`);
-        }
-    });
-
-    // 2.2 LOGIN OTP VERIFICATION PAGE
-    router.get('/login/verify-otp', async (req, res) => {
-        const username = req.query.username || '';
-        
-        let hasGauth = false;
-        let hasTelegram = false;
-
-        try {
-            if (username) {
-                const userRef = doc(db, 'users', username);
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    hasGauth = docSnap.data().gauthEnabled === true;
-                    hasTelegram = docSnap.data().telegramEnabled === true;
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        }
-
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Two-Factor Authentication - Soniexchange</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
-                <div class="flex flex-col items-center justify-center w-full max-w-sm">
-                    <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center">
-                        <h2 class="text-sm font-bold text-gray-800 mb-2">Security Verification</h2>
-                        <p class="text-gray-600 text-[11px] mb-4">
-                            ${hasGauth && hasTelegram ? 'Please enter your Google Authenticator 6-digit code or request an OTP via Telegram.' : 
-                              hasTelegram ? 'Please enter the OTP sent to your connected Telegram account.' : 
-                              'Please enter the 6-digit code from your Google Authenticator app.'}
-                        </p>
-                        
-                        <form action="/api/login/verify-otp" method="POST" class="space-y-4" autocomplete="off">
-                            <input type="hidden" name="username" value="${username}">
-                            <div>
-                                <input type="text" name="token" required placeholder="Enter verification code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
-                            </div>
-                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
-                                Verify & Login →
-                            </button>
-                        </form>
-
-                        ${hasTelegram ? `
-                            <div class="mt-4 pt-3 border-t border-gray-200">
-                                <form action="/api/login/resend-telegram-otp" method="POST">
-                                    <input type="hidden" name="username" value="${username}">
-                                    <button type="submit" class="text-blue-600 hover:underline text-[11px] font-semibold bg-transparent border-0 cursor-pointer">
-                                        📩 Resend / Send OTP via Telegram
-                                    </button>
-                                </form>
-                            </div>
-                        ` : ''}
+    function getModalsHTML(loggedInUser) {
+        return `
+            <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50">
+                <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
+                    <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
+                        <span class="font-bold text-xs">Market Analysis</span>
+                        <button type="button" onclick="closeMarketAnalysisModal()" class="w-5 h-5 bg-[#00a8e8] text-white flex items-center justify-center text-xs cursor-pointer">✕</button>
+                    </div>
+                    <div class="p-3 bg-gray-100 text-[11px]">
+                        <div class="bg-white border p-2 space-y-1 shadow-xs">
+                            <div class="flex justify-between"><span class="text-gray-600">Username:</span><span class="font-semibold" id="maUsername">-</span></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Role:</span><span class="font-semibold" id="maRole">-</span></div>
+                        </div>
                     </div>
                 </div>
-            </body>
-            </html>
-        `);
-    });
+            </div>
+        `;
+    }
 
-    // 2.2.1 RESEND TELEGRAM OTP ROUTE
-    router.post('/api/login/resend-telegram-otp', async (req, res) => {
-        const { username } = req.body;
-        try {
-            const userRef = doc(db, 'users', username);
-            const docSnap = await getDoc(userRef);
-            const bot = getBotInstance();
-            if (docSnap.exists() && docSnap.data().telegramChatId && bot) {
-                const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                req.session.pendingTelegramOtp = teleOtp;
-                await bot.sendMessage(docSnap.data().telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*.`, { parse_mode: 'Markdown' });
-            }
-        } catch (e) {
-            console.error(e);
-        }
-        res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
-    });
-
-    // 2.3 LOGIN OTP VERIFICATION API
-    router.post('/api/login/verify-otp', async (req, res) => {
-        const { username, token } = req.body;
-        try {
-            const userRef = doc(db, 'users', username);
-            const docSnap = await getDoc(userRef);
-
-            if (!docSnap.exists()) {
-                return res.redirect('/');
-            }
-
-            const user = docSnap.data();
-            let verified = false;
-
-            if (user.gauthEnabled && user.gauthSecret) {
-                verified = speakeasy.totp.verify({
-                    secret: user.gauthSecret,
-                    encoding: 'base32',
-                    token: token,
-                    window: 1
-                });
-            }
-
-            if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
-                if (token.trim() === req.session.pendingTelegramOtp.trim()) {
-                    verified = true;
-                    delete req.session.pendingTelegramOtp;
+    function getModalScriptsJS() {
+        return `
+            <script>
+                function closeMarketAnalysisModal() {
+                    const modal = document.getElementById('marketAnalysisModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
-            }
+                function toggleSummaryBanner() {
+                    const banner = document.getElementById('summaryBannerContent');
+                    if(banner) banner.classList.toggle('hidden');
+                }
+                function filterTableBySearch() {
+                    const q = (document.getElementById('tableSearchInput')?.value || '').toLowerCase();
+                    const rows = document.querySelectorAll('#soniAccountTable tbody tr, #accountTable tbody tr');
+                    rows.forEach(row => { row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none'; });
+                }
+                function resetTableSearch() {
+                    const input = document.getElementById('tableSearchInput');
+                    if(input) input.value = '';
+                    filterTableBySearch();
+                }
+            </script>
+        `;
+    }
 
-            if (!verified) {
-                return res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}&error=invalid`);
-            }
-
-            req.session.loggedInUser = user.username;
-            req.session.userRole = user.role;
-            if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
-                req.session.masterAdmin = user.username;
-            }
-            delete req.session.pendingAuthUser;
-
-            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
-        } catch (err) {
-            console.error(err);
-            res.redirect('/');
-        }
-    });
-
-    // 3. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
-    router.get('/change-temporary-password', (req, res) => {
-        const username = req.query.username || '';
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Change Temporary Password</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-            </head>
-            <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
-                <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
-                    <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
-                    <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your password. Upon updating, your unique 6-digit transaction password will be generated.</p>
-                    <form action="/api/update-temporary-password" method="POST" class="space-y-3">
-                        <input type="hidden" name="username" value="${username}">
-                        <div>
-                            <label class="block font-semibold mb-1">New Password:</label>
-                            <input type="password" name="newPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">Confirm New Password:</label>
-                            <input type="password" name="confirmPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
-                        </div>
-                        <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Update Password</button>
-                    </form>
-                </div>
-            </body>
-            </html>
-        `);
-    });
-
-    // 4. API FOR FIRST TIME PASSWORD & TRANSACTION PASSWORD GENERATION
-    router.post('/api/update-temporary-password', async (req, res) => {
-        const { username, newPassword, confirmPassword } = req.body;
-        if (newPassword !== confirmPassword) {
-            return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}`);
-        }
-
+    // --- 7. MAIN DASHBOARD ROUTE ---
+    router.get('/dashboard', async (req, res) => {
+        const loggedInUser = req.query.username || 'Soniexchange';
         try {
-            const userRef = doc(db, 'users', username);
+            const userRef = doc(db, 'users', loggedInUser);
             const docSnap = await getDoc(userRef);
+            
+            if (!docSnap.exists()) return res.redirect('/');
+            const user = docSnap.data();
 
-            if (!docSnap.exists()) {
-                return res.redirect('/');
+            if (user.role === 'ADMIN' || loggedInUser === 'Soniexchange') {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
             }
-
-            const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
-
-            await updateDoc(userRef, {
-                password: newPassword,
-                mustChangePassword: false,
-                txnPassword: txnPass
-            });
 
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
-                    <title>Transaction Password Generated - Soniexchange</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Dashboard - Soniexchange</title>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                    <style>body { font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; }</style>
                 </head>
-                <body class="min-h-screen flex items-center justify-center p-4 text-xs font-sans bg-white">
-                    <div class="p-6 max-w-xl w-full text-center space-y-4 text-gray-800">
-                        <div class="space-y-1">
-                            <p class="text-green-700 font-bold text-sm">Success! Your password has been updated successfully.</p>
-                            <p class="text-green-700 font-bold text-xs">Success! आपका पासवर्ड बदला जा चुका है।</p>
+                <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
+                    ${getHeaderAndSidebar(loggedInUser, user.role)}
+                    <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
+                        <div class="bg-white p-6 rounded shadow border border-gray-300 text-center">
+                            <h2 class="text-base font-bold text-gray-800 mb-2">Welcome to Soniexchange Dashboard, ${loggedInUser}!</h2>
+                            <p class="text-gray-600">Your account is active.</p>
                         </div>
+                    </main>
+                    ${getModalsHTML(loggedInUser)}
+                    ${getModalScriptsJS()}
+                </body>
+                </html>
+            `);
+        } catch(err) {
+            console.error("Dashboard error:", err);
+            res.redirect('/');
+        }
+    });
 
-                        <div>
-                            <p class="text-gray-800 font-semibold text-[11px]">Your transaction password is <span class="text-blue-600 font-bold text-base">${txnPass}</span>.</p>
-                            <p class="text-gray-800 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-base">${txnPass}</span> है।</p>
-                        </div>
+    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE) ---
+    router.get('/soni-view', async (req, res) => {
+        const loggedInUser = req.query.username || 'Soniexchange';
+        const tab = req.query.tab || 'active';
 
-                        <div class="text-gray-700 text-[11px] leading-relaxed space-y-1 px-4">
-                            <p>Please remember this transaction password, from now on all transcation of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
-                            <p>कृपया इस लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण केवल इस पासवर्ड से किए जा सकते हैं और एक बात का ध्यान रखें, इस पासवर्ड को किसी के साथ साझा न करें।</p>
-                        </div>
+        try {
+            const userRef = doc(db, 'users', loggedInUser);
+            const docSnap = await getDoc(userRef);
+            const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN', points: 100000000 };
 
-                        <div class="text-gray-600 text-[11px] pt-1 font-medium">
-                            Thank you, Team Soniexchange<br>
-                            धन्यवाद, टीम Soniexchange
-                        </div>
+            let allUsersList = [];
+            if (loggedInUser === 'Soniexchange') {
+                const querySnapshot = await getDocs(collection(db, "users"));
+                querySnapshot.forEach((docItem) => {
+                    if (docItem.id !== 'Soniexchange') allUsersList.push({ id: docItem.id, ...docItem.data() });
+                });
+            } else {
+                const q = query(collection(db, "users"), where("createdBy", "==", loggedInUser));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((docItem) => allUsersList.push({ id: docItem.id, ...docItem.data() }));
+            }
 
-                        <div class="pt-2">
-                            <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition">
-                                <i class="fa-solid fa-arrow-left mr-1"></i> Back
-                            </a>
+            let usersList = allUsersList.filter(u => tab === 'active' ? (u.userActive !== false) : (u.userActive === false));
+            usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+
+            let totalCR = 0, totalBalance = 0, totalPL = 0, totalExposure = 0, totalAvailBal = 0, totalExpLimit = 0;
+            usersList.forEach(u => {
+                const cr = Number(u.creditRef || 0), bal = Number(u.points || 0), exp = Number(u.exposure || 0), limit = Number(u.exposureLimit || 0);
+                totalCR += cr; totalBalance += Math.abs(bal); totalPL += (bal - cr); totalExposure += exp; totalAvailBal += (bal - exp); totalExpLimit += limit;
+            });
+
+            let tableRows = usersList.length === 0 ? `
+                <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
+            ` : usersList.map(u => `
+                <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
+                    <td class="p-2 border-r flex items-center justify-between">
+                        <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold text-[10px]">${u.username}</span>
+                        <a href="/admin/impersonate/${encodeURIComponent(u.username)}?admin=${encodeURIComponent(loggedInUser)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>
+                    </td>
+                    <td class="p-2 border-r text-right">${Number(u.creditRef || 0).toLocaleString()}</td>
+                    <td class="p-2 border-r text-right">${Math.abs(Number(u.points || 0)).toLocaleString()}</td>
+                    <td class="p-2 border-r text-right">${(Number(u.points || 0) - Number(u.creditRef || 0)).toLocaleString()}</td>
+                    <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
+                    <td class="p-2 border-r text-right">${(Number(u.points || 0) - Number(u.exposure || 0)).toLocaleString()}</td>
+                    <td class="p-2 border-r text-center">${u.userActive !== false ? '✓' : '✕'}</td>
+                    <td class="p-2 border-r text-center">${u.betActive !== false ? '✓' : '✕'}</td>
+                    <td class="p-2 border-r text-right">${Number(u.exposureLimit || 0).toLocaleString()}</td>
+                    <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
+                    <td class="p-2 border-r text-center">${u.role || 'User'}</td>
+                    <td class="p-1.5 text-center">
+                        <span class="text-gray-500 text-[10px] font-bold">Actions Active</span>
+                    </td>
+                </tr>
+            `).join('');
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Account List - Soni View</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                </head>
+                <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
+                    ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+                    <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-base font-bold text-gray-800">Account List</h2>
+                            <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold">Add Account</a>
                         </div>
-                    </div>
+                        <div class="bg-white border rounded shadow-xs overflow-x-auto">
+                            <table id="soniAccountTable" class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-700 text-[10px] border-b-2 border-gray-400 font-bold">
+                                        <th class="p-2 border-r">User Name</th>
+                                        <th class="p-2 border-r text-right">CR</th>
+                                        <th class="p-2 border-r text-right">Balance</th>
+                                        <th class="p-2 border-r text-right">Client(P/L)</th>
+                                        <th class="p-2 border-r text-right">Exposure</th>
+                                        <th class="p-2 border-r text-right">Available Balance</th>
+                                        <th class="p-2 border-r text-center">U st</th>
+                                        <th class="p-2 border-r text-center">B st</th>
+                                        <th class="p-2 border-r text-right">Exposure Limit</th>
+                                        <th class="p-2 border-r text-center">Default(%)</th>
+                                        <th class="p-2 border-r text-center">Account Type</th>
+                                        <th class="p-2 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        </div>
+                    </main>
+                    ${getModalsHTML(loggedInUser)}
+                    ${getModalScriptsJS()}
                 </body>
                 </html>
             `);
@@ -369,16 +272,39 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // 18. SECURE LOGOUT ROUTE
-    router.get('/logout', (req, res) => {
-        try {
-            req.session.destroy(() => {
-                res.clearCookie('connect.sid', { path: '/' });
-                res.redirect('/');
-            });
-        } catch (err) {
-            res.redirect('/');
-        }
+    // --- 8. USERS LIST ROUTE ---
+    router.get('/users', async (req, res) => {
+        const loggedInUser = req.query.username || 'Soniexchange';
+        res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+    });
+
+    // --- 10. INSERT USER ROUTE ---
+    router.get('/insertuser', async (req, res) => {
+        const loggedInUser = req.query.username || 'Soniexchange';
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Add Account</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+            </head>
+            <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
+                ${getHeaderAndSidebar(loggedInUser, 'ADMIN')}
+                <main class="flex-1 p-3 max-w-6xl mx-auto w-full">
+                    <h2 class="text-base font-bold text-gray-800 mb-3">Add Account</h2>
+                    <form action="/api/clients/create" method="POST" class="bg-white p-4 border rounded space-y-3">
+                        <input type="hidden" name="createdBy" value="${loggedInUser}">
+                        <div><label class="block font-semibold">Client Name:</label><input type="text" name="clientName" required class="w-full border p-1 rounded"></div>
+                        <div><label class="block font-semibold">User Password:</label><input type="password" name="password" required class="w-full border p-1 rounded"></div>
+                        <div><label class="block font-semibold">Credit Reference:</label><input type="number" name="creditRef" required class="w-full border p-1 rounded"></div>
+                        <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
+                        <button type="submit" class="bg-[#0077b6] text-white px-4 py-2 rounded font-bold">Create Account</button>
+                    </form>
+                </main>
+            </body>
+            </html>
+        `);
     });
 
     return router;
