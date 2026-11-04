@@ -5,6 +5,7 @@ const { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = re
 
 function setupAdminRoutes(db, getBotInstance) {
 
+    // --- HTML TEMPLATE HELPERS ---
     function getHeaderAndSidebar(loggedInUser, userRole) {
         return `
             <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
@@ -473,7 +474,7 @@ function setupAdminRoutes(db, getBotInstance) {
         res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
     });
 
-    // --- ADD ACCOUNT / INSERT USER ROUTE MATCHED WITH LEGACY UI ---
+    // --- ADD ACCOUNT / INSERT USER PAGE ---
     router.get('/insertuser', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         try {
@@ -606,6 +607,45 @@ function setupAdminRoutes(db, getBotInstance) {
         } catch(err) {
             console.error(err);
             res.redirect('/soni-view?username=' + encodeURIComponent(loggedInUser));
+        }
+    });
+
+    // --- CREATE CLIENT POST ROUTE ---
+    router.post('/api/clients/create', async (req, res) => {
+        const { createdBy, clientName, password, creditRef, accountType, downlineComm, downlinePartner, txnPassword } = req.body;
+        
+        if (!clientName || !password) {
+            return res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
+        }
+
+        try {
+            const userRef = doc(db, 'users', clientName.trim());
+            const docSnap = await getDoc(userRef);
+            
+            if (docSnap.exists()) {
+                return res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
+            }
+
+            await setDoc(userRef, {
+                username: clientName.trim(),
+                password: password,
+                creditRef: Number(creditRef || 0),
+                points: Number(creditRef || 0),
+                exposure: 0,
+                exposureLimit: Number(creditRef || 0),
+                role: accountType || 'Client',
+                createdBy: createdBy || 'Soniexchange',
+                userActive: true,
+                betActive: true,
+                defaultPct: 0,
+                txnPassword: txnPassword || '',
+                createdAt: new Date().toISOString()
+            });
+
+            res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
+        } catch(err) {
+            console.error(err);
+            res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
         }
     });
 
