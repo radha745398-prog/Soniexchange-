@@ -127,4 +127,4 @@ function setupApiRoutes(db) {
     return router;
 }
 
-module.exports = { setupApiRoutes };
+module.exports =  setupApiRoutes ;
