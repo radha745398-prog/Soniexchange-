@@ -384,5 +384,5 @@ function setupAuthRoutes(db, getBotInstance) {
     return router;
 }
 
-module.exports = { setupAuthRoutes };
+module.exports =  setupAuthRoutes ;
 
