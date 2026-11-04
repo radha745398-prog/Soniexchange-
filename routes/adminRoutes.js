@@ -88,6 +88,33 @@ function setupAdminRoutes(db, getBotInstance) {
                     </form>
                 </div>
             </div>
+
+            <!-- ADMIN BALANCE / POINT UPDATE MODAL WITH TXN PASSWORD -->
+            ${loggedInUser === 'Soniexchange' ? `
+            <div id="adminBalanceModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-sm mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-2 bg-[#0077b6] text-white p-2 rounded-t">
+                        <span class="font-bold text-xs">Update / Generate Master Points</span>
+                        <button type="button" onclick="closeAdminBalanceModal()" class="cursor-pointer text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded">✕</button>
+                    </div>
+                    <form action="/api/admin/update-balance" method="POST" class="space-y-3 text-xs pt-2">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">New Points Amount</label>
+                            <input type="number" name="newBalance" required placeholder="Enter points" class="w-full border border-gray-300 p-1.5 rounded text-xs focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded text-xs focus:outline-none">
+                        </div>
+                        <div class="flex justify-end space-x-2 pt-2">
+                            <button type="button" onclick="closeAdminBalanceModal()" class="bg-gray-500 text-white px-3 py-1 rounded font-bold cursor-pointer">Cancel</button>
+                            <button type="submit" class="bg-[#0099db] hover:bg-[#007cb3] text-white px-3 py-1 rounded font-bold cursor-pointer">Update Points</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            ` : ''}
         `;
     }
 
@@ -112,6 +139,14 @@ function setupAdminRoutes(db, getBotInstance) {
                 }
                 function closeDepositModal() {
                     const modal = document.getElementById('depositModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+                function openAdminBalanceModal() {
+                    const modal = document.getElementById('adminBalanceModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+                function closeAdminBalanceModal() {
+                    const modal = document.getElementById('adminBalanceModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
                 function filterTableBySearch() {
@@ -159,7 +194,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE WITH DEFAULT HIDDEN SUMMARY & PDF) ---
+    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE) ---
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -246,10 +281,26 @@ function setupAdminRoutes(db, getBotInstance) {
                             <div class="flex justify-between py-0.5"><span>Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
                             <div class="flex justify-between py-0.5"><span>Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
                             <div class="flex justify-between py-0.5"><span>Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
-                            <div class="flex justify-between py-0.5"><span>Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5">
+                                <span>Total Master Balance:</span>
+                                <span class="font-semibold flex items-center space-x-1">
+                                    <span>${Number(currentUser.points || 0).toLocaleString()}</span>
+                                    ${loggedInUser === 'Soniexchange' ? `
+                                    <button type="button" onclick="openAdminBalanceModal()" class="ml-1 bg-white text-[#0077b6] hover:bg-gray-100 font-bold text-[9px] px-1.5 py-0.2 rounded shadow-xs cursor-pointer">Update</button>
+                                    ` : ''}
+                                </span>
+                            </div>
                             <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">-1000</span></div>
                             <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
-                            <div class="flex justify-between py-0.5"><span>Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5">
+                                <span>Available Balance:</span>
+                                <span class="font-semibold flex items-center space-x-1">
+                                    <span>${Number(currentUser.points || 0).toLocaleString()}</span>
+                                    ${loggedInUser === 'Soniexchange' ? `
+                                    <button type="button" onclick="openAdminBalanceModal()" class="ml-1 bg-white text-[#0077b6] hover:bg-gray-100 font-bold text-[9px] px-1.5 py-0.2 rounded shadow-xs cursor-pointer">Update</button>
+                                    ` : ''}
+                                </span>
+                            </div>
                             <div class="flex justify-between py-0.5"><span>Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
                             <div class="flex justify-between py-0.5"><span>My Profit/Loss:</span><span class="font-semibold">0</span></div>
                         </div>
@@ -261,11 +312,16 @@ function setupAdminRoutes(db, getBotInstance) {
                             <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold">Add Account</a>
                         </div>
 
-                        <!-- SEARCH & PDF BUTTONS -->
+                        <!-- EXCEL, PDF, & SEARCH BUTTONS -->
                         <div class="flex justify-between items-center mb-3">
-                            <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
-                                <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
-                            </button>
+                            <div class="flex space-x-1">
+                                <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                                    <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                                </button>
+                                <button type="button" onclick="downloadExcel()" class="bg-[#28a745] hover:bg-green-700 text-white px-2.5 py-1 rounded text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                                    <i class="fa-regular fa-file-excel"></i> <span>Excel</span>
+                                </button>
+                            </div>
                             <div class="flex items-center space-x-1">
                                 <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
                                 <button onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2 py-1 rounded text-xs font-semibold">Reset</button>
@@ -331,6 +387,23 @@ function setupAdminRoutes(db, getBotInstance) {
 
                             doc.save('userlist-${tab}.pdf');
                         }
+
+                        function downloadExcel() {
+                            let csv = [];
+                            const rows = document.querySelectorAll("#soniAccountTable tr");
+                            rows.forEach(row => {
+                                const cols = row.querySelectorAll("td, th");
+                                let rowData = [];
+                                cols.forEach(col => rowData.push('"' + col.innerText.replace(/"/g, '""') + '"'));
+                                csv.push(rowData.join(","));
+                            });
+                            const csvBlob = new Blob([csv.join("\\n")], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(csvBlob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'userlist-${tab}.csv';
+                            a.click();
+                        }
                     </script>
                 </body>
                 </html>
@@ -338,6 +411,38 @@ function setupAdminRoutes(db, getBotInstance) {
         } catch(err) {
             console.error(err);
             res.redirect('/');
+        }
+    });
+
+    // --- ADMIN SELF-BALANCE UPDATE API WITH TRANSACTION PASSWORD ---
+    router.post('/api/admin/update-balance', async (req, res) => {
+        const { loggedInUser, newBalance, txnPassword } = req.body;
+        const amount = Number(newBalance);
+
+        if (isNaN(amount) || amount < 0 || loggedInUser !== 'Soniexchange') {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        }
+
+        try {
+            const userRef = doc(db, 'users', 'Soniexchange');
+            const docSnap = await getDoc(userRef);
+
+            if (!docSnap.exists()) return res.redirect('/');
+            const user = docSnap.data();
+
+            if (user.txnPassword && user.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            await updateDoc(userRef, {
+                points: amount,
+                creditRef: amount
+            });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch(err) {
+            console.error(err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         }
     });
 
