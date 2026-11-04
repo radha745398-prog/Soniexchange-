@@ -15,7 +15,7 @@ function setupAdminRoutes(db, getBotInstance) {
                         <i class="fa-solid fa-bars text-xs pointer-events-none"></i>
                     </button>
                     <nav class="flex items-center space-x-2 font-normal text-[11px]">
-                        <a href="/users?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
+                        <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-semibold">List of Clients</a>
                         <a href="#" class="hover:underline py-0.5 px-1">Assign Agent</a>
                         <a href="#" class="hover:underline py-0.5 px-1">Market Analysis</a>
                         <a href="/live-market?username=${encodeURIComponent(loggedInUser)}" class="hover:underline py-0.5 px-1 font-bold text-yellow-300">Live Market ▾</a>
@@ -36,15 +36,6 @@ function setupAdminRoutes(db, getBotInstance) {
                         </div>
                     </div>
                     <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold">Logout</a>
-                    <div class="relative ml-1">
-                        <form onsubmit="return false;" class="flex items-center">
-                            <input type="text" id="headerSearchInput" placeholder="Search..." autocomplete="off" oninput="handleSearchInput(this.value)" class="text-black bg-white px-2 py-0.5 pr-6 rounded-xs text-[11px] w-28 focus:outline-none border border-gray-300">
-                            <span class="absolute right-1.5 text-gray-600 text-[11px] pointer-events-none">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </span>
-                        </form>
-                        <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-[#4f75e2] text-white rounded-xs shadow-xl z-50 max-h-48 overflow-y-auto text-[11px]"></div>
-                    </div>
                 </div>
             </header>
 
@@ -55,7 +46,6 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 space-y-1 text-[11px] font-semibold text-gray-700">
                     <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Football</span> <span>+</span></div>
-                    <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Tennis</span> <span>+</span></div>
                     <div class="flex justify-between items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer border-b"><span>Cricket</span> <span>+</span></div>
                 </div>
             </aside>
@@ -83,18 +73,19 @@ function setupAdminRoutes(db, getBotInstance) {
 
     function getModalsHTML(loggedInUser) {
         return `
-            <div id="marketAnalysisModal" class="fixed inset-0 modal-bg-overlay hidden items-start justify-center pt-12 z-50">
-                <div class="bg-white rounded-xs shadow-2xl w-full max-w-2xl mx-3 overflow-hidden text-gray-800 border border-gray-300">
-                    <div class="bg-[#2b3e50] px-3 py-2 flex justify-between items-center text-white">
-                        <span class="font-bold text-xs">Market Analysis</span>
-                        <button type="button" onclick="closeMarketAnalysisModal()" class="w-5 h-5 bg-[#00a8e8] text-white flex items-center justify-center text-xs cursor-pointer">✕</button>
+            <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-2">
+                        <span class="font-bold text-sm">Deposit</span>
+                        <button type="button" onclick="closeDepositModal()" class="cursor-pointer text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded">✕</button>
                     </div>
-                    <div class="p-3 bg-gray-100 text-[11px]">
-                        <div class="bg-white border p-2 space-y-1 shadow-xs">
-                            <div class="flex justify-between"><span class="text-gray-600">Username:</span><span class="font-semibold" id="maUsername">-</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">Role:</span><span class="font-semibold" id="maRole">-</span></div>
-                        </div>
-                    </div>
+                    <form action="/api/deposit" method="POST" class="space-y-3 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="modalClientUsername">
+                        <div><label class="block font-semibold">Amount:</label><input type="number" name="amount" required class="w-full border p-1 rounded"></div>
+                        <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
+                        <button type="submit" class="bg-[#0077b6] text-white px-3 py-1.5 rounded font-bold">Submit Deposit</button>
+                    </form>
                 </div>
             </div>
         `;
@@ -103,17 +94,29 @@ function setupAdminRoutes(db, getBotInstance) {
     function getModalScriptsJS() {
         return `
             <script>
-                function closeMarketAnalysisModal() {
-                    const modal = document.getElementById('marketAnalysisModal');
-                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
-                }
                 function toggleSummaryBanner() {
                     const banner = document.getElementById('summaryBannerContent');
-                    if(banner) banner.classList.toggle('hidden');
+                    const arrowIcon = document.getElementById('summaryArrowIcon');
+                    if (banner.classList.contains('hidden')) {
+                        banner.classList.remove('hidden');
+                        arrowIcon.className = "fa-solid fa-chevron-up text-xs";
+                    } else {
+                        banner.classList.add('hidden');
+                        arrowIcon.className = "fa-solid fa-chevron-down text-xs";
+                    }
+                }
+                function openDepositModal(clientName) {
+                    document.getElementById('modalClientUsername').value = clientName;
+                    const modal = document.getElementById('depositModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+                function closeDepositModal() {
+                    const modal = document.getElementById('depositModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
                 function filterTableBySearch() {
                     const q = (document.getElementById('tableSearchInput')?.value || '').toLowerCase();
-                    const rows = document.querySelectorAll('#soniAccountTable tbody tr, #accountTable tbody tr');
+                    const rows = document.querySelectorAll('#soniAccountTable tbody tr');
                     rows.forEach(row => { row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none'; });
                 }
                 function resetTableSearch() {
@@ -125,50 +128,38 @@ function setupAdminRoutes(db, getBotInstance) {
         `;
     }
 
-    // --- 7. MAIN DASHBOARD ROUTE ---
+    // --- 7. DASHBOARD ROUTE (BLANK SCREEN AFTER LOGIN) ---
     router.get('/dashboard', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         try {
             const userRef = doc(db, 'users', loggedInUser);
             const docSnap = await getDoc(userRef);
-            
             if (!docSnap.exists()) return res.redirect('/');
             const user = docSnap.data();
-
-            if (user.role === 'ADMIN' || loggedInUser === 'Soniexchange') {
-                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
-            }
 
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Dashboard - Soniexchange</title>
+                    <title>Dashboard</title>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 </head>
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, user.role)}
-                    <main class="flex-1 p-4 max-w-7xl mx-auto w-full">
-                        <div class="bg-white p-6 rounded shadow border border-gray-300 text-center">
-                            <h2 class="text-base font-bold text-gray-800 mb-2">Welcome to Soniexchange Dashboard, ${loggedInUser}!</h2>
-                            <p class="text-gray-600">Your account is active.</p>
-                        </div>
-                    </main>
+                    <main class="flex-1 p-4 max-w-7xl mx-auto w-full"></main>
                     ${getModalsHTML(loggedInUser)}
                     ${getModalScriptsJS()}
                 </body>
                 </html>
             `);
         } catch(err) {
-            console.error("Dashboard error:", err);
             res.redirect('/');
         }
     });
 
-    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE) ---
+    // --- 9. SONI VIEW (ADMIN MAIN DASHBOARD PAGE WITH EXPANDABLE SUMMARY & PDF) ---
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -218,7 +209,14 @@ function setupAdminRoutes(db, getBotInstance) {
                     <td class="p-2 border-r text-center">${u.defaultPct || 0}</td>
                     <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                     <td class="p-1.5 text-center">
-                        <span class="text-gray-500 text-[10px] font-bold">Actions Active</span>
+                        <div class="flex items-center justify-center space-x-1">
+                            <button type="button" onclick="openDepositModal('${u.username}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
+                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -231,14 +229,43 @@ function setupAdminRoutes(db, getBotInstance) {
                     <title>Account List - Soni View</title>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
                 </head>
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, currentUser.role)}
+
+                    <!-- EXPANDABLE SUMMARY BANNER WITH ARROW -->
+                    <div class="bg-[#0077b6] text-white shadow-md">
+                        <div class="flex justify-center items-center py-1 cursor-pointer hover:bg-black/10 transition" onclick="toggleSummaryBanner()">
+                            <button type="button" class="text-white text-xs focus:outline-none cursor-pointer">
+                                <i id="summaryArrowIcon" class="fa-solid fa-chevron-down text-xs pointer-events-none"></i>
+                            </button>
+                        </div>
+                        <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
+                            <div class="flex justify-between py-0.5"><span>Total Master Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5"><span>Available Balance:</span><span class="font-semibold">${Number(currentUser.points || 0).toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5"><span>My Profit/Loss:</span><span class="font-semibold">0</span></div>
+                        </div>
+                    </div>
+
                     <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
                         <div class="flex justify-between items-center mb-2">
                             <h2 class="text-base font-bold text-gray-800">Account List</h2>
                             <a href="/insertuser?username=${encodeURIComponent(loggedInUser)}" class="bg-[#0088cc] text-white px-3 py-1 rounded text-xs font-semibold">Add Account</a>
                         </div>
+
+                        <!-- SEARCH & PDF BUTTONS -->
+                        <div class="flex justify-between items-center mb-3">
+                            <button type="button" onclick="downloadPDF()" class="bg-[#dc3545] hover:bg-red-700 text-white px-2.5 py-1 rounded text-[11px] font-bold flex items-center space-x-1 cursor-pointer">
+                                <i class="fa-regular fa-file-pdf"></i> <span>PDF</span>
+                            </button>
+                            <div class="flex items-center space-x-1">
+                                <input type="text" id="tableSearchInput" oninput="filterTableBySearch()" placeholder="Search..." class="border p-1 rounded bg-white text-xs focus:outline-none w-36">
+                                <button onclick="resetTableSearch()" class="bg-[#6c757d] text-white px-2 py-1 rounded text-xs font-semibold">Reset</button>
+                            </div>
+                        </div>
+
                         <div class="bg-white border rounded shadow-xs overflow-x-auto">
                             <table id="soniAccountTable" class="w-full text-left border-collapse">
                                 <thead>
@@ -263,6 +290,42 @@ function setupAdminRoutes(db, getBotInstance) {
                     </main>
                     ${getModalsHTML(loggedInUser)}
                     ${getModalScriptsJS()}
+
+                    <script>
+                        function downloadPDF() {
+                            const { jsPDF } = window.jspdf;
+                            const doc = new jsPDF();
+                            doc.setFont("helvetica", "bold");
+                            doc.setFontSize(14);
+                            doc.text("User List (${tab})", 105, 15, { align: "center" });
+
+                            const data = [];
+                            const rows = document.querySelectorAll("#soniAccountTable tbody tr");
+                            rows.forEach(row => {
+                                const cells = row.querySelectorAll("td");
+                                if (cells.length >= 11) {
+                                    data.push([
+                                        cells[0].innerText.trim(),
+                                        cells[1].innerText.trim(),
+                                        cells[6].innerText.includes('✓') ? 'Active' : 'Deactive',
+                                        cells[7].innerText.includes('✓') ? 'Active' : 'Deactive',
+                                        cells[8].innerText.trim(),
+                                        cells[9].innerText.trim(),
+                                        cells[10].innerText.trim()
+                                    ]);
+                                }
+                            });
+
+                            doc.autoTable({
+                                startY: 20,
+                                head: [['User Name', 'CR', 'U st', 'B st', 'Exposure Limit', 'Default %', 'Account type']],
+                                body: data,
+                                headStyles: { fillColor: [41, 128, 185], textColor: 255 }
+                            });
+
+                            doc.save('userlist-${tab}.pdf');
+                        }
+                    </script>
                 </body>
                 </html>
             `);
