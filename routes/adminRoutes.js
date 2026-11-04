@@ -1,11 +1,10 @@
-
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const { doc, getDoc, updateDoc } = require('firebase/firestore');
 
-function setupAuthRoutes(db, getBotInstance) {
+function setupAdminRoutes(db, getBotInstance) {
     // 1. SIGN IN PAGE
     router.get('/', (req, res) => {
         res.send(`
@@ -385,4 +384,4 @@ function setupAuthRoutes(db, getBotInstance) {
     return router;
 }
 
-module.exports =  setupAuthRoutes ;
+module.exports = setupAdminRoutes;
