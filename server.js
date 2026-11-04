@@ -3,9 +3,9 @@ const cors = require('cors');
 const session = require('express-session');
 const { db } = require('./config/firebase');
 const { initTelegramBot } = require('./services/telegramBot');
-const { setupAuthRoutes } = require('./routes/authRoutes');
-const { setupAdminRoutes } = require('./routes/adminRoutes');
-const { setupApiRoutes } = require('./routes/apiRoutes');
+const  setupAuthRoutes  = require('./routes/authRoutes');
+const  setupAdminRoutes  = require('./routes/adminRoutes');
+const  setupApiRoutes  = require('./routes/apiRoutes');
 
 const app = express();
 app.use(express.json());
