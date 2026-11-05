@@ -300,7 +300,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
-            <!-- PASSWORD CHANGE MODAL ('P' BUTTON)[span_3](start_span)[span_3](end_span) -->
+            <!-- PASSWORD CHANGE MODAL ('P' BUTTON) -->
             <div id="passwordModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -328,6 +328,53 @@ function setupAdminRoutes(db, getBotInstance) {
 
                         <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
                             <button type="button" onclick="closePasswordModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CHANGE STATUS MODAL ('S' BUTTON)[span_3](start_span)[span_3](end_span) -->
+            <div id="statusModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
+                        <span class="font-bold text-sm">Change Status</span>
+                        <button type="button" onclick="closeStatusModal()" class="cursor-pointer text-xs font-bold bg-[#0077b6] text-white w-5 h-5 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <form action="/api/change-status" method="POST" class="space-y-4 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="statusClientUsername">
+
+                        <div class="font-semibold text-[#d97706]" id="statusClientTitleDisplay">Client</div>
+
+                        <div class="flex justify-around items-center bg-gray-50 p-3 border rounded">
+                            <div class="text-center">
+                                <span class="block font-semibold text-gray-700 mb-1">User Active</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="userActive" id="statusUserActiveCheckbox" value="true" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0077b6]"></div>
+                                </label>
+                            </div>
+                            <div class="text-center">
+                                <span class="block font-semibold text-gray-700 mb-1">Bet Active</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="betActive" id="statusBetActiveCheckbox" value="true" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0077b6]"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
+                            <button type="button" onclick="closeStatusModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
                                 <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
                             </button>
                             <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
@@ -452,7 +499,6 @@ function setupAdminRoutes(db, getBotInstance) {
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
-                // --- PASSWORD MODAL SCRIPTS ('P' BUTTON)[span_4](start_span)[span_4](end_span) ---
                 function openPasswordModal(clientName) {
                     document.getElementById('passwordClientUsername').value = clientName;
                     const modal = document.getElementById('passwordModal');
@@ -461,6 +507,23 @@ function setupAdminRoutes(db, getBotInstance) {
 
                 function closePasswordModal() {
                     const modal = document.getElementById('passwordModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+
+                // --- CHANGE STATUS MODAL SCRIPTS ('S' BUTTON)[span_4](start_span)[span_4](end_span) ---
+                function openStatusModal(clientName, userActive, betActive) {
+                    document.getElementById('statusClientUsername').value = clientName;
+                    document.getElementById('statusClientTitleDisplay').innerText = clientName;
+                    
+                    document.getElementById('statusUserActiveCheckbox').checked = (userActive !== 'false' && userActive !== false);
+                    document.getElementById('statusBetActiveCheckbox').checked = (betActive !== 'false' && betActive !== false);
+
+                    const modal = document.getElementById('statusModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+
+                function closeStatusModal() {
+                    const modal = document.getElementById('statusModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
@@ -569,7 +632,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             <button type="button" onclick="openExposureModal('${u.username}', '${u.exposureLimit || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                             <button type="button" onclick="openCreditModal('${u.username}', '${u.creditRef || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                             <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
-                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
+                            <button type="button" onclick="openStatusModal('${u.username}', '${u.userActive !== false}', '${u.betActive !== false}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">S</button>
                         </div>
                     </td>
                 </tr>
@@ -1119,7 +1182,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- PASSWORD CHANGE API ROUTE ('P' BUTTON)[span_5](start_span)[span_5](end_span) ---
+    // --- PASSWORD CHANGE API ROUTE ('P' BUTTON) ---
     router.post('/api/change-password', async (req, res) => {
         const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
 
@@ -1150,6 +1213,47 @@ function setupAdminRoutes(db, getBotInstance) {
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         } catch (err) {
             console.error("Password Change Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+    });
+
+    // --- CHANGE STATUS API ROUTE ('S' BUTTON)[span_5](start_span)[span_5](end_span) ---
+    router.post('/api/change-status', async (req, res) => {
+        const { loggedInUser, clientUsername, userActive, betActive, txnPassword } = req.body;
+
+        if (!clientUsername) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const isUserActive = userActive === 'true';
+            const isBetActive = betActive === 'true';
+
+            await updateDoc(clientRef, {
+                userActive: isUserActive,
+                betActive: isBetActive
+            });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Change Status Error:", err);
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
