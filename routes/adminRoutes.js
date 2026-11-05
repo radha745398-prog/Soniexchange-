@@ -109,7 +109,7 @@ function setupAdminRoutes(db, getBotInstance) {
 
     function getModalsHTML(loggedInUser, currentUserPoints) {
         return `
-            <!-- DEPOSIT MODAL WITH EXACT TWO DOUBLE BOXES -->
+            <!-- DEPOSIT MODAL WITH CURRENT & TOTAL POINT BOXES -->
             <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -123,21 +123,27 @@ function setupAdminRoutes(db, getBotInstance) {
                         <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                         <input type="hidden" name="clientUsername" id="modalClientUsername">
                         
-                        <!-- Admin Row with Two Boxes -->
+                        <!-- Admin Row: Current and Total -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalAdminName">${loggedInUser}</div>
-                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalAdminPoints">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalAdminCurrent">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end text-gray-600" id="modalAdminTotal">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                            </div>
                         </div>
 
-                        <!-- Client Row with Two Boxes -->
+                        <!-- Client Row: Current and Total -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalClientDisplay">Client</div>
-                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalClientPoints">0</div>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalClientCurrent">0</div>
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end text-gray-600" id="modalClientTotal">0</div>
+                            </div>
                         </div>
 
                         <div>
                             <label class="block font-semibold text-gray-700 mb-1">Amount</label>
-                            <input type="number" name="amount" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                            <input type="number" name="amount" id="depositAmountInput" oninput="calculateDepositTotal()" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
                         </div>
 
                         <div>
@@ -193,6 +199,9 @@ function setupAdminRoutes(db, getBotInstance) {
     function getModalScriptsJS() {
         return `
             <script>
+                let baseAdminPoints = 0;
+                let baseClientPoints = 0;
+
                 function toggleSummaryBanner() {
                     const banner = document.getElementById('summaryBannerContent');
                     const arrowIcon = document.getElementById('summaryArrowIcon');
@@ -205,12 +214,26 @@ function setupAdminRoutes(db, getBotInstance) {
                     }
                 }
                 function openDepositModal(clientName, clientPoints) {
+                    baseClientPoints = Number(clientPoints || 0);
+                    baseAdminPoints = Number(${JSON.stringify(Number(db ? 100000000 : 0))}); // will be updated from DOM or template
+                    
                     document.getElementById('modalClientUsername').value = clientName;
                     document.getElementById('modalClientDisplay').innerText = clientName;
-                    document.getElementById('modalClientPoints').innerText = Number(clientPoints || 0).toLocaleString();
+                    document.getElementById('modalClientCurrent').innerText = baseClientPoints.toLocaleString();
+                    document.getElementById('modalClientTotal').innerText = baseClientPoints.toLocaleString();
+                    
+                    document.getElementById('depositAmountInput').value = '';
+
                     const modal = document.getElementById('depositModal');
                     if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
                 }
+
+                function calculateDepositTotal() {
+                    const amtVal = Number(document.getElementById('depositAmountInput').value || 0);
+                    const newClientTotal = baseClientPoints + amtVal;
+                    document.getElementById('modalClientTotal').innerText = newClientTotal.toLocaleString();
+                }
+
                 function closeDepositModal() {
                     const modal = document.getElementById('depositModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
