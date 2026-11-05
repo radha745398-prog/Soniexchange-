@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
 const { doc, getDoc, updateDoc } = require('firebase/firestore');
 
 function setupAuthRoutes(db, getBotInstance) {
@@ -42,7 +43,60 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. LOGIN PROCESS & 2FA / TELEGRAM CHECK
+    // 2. SECURE AUTH & TELEGRAM VERIFICATION PAGE
+    router.get('/admin/secureauth', async (req, res) => {
+        const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
+        try {
+            const userRef = doc(db, 'users', loggedInUser);
+            const docSnap = await getDoc(userRef);
+            const currentUser = docSnap.exists() ? docSnap.data() : { role: 'ADMIN' };
+
+            let secretBase32 = currentUser.gauthSecret;
+            if (!secretBase32) {
+                const secret = speakeasy.generateSecret({ name: `Soniexchange (${loggedInUser})` });
+                secretBase32 = secret.base32;
+                await updateDoc(userRef, { gauthSecret: secretBase32 });
+            }
+
+            const otpauthUrl = speakeasy.otpauthURL({
+                secret: secretBase32,
+                label: `Soniexchange:${loggedInUser}`,
+                encoding: 'base32'
+            });
+
+            const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+            const isAuthEnabled = currentUser.gauthEnabled === true || currentUser.telegramEnabled === true;
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Secure Auth Verification - Soniexchange</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                </head>
+                <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
+                    <main class="flex-1 p-6 max-w-xl mx-auto w-full">
+                        <div class="bg-white border rounded p-6 shadow-xs text-center space-y-4">
+                            <h2 class="text-sm font-bold">Secure Auth Verification Status: <span class="${isAuthEnabled ? 'text-green-600' : 'text-red-500'}">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span></h2>
+                            <p class="text-gray-600">Telegram connection code: <b class="text-blue-600">${currentUser.telegramCode || 'Not Generated'}</b></p>
+                            <div class="flex justify-center my-3">
+                                <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white">
+                            </div>
+                            <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer">Back to Panel</a>
+                        </div>
+                    </main>
+                </body>
+                </html>
+            `);
+        } catch(err) {
+            console.error("Secure auth error:", err);
+            res.redirect('/');
+        }
+    });
+
+    // 3. LOGIN PROCESS & 2FA / TELEGRAM CHECK
     router.post('/login-process', async (req, res) => {
         let { username, password } = req.body;
         username = username ? username.trim() : '';
@@ -63,7 +117,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // Check if 2FA (Google Auth or Telegram) is enabled
             if (user.gauthEnabled === true || user.telegramEnabled === true) {
                 req.session.pendingAuthUser = user.username;
                 const bot = getBotInstance ? getBotInstance() : null;
@@ -99,7 +152,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 2.1 MASTER IMPERSONATION ROUTE
+    // 4. MASTER IMPERSONATION ROUTE
     router.get('/admin/impersonate/:targetUser', async (req, res) => {
         const loggedInUser = req.session.loggedInUser;
         const masterAdmin = req.session.masterAdmin;
@@ -134,7 +187,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 2.2 LOGIN OTP VERIFICATION PAGE
+    // 5. LOGIN OTP VERIFICATION PAGE
     router.get('/login/verify-otp', async (req, res) => {
         const username = req.query.username || '';
         let hasGauth = false;
@@ -199,7 +252,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2.2.1 RESEND TELEGRAM OTP ROUTE
+    // 6. RESEND TELEGRAM OTP ROUTE
     router.post('/api/login/resend-telegram-otp', async (req, res) => {
         const { username } = req.body;
         try {
@@ -217,7 +270,7 @@ function setupAuthRoutes(db, getBotInstance) {
         res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
     });
 
-    // 2.3 LOGIN OTP VERIFICATION API
+    // 7. LOGIN OTP VERIFICATION API
     router.post('/api/login/verify-otp', async (req, res) => {
         const { username, token } = req.body;
         try {
@@ -265,7 +318,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 3. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
+    // 8. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
     router.get('/change-temporary-password', (req, res) => {
         const username = req.query.username || '';
         res.send(`
@@ -298,7 +351,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 4. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY (MASTERS ONLY, EXCLUDING CLIENTS)
+    // 9. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY
     router.post('/api/update-temporary-password', async (req, res) => {
         const { username, newPassword, confirmPassword } = req.body;
         if (newPassword !== confirmPassword) {
@@ -318,7 +371,6 @@ function setupAuthRoutes(db, getBotInstance) {
             const isClient = (userRole === 'Client' || userRole === 'User');
 
             if (isClient) {
-                // Clients only play games - no transaction password needed
                 await updateDoc(userRef, {
                     password: newPassword,
                     mustChangePassword: false
@@ -326,7 +378,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // Masters, Super Masters & Admins generate Transaction Password
             const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
             await updateDoc(userRef, {
@@ -335,7 +386,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 txnPassword: txnPass
             });
 
-            // Show 30-second Countdown Screen before redirecting to sign-in page
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -398,7 +448,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 5. SECURE LOGOUT ROUTE
+    // 10. SECURE LOGOUT ROUTE
     router.get('/logout', (req, res) => {
         try {
             req.session.destroy(() => {
