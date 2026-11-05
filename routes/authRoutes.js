@@ -13,7 +13,7 @@ function setupAuthRoutes(db, getBotInstance) {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Sign In</title>
+                <title>Sign In - Soniexchange</title>
                 <script src="https://cdn.tailwindcss.com"></script>
             </head>
             <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
@@ -31,7 +31,7 @@ function setupAuthRoutes(db, getBotInstance) {
                             <div>
                                 <input type="password" name="password" required placeholder="Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                             </div>
-                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow">
+                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
                                 Login →
                             </button>
                         </form>
@@ -42,7 +42,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. FIXED LOGIN PROCESS
+    // 2. LOGIN PROCESS & 2FA / TELEGRAM CHECK
     router.post('/login-process', async (req, res) => {
         let { username, password } = req.body;
         username = username ? username.trim() : '';
@@ -63,9 +63,10 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
+            // Check if 2FA (Google Auth or Telegram) is enabled
             if (user.gauthEnabled === true || user.telegramEnabled === true) {
                 req.session.pendingAuthUser = user.username;
-                const bot = getBotInstance();
+                const bot = getBotInstance ? getBotInstance() : null;
 
                 if (user.telegramEnabled && user.telegramChatId && bot) {
                     const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -91,9 +92,9 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
             }
 
-            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+            res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
         } catch(err) {
-            console.error(err);
+            console.error("Login process error:", err);
             res.redirect('/');
         }
     });
@@ -126,10 +127,9 @@ function setupAuthRoutes(db, getBotInstance) {
             req.session.userRole = targetSnap.data().role || 'Client';
             req.session.masterAdmin = masterAdmin || 'Soniexchange';
 
-            console.log(`Master Admin impersonated into client ID: ${targetUser}`);
-            res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
+            res.redirect(`/soni-view?username=${encodeURIComponent(targetUser)}`);
         } catch(err) {
-            console.error(err);
+            console.error("Impersonation error:", err);
             res.redirect(`/soni-view?username=Soniexchange`);
         }
     });
@@ -137,7 +137,6 @@ function setupAuthRoutes(db, getBotInstance) {
     // 2.2 LOGIN OTP VERIFICATION PAGE
     router.get('/login/verify-otp', async (req, res) => {
         const username = req.query.username || '';
-        
         let hasGauth = false;
         let hasTelegram = false;
 
@@ -206,7 +205,7 @@ function setupAuthRoutes(db, getBotInstance) {
         try {
             const userRef = doc(db, 'users', username);
             const docSnap = await getDoc(userRef);
-            const bot = getBotInstance();
+            const bot = getBotInstance ? getBotInstance() : null;
             if (docSnap.exists() && docSnap.data().telegramChatId && bot) {
                 const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
                 req.session.pendingTelegramOtp = teleOtp;
@@ -259,7 +258,7 @@ function setupAuthRoutes(db, getBotInstance) {
             }
             delete req.session.pendingAuthUser;
 
-            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
+            res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
         } catch (err) {
             console.error(err);
             res.redirect('/');
@@ -274,13 +273,13 @@ function setupAuthRoutes(db, getBotInstance) {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Change Temporary Password</title>
+                <title>Change Temporary Password - Soniexchange</title>
                 <script src="https://cdn.tailwindcss.com"></script>
             </head>
             <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
                 <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
                     <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
-                    <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your password. Upon updating, your unique 6-digit transaction password will be generated.</p>
+                    <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your temporary password before accessing the system.</p>
                     <form action="/api/update-temporary-password" method="POST" class="space-y-3">
                         <input type="hidden" name="username" value="${username}">
                         <div>
@@ -291,7 +290,7 @@ function setupAuthRoutes(db, getBotInstance) {
                             <label class="block font-semibold mb-1">Confirm New Password:</label>
                             <input type="password" name="confirmPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
                         </div>
-                        <button type="submit" class="w-full bg-[#0077b6] text-white font-bold py-2 rounded">Update Password</button>
+                        <button type="submit" class="w-full bg-[#0077b6] hover:bg-[#005b8e] text-white font-bold py-2 rounded cursor-pointer">Update Password</button>
                     </form>
                 </div>
             </body>
@@ -299,7 +298,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 4. API FOR FIRST TIME PASSWORD & TRANSACTION PASSWORD GENERATION
+    // 4. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY (MASTERS ONLY, EXCLUDING CLIENTS)
     router.post('/api/update-temporary-password', async (req, res) => {
         const { username, newPassword, confirmPassword } = req.body;
         if (newPassword !== confirmPassword) {
@@ -314,6 +313,20 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
+            const userData = docSnap.data();
+            const userRole = userData.role || 'Client';
+            const isClient = (userRole === 'Client' || userRole === 'User');
+
+            if (isClient) {
+                // Clients only play games - no transaction password needed
+                await updateDoc(userRef, {
+                    password: newPassword,
+                    mustChangePassword: false
+                });
+                return res.redirect('/');
+            }
+
+            // Masters, Super Masters & Admins generate Transaction Password
             const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
             await updateDoc(userRef, {
@@ -322,6 +335,7 @@ function setupAuthRoutes(db, getBotInstance) {
                 txnPassword: txnPass
             });
 
+            // Show 30-second Countdown Screen before redirecting to sign-in page
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -330,22 +344,24 @@ function setupAuthRoutes(db, getBotInstance) {
                     <title>Transaction Password Generated - Soniexchange</title>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                    <style>body { font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; }</style>
                 </head>
                 <body class="min-h-screen flex items-center justify-center p-4 text-xs font-sans bg-white">
-                    <div class="p-6 max-w-xl w-full text-center space-y-4 text-gray-800">
+                    <div class="p-6 max-w-xl w-full text-center space-y-4 text-gray-800 border border-gray-300 rounded shadow-lg bg-gray-50">
                         <div class="space-y-1">
                             <p class="text-green-700 font-bold text-sm">Success! Your password has been updated successfully.</p>
                             <p class="text-green-700 font-bold text-xs">Success! आपका पासवर्ड बदला जा चुका है।</p>
+                            <p class="text-red-600 font-bold text-xs pt-1">
+                                Redirecting to Sign In in <span id="countdown" class="text-base text-black underline">30</span> seconds...
+                            </p>
                         </div>
 
-                        <div>
-                            <p class="text-gray-800 font-semibold text-[11px]">Your transaction password is <span class="text-blue-600 font-bold text-base">${txnPass}</span>.</p>
-                            <p class="text-gray-800 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-base">${txnPass}</span> है।</p>
+                        <div class="bg-white p-4 border border-blue-200 rounded shadow-inner my-2">
+                            <p class="text-gray-800 font-semibold text-[11px]">Your transaction password is <span class="text-blue-600 font-bold text-xl tracking-wider">${txnPass}</span>.</p>
+                            <p class="text-gray-800 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-xl tracking-wider">${txnPass}</span> है।</p>
                         </div>
 
                         <div class="text-gray-700 text-[11px] leading-relaxed space-y-1 px-4">
-                            <p>Please remember this transaction password, from now on all transcation of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
+                            <p>Please remember this transaction password, from now on all transactions of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
                             <p>कृपया इस लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण केवल इस पासवर्ड से किए जा सकते हैं और एक बात का ध्यान रखें, इस पासवर्ड को किसी के साथ साझा न करें।</p>
                         </div>
 
@@ -355,11 +371,24 @@ function setupAuthRoutes(db, getBotInstance) {
                         </div>
 
                         <div class="pt-2">
-                            <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition">
-                                <i class="fa-solid fa-arrow-left mr-1"></i> Back
+                            <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition cursor-pointer">
+                                <i class="fa-solid fa-arrow-left mr-1"></i> Go to Sign In Now
                             </a>
                         </div>
                     </div>
+
+                    <script>
+                        let seconds = 30;
+                        const timer = setInterval(() => {
+                            seconds--;
+                            const countEl = document.getElementById('countdown');
+                            if (countEl) countEl.innerText = seconds;
+                            if (seconds <= 0) {
+                                clearInterval(timer);
+                                window.location.href = '/';
+                            }
+                        }, 1000);
+                    </script>
                 </body>
                 </html>
             `);
@@ -369,7 +398,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 18. SECURE LOGOUT ROUTE
+    // 5. SECURE LOGOUT ROUTE
     router.get('/logout', (req, res) => {
         try {
             req.session.destroy(() => {
@@ -384,5 +413,4 @@ function setupAuthRoutes(db, getBotInstance) {
     return router;
 }
 
-module.exports =  setupAuthRoutes ;
-
+module.exports = setupAuthRoutes;
