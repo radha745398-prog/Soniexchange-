@@ -109,7 +109,7 @@ function setupAdminRoutes(db, getBotInstance) {
 
     function getModalsHTML(loggedInUser, currentUserPoints) {
         return `
-            <!-- DEPOSIT MODAL WITH CURRENT & TOTAL POINT BOXES -->
+            <!-- PERMANENT DEPOSIT MODAL -->
             <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -123,7 +123,7 @@ function setupAdminRoutes(db, getBotInstance) {
                         <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                         <input type="hidden" name="clientUsername" id="modalClientUsername">
                         
-                        <!-- Admin Row: Current and Total -->
+                        <!-- Admin Row -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalAdminName">${loggedInUser}</div>
                             <div class="grid grid-cols-2 gap-1">
@@ -132,7 +132,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             </div>
                         </div>
 
-                        <!-- Client Row: Current and Total -->
+                        <!-- Client Row -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalClientDisplay">Client</div>
                             <div class="grid grid-cols-2 gap-1">
@@ -215,7 +215,6 @@ function setupAdminRoutes(db, getBotInstance) {
                 }
                 function openDepositModal(clientName, clientPoints) {
                     baseClientPoints = Number(clientPoints || 0);
-                    baseAdminPoints = Number(${JSON.stringify(Number(db ? 100000000 : 0))}); // will be updated from DOM or template
                     
                     document.getElementById('modalClientUsername').value = clientName;
                     document.getElementById('modalClientDisplay').innerText = clientName;
@@ -701,6 +700,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
+    // --- PERMANENT CREATE CLIENT API ROUTE ---
     router.post('/api/clients/create', async (req, res) => {
         const { createdBy, clientName, password, creditRef, accountType, txnPassword } = req.body;
         
@@ -736,6 +736,54 @@ function setupAdminRoutes(db, getBotInstance) {
         } catch(err) {
             console.error(err);
             res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
+        }
+    });
+
+    // --- PERMANENT DEPOSIT API ROUTE FOR ALL USERS (ADMIN/MASTER/SUPER) ---
+    router.post('/api/deposit', async (req, res) => {
+        const { loggedInUser, clientUsername, amount, txnPassword } = req.body;
+        const depositAmount = Number(amount);
+
+        if (isNaN(depositAmount) || depositAmount <= 0 || !clientUsername) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+            const clientData = clientSnap.data();
+
+            const updatedClientPoints = Number(clientData.points || 0) + depositAmount;
+            const updatedAdminPoints = Number(adminData.points || 0) - (loggedInUser !== 'Soniexchange' ? depositAmount : 0);
+
+            await updateDoc(clientRef, {
+                points: updatedClientPoints
+            });
+
+            if (loggedInUser !== 'Soniexchange') {
+                await updateDoc(adminRef, {
+                    points: updatedAdminPoints
+                });
+            }
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Deposit Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
 
