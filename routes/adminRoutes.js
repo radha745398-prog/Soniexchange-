@@ -6,8 +6,9 @@ const adminController = require('./adminController');
 
 function setupAdminRoutes(db) {
 
+    // 1. CLEAN DASHBOARD (Login ke turant baad ab yeh khulega, client list nahi)
     router.get('/dashboard', async (req, res) => {
-        const loggedInUser = req.query.username || 'Soniexchange';
+        const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         try {
             const userRef = doc(db, 'users', loggedInUser);
             const docSnap = await getDoc(userRef);
@@ -19,25 +20,32 @@ function setupAdminRoutes(db) {
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
-                    <title>Dashboard</title>
+                    <title>Dashboard - Soniexchange</title>
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 </head>
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, user.role)}
-                    <main class="flex-1 p-4 max-w-7xl mx-auto w-full"></main>
+                    <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+                        <div class="bg-white border rounded p-6 shadow-sm space-y-3">
+                            <h2 class="text-base font-bold text-[#0077b6]">Welcome to Dashboard, ${loggedInUser}!</h2>
+                            <p class="text-gray-600 text-xs">Aapka login safal raha. Upar menu mein <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="text-blue-600 font-bold underline">List of Clients</a> par click karke aap client list dekh sakte hain.</p>
+                        </div>
+                    </main>
                     ${getModalsHTML(loggedInUser, user.points)}
                     ${getModalScriptsJS()}
                 </body>
                 </html>
             `);
         } catch(err) {
+            console.error("Dashboard error:", err);
             res.redirect('/');
         }
     });
 
+    // 2. CLIENT LIST VIEW (Jab user specifically click karega tabhi dikhegi)
     router.get('/soni-view', async (req, res) => {
-        const loggedInUser = req.query.username || 'Soniexchange';
+        const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         const tab = req.query.tab || 'active';
 
         try {
