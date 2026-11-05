@@ -110,6 +110,7 @@ function setupAdminRoutes(db, getBotInstance) {
 
     function getModalsHTML(loggedInUser, currentUserPoints) {
         return `
+            <!-- DEPOSIT MODAL -->
             <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -166,6 +167,63 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
+            <!-- WITHDRAW MODAL (EXACT HÙ-B-HÙ SCREENSHOT MATCH)[span_1](start_span)[span_1](end_span) -->
+            <div id="withdrawModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
+                        <span class="font-bold text-sm">Withdraw</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-[#f0f2f5] text-gray-700 text-[10px] px-2 py-0.5 rounded border font-semibold flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Back up now</span></span>
+                            <button type="button" onclick="closeWithdrawModal()" class="cursor-pointer text-xs font-bold bg-[#343a40] text-white px-2 py-0.5 rounded">✕</button>
+                        </div>
+                    </div>
+                    <form action="/api/withdraw" method="POST" class="space-y-3 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="withdrawClientUsername">
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="withdrawAdminDisplay">${loggedInUser}</div>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="withdrawAdminCurrent">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end text-gray-600" id="withdrawAdminTotal">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="withdrawClientDisplay">Client</div>
+                            <div class="grid grid-cols-2 gap-1">
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="withdrawClientCurrent">0</div>
+                                <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end text-gray-600" id="withdrawClientTotal">0</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Amount</label>
+                            <input type="number" name="amount" id="withdrawAmountInput" oninput="calculateWithdrawTotal()" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Remark</label>
+                            <input type="text" name="remark" placeholder="Remark" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button type="button" onclick="closeWithdrawModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#2b3a4a] hover:bg-black text-white px-5 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             ${loggedInUser === 'Soniexchange' ? `
             <div id="adminBalanceModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-sm mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
@@ -211,16 +269,14 @@ function setupAdminRoutes(db, getBotInstance) {
                         arrowIcon.className = "fa-solid fa-chevron-down text-xs";
                     }
                 }
+
                 function openDepositModal(clientName, clientPoints) {
                     baseClientPoints = Number(clientPoints || 0);
-                    
                     document.getElementById('modalClientUsername').value = clientName;
                     document.getElementById('modalClientDisplay').innerText = clientName;
                     document.getElementById('modalClientCurrent').innerText = baseClientPoints.toLocaleString();
                     document.getElementById('modalClientTotal').innerText = baseClientPoints.toLocaleString();
-                    
                     document.getElementById('depositAmountInput').value = '';
-
                     const modal = document.getElementById('depositModal');
                     if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
                 }
@@ -235,6 +291,30 @@ function setupAdminRoutes(db, getBotInstance) {
                     const modal = document.getElementById('depositModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
+
+                // --- WITHDRAW MODAL SCRIPTS ---
+                function openWithdrawModal(clientName, clientPoints) {
+                    baseClientPoints = Number(clientPoints || 0);
+                    document.getElementById('withdrawClientUsername').value = clientName;
+                    document.getElementById('withdrawClientDisplay').innerText = clientName;
+                    document.getElementById('withdrawClientCurrent').innerText = baseClientPoints.toLocaleString();
+                    document.getElementById('withdrawClientTotal').innerText = baseClientPoints.toLocaleString();
+                    document.getElementById('withdrawAmountInput').value = '';
+                    const modal = document.getElementById('withdrawModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+
+                function calculateWithdrawTotal() {
+                    const amtVal = Number(document.getElementById('withdrawAmountInput').value || 0);
+                    const newClientTotal = baseClientPoints - amtVal;
+                    document.getElementById('withdrawClientTotal').innerText = newClientTotal.toLocaleString();
+                }
+
+                function closeWithdrawModal() {
+                    const modal = document.getElementById('withdrawModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+
                 function openAdminBalanceModal() {
                     const modal = document.getElementById('adminBalanceModal');
                     if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -336,7 +416,7 @@ function setupAdminRoutes(db, getBotInstance) {
                     <td class="p-1.5 text-center">
                         <div class="flex items-center justify-center space-x-1">
                             <button type="button" onclick="openDepositModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
-                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
+                            <button type="button" onclick="openWithdrawModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
@@ -736,7 +816,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- PERMANENT DEPOSIT API ROUTE WITH DEDUCTION ENABLED ---
+    // --- DEPOSIT API ROUTE ---
     router.post('/api/deposit', async (req, res) => {
         const { loggedInUser, clientUsername, amount, txnPassword } = req.body;
         const depositAmount = Number(amount);
@@ -767,17 +847,54 @@ function setupAdminRoutes(db, getBotInstance) {
             const updatedClientPoints = Number(clientData.points || 0) + depositAmount;
             const updatedAdminPoints = Number(adminData.points || 0) - depositAmount;
 
-            await updateDoc(clientRef, {
-                points: updatedClientPoints
-            });
-
-            await updateDoc(adminRef, {
-                points: updatedAdminPoints
-            });
+            await updateDoc(clientRef, { points: updatedClientPoints });
+            await updateDoc(adminRef, { points: updatedAdminPoints });
 
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         } catch (err) {
             console.error("Deposit Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+    });
+
+    // --- WITHDRAW API ROUTE ---
+    router.post('/api/withdraw', async (req, res) => {
+        const { loggedInUser, clientUsername, amount, txnPassword } = req.body;
+        const withdrawAmount = Number(amount);
+
+        if (isNaN(withdrawAmount) || withdrawAmount <= 0 || !clientUsername) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+            const clientData = clientSnap.data();
+
+            // Withdraw: Client ke points kam honge aur Admin/Sender ke points wapas judenge
+            const updatedClientPoints = Number(clientData.points || 0) - withdrawAmount;
+            const updatedAdminPoints = Number(adminData.points || 0) + withdrawAmount;
+
+            await updateDoc(clientRef, { points: updatedClientPoints });
+            await updateDoc(adminRef, { points: updatedAdminPoints });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Withdraw Error:", err);
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
