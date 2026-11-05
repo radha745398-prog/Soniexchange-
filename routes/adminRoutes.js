@@ -5,7 +5,6 @@ const { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } = re
 
 function setupAdminRoutes(db, getBotInstance) {
 
-    // --- HTML TEMPLATE HELPERS ---
     function getHeaderAndSidebar(loggedInUser, userRole) {
         return `
             <header class="bg-[#0077b6] text-white px-3 py-1 flex items-center justify-between text-[11px] whitespace-nowrap relative shadow-sm" style="z-index: 50; min-height: 38px;">
@@ -108,20 +107,55 @@ function setupAdminRoutes(db, getBotInstance) {
         `;
     }
 
-    function getModalsHTML(loggedInUser) {
+    function getModalsHTML(loggedInUser, currentUserPoints) {
         return `
-            <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+            <!-- DEPOSIT MODAL MATCHED EXACTLY WITH LEGACY UI -->
+            <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
-                    <div class="flex justify-between items-center border-b pb-2 mb-2">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
                         <span class="font-bold text-sm">Deposit</span>
-                        <button type="button" onclick="closeDepositModal()" class="cursor-pointer text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded">✕</button>
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-[#f0f2f5] text-gray-700 text-[10px] px-2 py-0.5 rounded border font-semibold flex items-center space-x-1 cursor-pointer"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Back up now</span></span>
+                            <button type="button" onclick="closeDepositModal()" class="cursor-pointer text-xs font-bold bg-[#343a40] text-white px-2 py-0.5 rounded">✕</button>
+                        </div>
                     </div>
                     <form action="/api/deposit" method="POST" class="space-y-3 text-xs">
                         <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                         <input type="hidden" name="clientUsername" id="modalClientUsername">
-                        <div><label class="block font-semibold">Amount:</label><input type="number" name="amount" required class="w-full border p-1 rounded"></div>
-                        <div><label class="block font-semibold">Transaction Password:</label><input type="password" name="txnPassword" required class="w-full border p-1 rounded"></div>
-                        <button type="submit" class="bg-[#0077b6] text-white px-3 py-1.5 rounded font-bold cursor-pointer">Submit Deposit</button>
+                        
+                        <div class="grid grid-cols-2 gap-2 items-center">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700" id="modalAdminName">${loggedInUser}</div>
+                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold" id="modalAdminPoints">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 items-center">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700" id="modalClientDisplay">Client</div>
+                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold" id="modalClientPoints">0</div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Amount</label>
+                            <input type="number" name="amount" required placeholder="Amount" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Remark</label>
+                            <input type="text" name="remark" placeholder="Remark" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-gray-700 mb-1">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button type="button" onclick="closeDepositModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#2b3a4a] hover:bg-black text-white px-5 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -168,8 +202,10 @@ function setupAdminRoutes(db, getBotInstance) {
                         arrowIcon.className = "fa-solid fa-chevron-down text-xs";
                     }
                 }
-                function openDepositModal(clientName) {
+                function openDepositModal(clientName, clientPoints) {
                     document.getElementById('modalClientUsername').value = clientName;
+                    document.getElementById('modalClientDisplay').innerText = clientName;
+                    document.getElementById('modalClientPoints').innerText = Number(clientPoints || 0).toLocaleString();
                     const modal = document.getElementById('depositModal');
                     if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
                 }
@@ -219,7 +255,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
                     ${getHeaderAndSidebar(loggedInUser, user.role)}
                     <main class="flex-1 p-4 max-w-7xl mx-auto w-full"></main>
-                    ${getModalsHTML(loggedInUser)}
+                    ${getModalsHTML(loggedInUser, user.points)}
                     ${getModalScriptsJS()}
                 </body>
                 </html>
@@ -277,7 +313,7 @@ function setupAdminRoutes(db, getBotInstance) {
                     <td class="p-2 border-r text-center">${u.role || 'User'}</td>
                     <td class="p-1.5 text-center">
                         <div class="flex items-center justify-center space-x-1">
-                            <button type="button" onclick="openDepositModal('${u.username}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
+                            <button type="button" onclick="openDepositModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">W</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
@@ -411,7 +447,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             </table>
                         </div>
                     </main>
-                    ${getModalsHTML(loggedInUser)}
+                    ${getModalsHTML(loggedInUser, currentUser.points)}
                     ${getModalScriptsJS()}
 
                     <script>
@@ -536,14 +572,12 @@ function setupAdminRoutes(db, getBotInstance) {
                         <form action="/api/clients/create" method="POST" class="space-y-4 bg-white p-4 border rounded shadow-xs">
                             <input type="hidden" name="createdBy" value="${loggedInUser}">
 
-                            <!-- Personal Detail Section -->
                             <div class="border rounded overflow-hidden">
                                 <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Personal Detail</div>
                                 <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50">
                                     <div>
                                         <label class="block font-semibold text-gray-700 mb-1">Client Name:</label>
                                         <input type="text" name="clientName" required placeholder="Client Username" class="w-full border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
-                                        <span class="text-[10px] text-red-500">The username must only contain alpha-numeric characters.</span>
                                     </div>
                                     <div>
                                         <label class="block font-semibold text-gray-700 mb-1">User Password:</label>
@@ -568,7 +602,6 @@ function setupAdminRoutes(db, getBotInstance) {
                                 </div>
                             </div>
 
-                            <!-- Account Detail Section -->
                             <div class="border rounded overflow-hidden">
                                 <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Account Detail</div>
                                 <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50">
@@ -587,7 +620,6 @@ function setupAdminRoutes(db, getBotInstance) {
                                 </div>
                             </div>
 
-                            <!-- Commission Settings Section -->
                             <div class="border rounded overflow-hidden">
                                 <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Commission Settings</div>
                                 <div class="p-3 space-y-2 bg-gray-50/50">
@@ -606,7 +638,6 @@ function setupAdminRoutes(db, getBotInstance) {
                                 </div>
                             </div>
 
-                            <!-- Partnership Section -->
                             <div class="border rounded overflow-hidden">
                                 <div class="bg-[#2b3a4a] text-white px-3 py-1.5 font-bold text-xs">Partnership</div>
                                 <div class="p-3 space-y-2 bg-gray-50/50">
@@ -625,7 +656,6 @@ function setupAdminRoutes(db, getBotInstance) {
                                 </div>
                             </div>
 
-                            <!-- Transaction Password & Submit -->
                             <div class="flex flex-col items-end space-y-2 pt-2">
                                 <div class="w-full md:w-72">
                                     <label class="block font-semibold text-gray-700 mb-1">Transaction Password:</label>
@@ -647,7 +677,7 @@ function setupAdminRoutes(db, getBotInstance) {
     });
 
     router.post('/api/clients/create', async (req, res) => {
-        const { createdBy, clientName, password, creditRef, accountType, downlineComm, downlinePartner, txnPassword } = req.body;
+        const { createdBy, clientName, password, creditRef, accountType, txnPassword } = req.body;
         
         if (!clientName || !password) {
             return res.redirect('/soni-view?username=' + encodeURIComponent(createdBy || 'Soniexchange'));
