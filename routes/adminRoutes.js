@@ -167,7 +167,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
-            <!-- WITHDRAW MODAL (EXACT HÙ-B-HÙ SCREENSHOT MATCH)[span_1](start_span)[span_1](end_span) -->
+            <!-- WITHDRAW MODAL -->
             <div id="withdrawModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -217,6 +217,44 @@ function setupAdminRoutes(db, getBotInstance) {
                                 <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
                             </button>
                             <button type="submit" class="bg-[#2b3a4a] hover:bg-black text-white px-5 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- EXPOSURE LIMIT MODAL (ATTACHED TO 'L' BUTTON)[span_0](start_span)[span_0](end_span) -->
+            <div id="exposureModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
+                        <span class="font-bold text-sm">Exposure Limit</span>
+                        <button type="button" onclick="closeExposureModal()" class="cursor-pointer text-xs font-bold bg-[#0077b6] text-white w-5 h-5 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <form action="/api/exposure-limit" method="POST" class="space-y-3 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="exposureClientUsername">
+                        
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Old Limit</label>
+                            <div class="col-span-2 bg-gray-200 border border-gray-300 p-1.5 rounded text-gray-600 font-semibold" id="exposureOldLimitDisplay">0.00</div>
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">New Limit</label>
+                            <input type="number" step="any" name="newLimit" required placeholder="New Limit" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
+                            <button type="button" onclick="closeExposureModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
                                 <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -292,7 +330,6 @@ function setupAdminRoutes(db, getBotInstance) {
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
-                // --- WITHDRAW MODAL SCRIPTS ---
                 function openWithdrawModal(clientName, clientPoints) {
                     baseClientPoints = Number(clientPoints || 0);
                     document.getElementById('withdrawClientUsername').value = clientName;
@@ -312,6 +349,19 @@ function setupAdminRoutes(db, getBotInstance) {
 
                 function closeWithdrawModal() {
                     const modal = document.getElementById('withdrawModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+
+                // --- EXPOSURE LIMIT MODAL SCRIPTS ('L' BUTTON) ---
+                function openExposureModal(clientName, exposureLimit) {
+                    document.getElementById('exposureClientUsername').value = clientName;
+                    document.getElementById('exposureOldLimitDisplay').innerText = Number(exposureLimit || 0).toLocaleString();
+                    const modal = document.getElementById('exposureModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+
+                function closeExposureModal() {
+                    const modal = document.getElementById('exposureModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
@@ -417,7 +467,7 @@ function setupAdminRoutes(db, getBotInstance) {
                         <div class="flex items-center justify-center space-x-1">
                             <button type="button" onclick="openDepositModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                             <button type="button" onclick="openWithdrawModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
-                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">L</button>
+                            <button type="button" onclick="openExposureModal('${u.username}', '${u.exposureLimit || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
@@ -885,7 +935,6 @@ function setupAdminRoutes(db, getBotInstance) {
             }
             const clientData = clientSnap.data();
 
-            // Withdraw: Client ke points kam honge aur Admin/Sender ke points wapas judenge
             const updatedClientPoints = Number(clientData.points || 0) - withdrawAmount;
             const updatedAdminPoints = Number(adminData.points || 0) + withdrawAmount;
 
@@ -895,6 +944,42 @@ function setupAdminRoutes(db, getBotInstance) {
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         } catch (err) {
             console.error("Withdraw Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+    });
+
+    // --- EXPOSURE LIMIT API ROUTE (FOR 'L' BUTTON) ---
+    router.post('/api/exposure-limit', async (req, res) => {
+        const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
+        const limitAmount = Number(newLimit);
+
+        if (isNaN(limitAmount) || limitAmount < 0 || !clientUsername) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            await updateDoc(clientRef, { exposureLimit: limitAmount });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Exposure Limit Error:", err);
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
