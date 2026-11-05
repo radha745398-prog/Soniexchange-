@@ -224,7 +224,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
-            <!-- EXPOSURE LIMIT MODAL (ATTACHED TO 'L' BUTTON)[span_0](start_span)[span_0](end_span) -->
+            <!-- EXPOSURE LIMIT MODAL ('L' BUTTON) -->
             <div id="exposureModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -252,6 +252,44 @@ function setupAdminRoutes(db, getBotInstance) {
 
                         <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
                             <button type="button" onclick="closeExposureModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CREDIT REFERENCE MODAL ('C' BUTTON)[span_2](start_span)[span_2](end_span) -->
+            <div id="creditModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
+                        <span class="font-bold text-sm">Credit</span>
+                        <button type="button" onclick="closeCreditModal()" class="cursor-pointer text-xs font-bold bg-[#0077b6] text-white w-5 h-5 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <form action="/api/credit-ref" method="POST" class="space-y-3 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="creditClientUsername">
+                        
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Old Credit</label>
+                            <div class="col-span-2 bg-gray-200 border border-gray-300 p-1.5 rounded text-gray-600 font-semibold" id="creditOldDisplay">0.00</div>
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">New Credit</label>
+                            <input type="number" step="any" name="newCredit" required placeholder="New Credit" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
+                            <button type="button" onclick="closeCreditModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
                                 <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
                             </button>
                             <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
@@ -352,7 +390,6 @@ function setupAdminRoutes(db, getBotInstance) {
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
-                // --- EXPOSURE LIMIT MODAL SCRIPTS ('L' BUTTON) ---
                 function openExposureModal(clientName, exposureLimit) {
                     document.getElementById('exposureClientUsername').value = clientName;
                     document.getElementById('exposureOldLimitDisplay').innerText = Number(exposureLimit || 0).toLocaleString();
@@ -362,6 +399,19 @@ function setupAdminRoutes(db, getBotInstance) {
 
                 function closeExposureModal() {
                     const modal = document.getElementById('exposureModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+
+                // --- CREDIT REFERENCE MODAL SCRIPTS ('C' BUTTON)[span_3](start_span)[span_3](end_span) ---
+                function openCreditModal(clientName, creditRef) {
+                    document.getElementById('creditClientUsername').value = clientName;
+                    document.getElementById('creditOldDisplay').innerText = Number(creditRef || 0).toLocaleString();
+                    const modal = document.getElementById('creditModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+
+                function closeCreditModal() {
+                    const modal = document.getElementById('creditModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
@@ -468,7 +518,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             <button type="button" onclick="openDepositModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">D</button>
                             <button type="button" onclick="openWithdrawModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                             <button type="button" onclick="openExposureModal('${u.username}', '${u.exposureLimit || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
-                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">C</button>
+                            <button type="button" onclick="openCreditModal('${u.username}', '${u.creditRef || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         </div>
@@ -948,7 +998,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- EXPOSURE LIMIT API ROUTE (FOR 'L' BUTTON) ---
+    // --- EXPOSURE LIMIT API ROUTE ('L' BUTTON) ---
     router.post('/api/exposure-limit', async (req, res) => {
         const { loggedInUser, clientUsername, newLimit, txnPassword } = req.body;
         const limitAmount = Number(newLimit);
@@ -980,6 +1030,42 @@ function setupAdminRoutes(db, getBotInstance) {
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         } catch (err) {
             console.error("Exposure Limit Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+    });
+
+    // --- CREDIT REFERENCE API ROUTE ('C' BUTTON)[span_4](start_span)[span_4](end_span) ---
+    router.post('/api/credit-ref', async (req, res) => {
+        const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
+        const creditAmount = Number(newCredit);
+
+        if (isNaN(creditAmount) || creditAmount < 0 || !clientUsername) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            await updateDoc(clientRef, { creditRef: creditAmount });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Credit Reference Error:", err);
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
