@@ -262,7 +262,7 @@ function setupAdminRoutes(db, getBotInstance) {
                 </div>
             </div>
 
-            <!-- CREDIT REFERENCE MODAL ('C' BUTTON)[span_2](start_span)[span_2](end_span) -->
+            <!-- CREDIT REFERENCE MODAL ('C' BUTTON) -->
             <div id="creditModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -290,6 +290,44 @@ function setupAdminRoutes(db, getBotInstance) {
 
                         <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
                             <button type="button" onclick="closeCreditModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
+                            </button>
+                            <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
+                                <span>submit</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PASSWORD CHANGE MODAL ('P' BUTTON)[span_3](start_span)[span_3](end_span) -->
+            <div id="passwordModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-16 z-50">
+                <div class="bg-white rounded-md shadow-2xl w-full max-w-md mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-3">
+                        <span class="font-bold text-sm">Password</span>
+                        <button type="button" onclick="closePasswordModal()" class="cursor-pointer text-xs font-bold bg-[#0077b6] text-white w-5 h-5 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <form action="/api/change-password" method="POST" class="space-y-3 text-xs">
+                        <input type="hidden" name="loggedInUser" value="${loggedInUser}">
+                        <input type="hidden" name="clientUsername" id="passwordClientUsername">
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">New Password</label>
+                            <input type="password" name="newPassword" required placeholder="New Password" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Confirm Password</label>
+                            <input type="password" name="confirmPassword" required placeholder="Confirm Password" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <label class="font-semibold text-gray-700">Transaction Password</label>
+                            <input type="password" name="txnPassword" required placeholder="Transaction Password" class="col-span-2 border border-gray-300 p-1.5 rounded bg-white focus:outline-none">
+                        </div>
+
+                        <div class="flex justify-end items-center space-x-2 pt-3 border-t mt-2">
+                            <button type="button" onclick="closePasswordModal()" class="bg-[#2b3a4a] hover:bg-black text-white px-3 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
                                 <i class="fa-solid fa-arrow-left"></i> <span>BACK</span>
                             </button>
                             <button type="submit" class="bg-[#0077b6] hover:bg-[#005f92] text-white px-4 py-1.5 rounded font-bold cursor-pointer flex items-center space-x-1">
@@ -402,7 +440,6 @@ function setupAdminRoutes(db, getBotInstance) {
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
-                // --- CREDIT REFERENCE MODAL SCRIPTS ('C' BUTTON)[span_3](start_span)[span_3](end_span) ---
                 function openCreditModal(clientName, creditRef) {
                     document.getElementById('creditClientUsername').value = clientName;
                     document.getElementById('creditOldDisplay').innerText = Number(creditRef || 0).toLocaleString();
@@ -412,6 +449,18 @@ function setupAdminRoutes(db, getBotInstance) {
 
                 function closeCreditModal() {
                     const modal = document.getElementById('creditModal');
+                    if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
+                }
+
+                // --- PASSWORD MODAL SCRIPTS ('P' BUTTON)[span_4](start_span)[span_4](end_span) ---
+                function openPasswordModal(clientName) {
+                    document.getElementById('passwordClientUsername').value = clientName;
+                    const modal = document.getElementById('passwordModal');
+                    if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+                }
+
+                function closePasswordModal() {
+                    const modal = document.getElementById('passwordModal');
                     if(modal) { modal.classList.remove('flex'); modal.classList.add('hidden'); }
                 }
 
@@ -519,7 +568,7 @@ function setupAdminRoutes(db, getBotInstance) {
                             <button type="button" onclick="openWithdrawModal('${u.username}', '${u.points || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">W</button>
                             <button type="button" onclick="openExposureModal('${u.username}', '${u.exposureLimit || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">L</button>
                             <button type="button" onclick="openCreditModal('${u.username}', '${u.creditRef || 0}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">C</button>
-                            <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">P</button>
+                            <button type="button" onclick="openPasswordModal('${u.username}')" class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">P</button>
                             <button class="bg-[#343a40] text-white px-1.5 py-0.5 rounded text-[10px] font-bold">S</button>
                         </div>
                     </td>
@@ -1034,7 +1083,7 @@ function setupAdminRoutes(db, getBotInstance) {
         }
     });
 
-    // --- CREDIT REFERENCE API ROUTE ('C' BUTTON)[span_4](start_span)[span_4](end_span) ---
+    // --- CREDIT REFERENCE API ROUTE ('C' BUTTON) ---
     router.post('/api/credit-ref', async (req, res) => {
         const { loggedInUser, clientUsername, newCredit, txnPassword } = req.body;
         const creditAmount = Number(newCredit);
@@ -1066,6 +1115,41 @@ function setupAdminRoutes(db, getBotInstance) {
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
         } catch (err) {
             console.error("Credit Reference Error:", err);
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+    });
+
+    // --- PASSWORD CHANGE API ROUTE ('P' BUTTON)[span_5](start_span)[span_5](end_span) ---
+    router.post('/api/change-password', async (req, res) => {
+        const { loggedInUser, clientUsername, newPassword, confirmPassword, txnPassword } = req.body;
+
+        if (!clientUsername || !newPassword || newPassword !== confirmPassword) {
+            return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
+        }
+
+        try {
+            const adminRef = doc(db, 'users', loggedInUser || 'Soniexchange');
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists()) return res.redirect('/');
+            const adminData = adminSnap.data();
+
+            if (adminData.txnPassword && adminData.txnPassword !== txnPassword) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            const clientRef = doc(db, 'users', clientUsername.trim());
+            const clientSnap = await getDoc(clientRef);
+
+            if (!clientSnap.exists()) {
+                return res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+            }
+
+            await updateDoc(clientRef, { password: newPassword });
+
+            res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser)}`);
+        } catch (err) {
+            console.error("Password Change Error:", err);
             res.redirect(`/soni-view?username=${encodeURIComponent(loggedInUser || 'Soniexchange')}`);
         }
     });
