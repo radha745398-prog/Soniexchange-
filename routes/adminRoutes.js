@@ -109,7 +109,7 @@ function setupAdminRoutes(db, getBotInstance) {
 
     function getModalsHTML(loggedInUser, currentUserPoints) {
         return `
-            <!-- DEPOSIT MODAL MATCHED EXACTLY WITH LEGACY UI -->
+            <!-- DEPOSIT MODAL WITH EXACT TWO DOUBLE BOXES -->
             <div id="depositModal" class="fixed inset-0 bg-black/45 hidden items-start justify-center pt-12 z-50">
                 <div class="bg-white rounded-md shadow-2xl w-full max-w-lg mx-3 overflow-hidden text-gray-800 border border-gray-300 p-4">
                     <div class="flex justify-between items-center border-b pb-2 mb-3">
@@ -123,14 +123,16 @@ function setupAdminRoutes(db, getBotInstance) {
                         <input type="hidden" name="loggedInUser" value="${loggedInUser}">
                         <input type="hidden" name="clientUsername" id="modalClientUsername">
                         
-                        <div class="grid grid-cols-2 gap-2 items-center">
-                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700" id="modalAdminName">${loggedInUser}</div>
-                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold" id="modalAdminPoints">${Number(currentUserPoints || 0).toLocaleString()}</div>
+                        <!-- Admin Row with Two Boxes -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalAdminName">${loggedInUser}</div>
+                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalAdminPoints">${Number(currentUserPoints || 0).toLocaleString()}</div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 items-center">
-                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700" id="modalClientDisplay">Client</div>
-                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold" id="modalClientPoints">0</div>
+                        <!-- Client Row with Two Boxes -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-gray-100 border p-1.5 rounded font-semibold text-gray-700 flex items-center" id="modalClientDisplay">Client</div>
+                            <div class="bg-gray-100 border p-1.5 rounded text-right font-semibold flex items-center justify-end" id="modalClientPoints">0</div>
                         </div>
 
                         <div>
