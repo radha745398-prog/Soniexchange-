@@ -96,7 +96,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 3. LOGIN PROCESS & 2FA / TELEGRAM CHECK
+    // 3. LOGIN PROCESS & ROLE-BASED CHECK
     router.post('/login-process', async (req, res) => {
         let { username, password } = req.body;
         username = username ? username.trim() : '';
@@ -117,7 +117,7 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // CHECK IF PASSWORD CHANGE IS MANDATORY ON FIRST LOGIN
+            // CRITICAL: Check if password change is mandatory on first login
             if (user.mustChangePassword === true) {
                 return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
             }
@@ -140,9 +140,9 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             req.session.loggedInUser = user.username;
-            req.session.userRole = user.role;
+            req.session.userRole = user.role || 'Client';
 
-            if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            if (user.role === 'ADMIN' || user.role === 'Super' || user.role === 'Master' || user.username === 'Soniexchange') {
                 req.session.masterAdmin = user.username;
             }
 
@@ -163,7 +163,7 @@ function setupAuthRoutes(db, getBotInstance) {
         try {
             const isMasterAuthorized = (masterAdmin === 'Soniexchange') || 
                                        (loggedInUser === 'Soniexchange') || 
-                                       (userRole === 'ADMIN') || 
+                                       (userRole === 'ADMIN' || userRole === 'Super' || userRole === 'Master') || 
                                        (req.query.admin === 'Soniexchange');
 
             if (!isMasterAuthorized) {
@@ -310,8 +310,8 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             req.session.loggedInUser = user.username;
-            req.session.userRole = user.role;
-            if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
+            req.session.userRole = user.role || 'Client';
+            if (user.role === 'ADMIN' || user.role === 'Super' || user.role === 'Master' || user.username === 'Soniexchange') {
                 req.session.masterAdmin = user.username;
             }
             delete req.session.pendingAuthUser;
@@ -391,9 +391,10 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             const userRole = userData.role || 'Client';
+            // Check if user is a client (supporting both 'Client' and 'User')
             const isClient = (userRole === 'Client' || userRole === 'User');
 
-            // IF CLIENT: Update password and redirect straight to login page
+            // IF CLIENT: Update password, remove flag, and redirect straight to login page
             if (isClient) {
                 await updateDoc(userRef, {
                     password: newPassword,
@@ -402,7 +403,7 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // IF ADMIN / MASTER: Generate transaction password and show 30-sec screen
+            // IF ADMIN / SUPER / MASTER: Generate transaction password, remove flag, and show 30-sec screen
             const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
             await updateDoc(userRef, {
