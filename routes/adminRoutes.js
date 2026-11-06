@@ -43,7 +43,7 @@ function setupAdminRoutes(db) {
         }
     });
 
-    // 2. CLIENT LIST VIEW (TOTALS ROW PLACED JUST BELOW THE TABLE HEADER)
+    // 2. CLIENT LIST VIEW (WITH NEGATIVE VALUES HIGHLIGHTED IN RED)
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -85,7 +85,12 @@ function setupAdminRoutes(db) {
 
             let tableRows = usersList.length === 0 ? `
                 <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
-            ` : usersList.map(u => `
+            ` : usersList.map(u => {
+                const clientPL = Number(u.points || 0) - Number(u.creditRef || 0);
+                const plClass = clientPL < 0 ? 'text-red-600 font-bold' : '';
+                const plFormatted = clientPL < 0 ? `-${Math.abs(clientPL).toLocaleString()}` : clientPL.toLocaleString();
+
+                return `
                 <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
                     <td class="p-2 border-r flex items-center justify-between">
                         <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold text-[10px]">${u.username}</span>
@@ -93,7 +98,7 @@ function setupAdminRoutes(db) {
                     </td>
                     <td class="p-2 border-r text-right">${Number(u.creditRef || 0).toLocaleString()}</td>
                     <td class="p-2 border-r text-right">${Math.abs(Number(u.points || 0)).toLocaleString()}</td>
-                    <td class="p-2 border-r text-right">${(Number(u.points || 0) - Number(u.creditRef || 0)).toLocaleString()}</td>
+                    <td class="p-2 border-r text-right ${plClass}">${plFormatted}</td>
                     <td class="p-2 border-r text-right">${Number(u.exposure || 0).toLocaleString()}</td>
                     <td class="p-2 border-r text-right">${(Number(u.points || 0) - Number(u.exposure || 0)).toLocaleString()}</td>
                     <td class="p-2 border-r text-center">${u.userActive !== false ? '✓' : '✕'}</td>
@@ -112,7 +117,11 @@ function setupAdminRoutes(db) {
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+
+            const totalPLFormatted = totalPoints < 0 ? `-${Math.abs(totalPoints).toLocaleString()}` : totalPoints.toLocaleString();
+            const totalPLClass = totalPoints < 0 ? 'text-red-600 font-bold' : '';
 
             res.send(`
                 <!DOCTYPE html>
@@ -168,7 +177,7 @@ function setupAdminRoutes(db) {
                                 </span>
                             </div>
                             <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">0</span></div>
-                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold">${totalPoints.toLocaleString()}</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold ${totalPoints < 0 ? 'text-red-300 font-bold' : ''}">${totalPLFormatted}</span></div>
                             <div class="flex justify-between py-0.5">
                                 <span>Available Balance:</span>
                                 <span class="font-semibold flex items-center space-x-1">
@@ -237,7 +246,7 @@ function setupAdminRoutes(db) {
                                         <td class="p-2 border-r"></td>
                                         <td class="p-2 border-r text-right">${totalCreditRef.toLocaleString()}</td>
                                         <td class="p-2 border-r text-right">0</td>
-                                        <td class="p-2 border-r text-right">${totalPoints.toLocaleString()}</td>
+                                        <td class="p-2 border-r text-right ${totalPLClass}">${totalPLFormatted}</td>
                                         <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
                                         <td colspan="7" class="p-2"></td>
                                     </tr>
