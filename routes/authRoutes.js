@@ -84,7 +84,7 @@ function setupAuthRoutes(db, getBotInstance) {
                             <div class="flex justify-center my-3">
                                 <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white">
                             </div>
-                            <a href="/soni-view?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer">Back to Panel</a>
+                            <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer">Back to Dashboard</a>
                         </div>
                     </main>
                 </body>
@@ -145,7 +145,8 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
             }
 
-            res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
+            // FIXED: Redirect to Dashboard instead of soni-view
+            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
         } catch(err) {
             console.error("Login process error:", err);
             res.redirect('/');
@@ -173,17 +174,17 @@ function setupAuthRoutes(db, getBotInstance) {
             const targetSnap = await getDoc(targetRef);
 
             if (!targetSnap.exists()) {
-                return res.redirect(`/soni-view?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
+                return res.redirect(`/dashboard?username=${encodeURIComponent(masterAdmin || 'Soniexchange')}`);
             }
 
             req.session.loggedInUser = targetUser;
             req.session.userRole = targetSnap.data().role || 'Client';
             req.session.masterAdmin = masterAdmin || 'Soniexchange';
 
-            res.redirect(`/soni-view?username=${encodeURIComponent(targetUser)}`);
+            res.redirect(`/dashboard?username=${encodeURIComponent(targetUser)}`);
         } catch(err) {
             console.error("Impersonation error:", err);
-            res.redirect(`/soni-view?username=Soniexchange`);
+            res.redirect(`/dashboard?username=Soniexchange`);
         }
     });
 
@@ -311,7 +312,8 @@ function setupAuthRoutes(db, getBotInstance) {
             }
             delete req.session.pendingAuthUser;
 
-            res.redirect(`/soni-view?username=${encodeURIComponent(user.username)}`);
+            // FIXED: Redirect to Dashboard instead of soni-view
+            res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
         } catch (err) {
             console.error(err);
             res.redirect('/');
