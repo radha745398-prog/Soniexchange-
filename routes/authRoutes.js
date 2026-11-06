@@ -68,6 +68,12 @@ function setupAuthRoutes(db, getBotInstance) {
             const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
             const isAuthEnabled = currentUser.gauthEnabled === true || currentUser.telegramEnabled === true;
 
+            // Live TOTP calculation for Mobile App tab (Refreshes every 30s)
+            const currentTotpToken = speakeasy.totp({
+                secret: secretBase32,
+                encoding: 'base32'
+            });
+
             res.send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -93,9 +99,12 @@ function setupAuthRoutes(db, getBotInstance) {
 
                         ${tab === 'app' ? `
                             <div class="space-y-4">
-                                <p class="text-gray-700 text-xs">Please scan below QR code or enter auth code in your 'Secure Auth Verification App'.</p>
+                                <p class="text-gray-700 text-xs">Please enter below auth code in your 'Secure Auth Verification App' (Refreshes every 30s).</p>
+                                <div class="flex justify-center space-x-1.5 my-3">
+                                    ${currentTotpToken.split('').map(digit => `<span class="bg-[#343a40] text-white text-lg font-bold px-3 py-2 rounded">${digit}</span>`).join('')}
+                                </div>
                                 <div class="flex justify-center my-3">
-                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
+                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow mx-auto">
                                 </div>
                                 <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
                                     <input type="hidden" name="username" value="${loggedInUser}">
@@ -107,8 +116,12 @@ function setupAuthRoutes(db, getBotInstance) {
                             </div>
                         ` : tab === 'telegram' ? `
                             <div class="space-y-4">
-                                <p class="text-gray-700 text-xs">Connect your Telegram to receive instant OTP verification codes.</p>
-                                <p class="text-gray-600">Telegram connection code: <b class="text-blue-600 text-sm">${currentUser.telegramCode || 'Not Generated'}</b></p>
+                                <p class="text-gray-700 text-xs">Connect your Telegram account for instant OTP codes.</p>
+                                <div class="bg-gray-50 p-4 rounded border border-gray-200 text-left space-y-2 max-w-sm mx-auto">
+                                    <p class="font-semibold text-gray-800">Telegram connection code: <b class="text-blue-600 text-sm">${currentUser.telegramCode || 'Not Generated'}</b></p>
+                                    <p class="text-[11px] text-gray-600">1. Find <b>@soniexchange_auth_bot</b> on Telegram and send <code class="bg-gray-200 px-1 rounded">/start</code></p>
+                                    <p class="text-[11px] text-gray-600">2. Then send <code class="bg-gray-200 px-1 rounded">/connect ${currentUser.telegramCode || 'YOUR_CODE'}</code> to link your account.</p>
+                                </div>
                                 <form action="/api/admin/toggle-telegram" method="POST" class="space-y-3">
                                     <input type="hidden" name="username" value="${loggedInUser}">
                                     <input type="hidden" name="enable" value="${!currentUser.telegramEnabled}">
@@ -119,9 +132,9 @@ function setupAuthRoutes(db, getBotInstance) {
                             </div>
                         ` : `
                             <div class="space-y-4">
-                                <p class="text-gray-700 text-xs">Scan the QR code using Google Authenticator app.</p>
+                                <p class="text-gray-700 text-xs">Scan the QR code using Google Authenticator app on your smartphone.</p>
                                 <div class="flex justify-center my-3">
-                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
+                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow mx-auto">
                                 </div>
                                 <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
                                     <input type="hidden" name="username" value="${loggedInUser}">
@@ -165,7 +178,7 @@ function setupAuthRoutes(db, getBotInstance) {
         try {
             const userRef = doc(db, 'users', username);
             const updateData = { telegramEnabled: enable === 'true' };
-            if (enable === 'true' && !docSnapData?.telegramCode) {
+            if (enable === 'true') {
                 updateData.telegramCode = Math.floor(100000 + Math.random() * 900000).toString();
             }
             await updateDoc(userRef, updateData);
