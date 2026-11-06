@@ -72,6 +72,17 @@ function setupAdminRoutes(db) {
 
             usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
+            // Calculate Totals for Footer and Summary Banner
+            let totalCreditRef = 0;
+            let totalPoints = 0;
+            let totalExposure = 0;
+
+            usersList.forEach(u => {
+                totalCreditRef += Number(u.creditRef || 0);
+                totalPoints += Number(u.points || 0);
+                totalExposure += Number(u.exposure || 0);
+            });
+
             let tableRows = usersList.length === 0 ? `
                 <tr><td colspan="12" class="text-center p-4 text-gray-500">No ${tab} users found.</td></tr>
             ` : usersList.map(u => `
@@ -146,7 +157,7 @@ function setupAdminRoutes(db) {
                         <div id="summaryBannerContent" class="hidden px-4 pb-3 pt-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[11px] border-t border-white/20">
                             <div class="flex justify-between py-0.5"><span>Upper Level Credit Reference:</span><span class="font-semibold">0</span></div>
                             <div class="flex justify-between py-0.5"><span>Down level Occupy Balance:</span><span class="font-semibold">0</span></div>
-                            <div class="flex justify-between py-0.5"><span>Down Level Credit Reference:</span><span class="font-semibold">100</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Credit Reference:</span><span class="font-semibold">${totalCreditRef.toLocaleString()}</span></div>
                             <div class="flex justify-between py-0.5">
                                 <span>Total Master Balance:</span>
                                 <span class="font-semibold flex items-center space-x-1">
@@ -156,8 +167,8 @@ function setupAdminRoutes(db) {
                                     ` : ''}
                                 </span>
                             </div>
-                            <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">-1000</span></div>
-                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold">-100</span></div>
+                            <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">0</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold">${totalPoints.toLocaleString()}</span></div>
                             <div class="flex justify-between py-0.5">
                                 <span>Available Balance:</span>
                                 <span class="font-semibold flex items-center space-x-1">
@@ -167,7 +178,7 @@ function setupAdminRoutes(db) {
                                     ` : ''}
                                 </span>
                             </div>
-                            <div class="flex justify-between py-0.5"><span>Available Balance With Profit/Loss:</span><span class="font-semibold">1000</span></div>
+                            <div class="flex justify-between py-0.5"><span>Available Balance With Profit/Loss:</span><span class="font-semibold">${(Number(currentUser.points || 0) + totalPoints).toLocaleString()}</span></div>
                             <div class="flex justify-between py-0.5"><span>My Profit/Loss:</span><span class="font-semibold">0</span></div>
                         </div>
                     </div>
@@ -223,6 +234,16 @@ function setupAdminRoutes(db) {
                                     </tr>
                                 </thead>
                                 <tbody>${tableRows}</tbody>
+                                <tfoot>
+                                    <tr class="bg-gray-100 font-bold text-[11px] border-t-2 border-gray-300 text-gray-800">
+                                        <td class="p-2 border-r">Total</td>
+                                        <td class="p-2 border-r text-right">${totalCreditRef.toLocaleString()}</td>
+                                        <td class="p-2 border-r text-right">0</td>
+                                        <td class="p-2 border-r text-right">${totalPoints.toLocaleString()}</td>
+                                        <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
+                                        <td colspan="7" class="p-2"></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </main>
