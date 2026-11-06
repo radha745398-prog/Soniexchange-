@@ -6,7 +6,7 @@ const adminController = require('./adminController');
 
 function setupAdminRoutes(db) {
 
-    // 1. CLEAN DASHBOARD (Login ke turant baad ab yeh khulega, client list nahi)
+    // 1. CLEAN DASHBOARD
     router.get('/dashboard', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         try {
@@ -43,7 +43,7 @@ function setupAdminRoutes(db) {
         }
     });
 
-    // 2. CLIENT LIST VIEW (Jab user specifically click karega tabhi dikhegi)
+    // 2. CLIENT LIST VIEW (TOTALS ROW PLACED JUST BELOW THE TABLE HEADER)
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -72,7 +72,7 @@ function setupAdminRoutes(db) {
 
             usersList.sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
-            // Calculate Totals for Footer and Summary Banner
+            // Calculate Totals for Header Summary and Table Total Row
             let totalCreditRef = 0;
             let totalPoints = 0;
             let totalExposure = 0;
@@ -232,18 +232,17 @@ function setupAdminRoutes(db) {
                                         <th class="p-2 border-r text-center">Account Type</th>
                                         <th class="p-2 text-center">Action</th>
                                     </tr>
-                                </thead>
-                                <tbody>${tableRows}</tbody>
-                                <tfoot>
-                                    <tr class="bg-gray-100 font-bold text-[11px] border-t-2 border-gray-300 text-gray-800">
-                                        <td class="p-2 border-r">Total</td>
+                                    <!-- TOTAL ROW JUST BELOW HEADER -->
+                                    <tr class="bg-gray-50 font-bold text-[11px] border-b-2 border-gray-300 text-gray-800">
+                                        <td class="p-2 border-r"></td>
                                         <td class="p-2 border-r text-right">${totalCreditRef.toLocaleString()}</td>
                                         <td class="p-2 border-r text-right">0</td>
                                         <td class="p-2 border-r text-right">${totalPoints.toLocaleString()}</td>
                                         <td class="p-2 border-r text-right">${totalExposure.toLocaleString()}</td>
                                         <td colspan="7" class="p-2"></td>
                                     </tr>
-                                </tfoot>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
                             </table>
                         </div>
                     </main>
