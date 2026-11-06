@@ -43,9 +43,10 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. SECURE AUTH & VERIFICATION PAGE (WITH WORKING QR & TELEGRAM DATA)
+    // 2. SECURE AUTH & VERIFICATION PAGE (FULLY FUNCTIONAL WITH TABS & ACTIONS)
     router.get('/admin/secureauth', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
+        const tab = req.query.tab || 'app';
         try {
             const userRef = doc(db, 'users', loggedInUser);
             const docSnap = await getDoc(userRef);
@@ -76,36 +77,64 @@ function setupAuthRoutes(db, getBotInstance) {
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 </head>
-                <body class="min-h-screen flex flex-col text-xs bg-white">
+                <body class="min-h-screen flex flex-col text-xs bg-white font-sans">
                     <div class="max-w-xl mx-auto w-full p-6 text-center space-y-6">
                         <div class="flex items-center justify-center gap-2 font-bold text-sm">
                             <span>Secure Auth Verification Status:</span>
-                            <span class="px-2 py-0.5 rounded text-white ${isAuthEnabled ? 'bg-green-600' : 'bg-red-500'}">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span>
+                            <span class="px-2.5 py-1 rounded text-white ${isAuthEnabled ? 'bg-green-600' : 'bg-red-500'}">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span>
                         </div>
                         <p class="text-gray-600 text-xs">Please select below option to enable secure auth verification</p>
                         
                         <div class="flex justify-center border-b border-gray-200">
-                            <button class="px-4 py-2 border-b-2 border-blue-600 font-bold text-blue-600 text-xs">Enable Using Mobile App</button>
-                            <button class="px-4 py-2 text-gray-500 font-semibold text-xs">Enable Using Telegram</button>
-                            <button class="px-4 py-2 text-gray-500 font-semibold text-xs">Enable Using Google Auth</button>
+                            <a href="/admin/secureauth?username=${encodeURIComponent(loggedInUser)}&tab=app" class="px-4 py-2 border-b-2 ${tab === 'app' ? 'border-blue-600 font-bold text-blue-600' : 'border-transparent text-gray-500'} text-xs">Enable Using Mobile App</a>
+                            <a href="/admin/secureauth?username=${encodeURIComponent(loggedInUser)}&tab=telegram" class="px-4 py-2 border-b-2 ${tab === 'telegram' ? 'border-blue-600 font-bold text-blue-600' : 'border-transparent text-gray-500'} text-xs">Enable Using Telegram</a>
+                            <a href="/admin/secureauth?username=${encodeURIComponent(loggedInUser)}&tab=gauth" class="px-4 py-2 border-b-2 ${tab === 'gauth' ? 'border-blue-600 font-bold text-blue-600' : 'border-transparent text-gray-500'} text-xs">Enable Using Google Auth</a>
                         </div>
 
-                        <div class="space-y-4">
-                            <p class="text-gray-700 text-xs">Please scan below QR code or enter auth code in your 'Secure Auth Verification App'.</p>
-                            <div class="flex justify-center my-3">
-                                <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
+                        ${tab === 'app' ? `
+                            <div class="space-y-4">
+                                <p class="text-gray-700 text-xs">Please scan below QR code or enter auth code in your 'Secure Auth Verification App'.</p>
+                                <div class="flex justify-center my-3">
+                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
+                                </div>
+                                <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
+                                    <input type="hidden" name="username" value="${loggedInUser}">
+                                    <input type="hidden" name="enable" value="${!currentUser.gauthEnabled}">
+                                    <button type="submit" class="px-4 py-2 rounded text-white font-bold text-xs ${currentUser.gauthEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} cursor-pointer">
+                                        ${currentUser.gauthEnabled ? 'Disable Mobile App Auth' : 'Enable Mobile App Auth'}
+                                    </button>
+                                </form>
                             </div>
-                            <p class="text-gray-600">Telegram connection code: <b class="text-blue-600">${currentUser.telegramCode || 'Not Generated'}</b></p>
-                            
-                            <div class="flex justify-center pt-2">
-                                <a href="#" class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded text-xs font-semibold inline-flex items-center gap-1.5 shadow">
-                                    <i class="fa-brands fa-android"></i> Download on the Android
-                                </a>
+                        ` : tab === 'telegram' ? `
+                            <div class="space-y-4">
+                                <p class="text-gray-700 text-xs">Connect your Telegram to receive instant OTP verification codes.</p>
+                                <p class="text-gray-600">Telegram connection code: <b class="text-blue-600 text-sm">${currentUser.telegramCode || 'Not Generated'}</b></p>
+                                <form action="/api/admin/toggle-telegram" method="POST" class="space-y-3">
+                                    <input type="hidden" name="username" value="${loggedInUser}">
+                                    <input type="hidden" name="enable" value="${!currentUser.telegramEnabled}">
+                                    <button type="submit" class="px-4 py-2 rounded text-white font-bold text-xs ${currentUser.telegramEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} cursor-pointer">
+                                        ${currentUser.telegramEnabled ? 'Disable Telegram Auth' : 'Enable Telegram Auth'}
+                                    </button>
+                                </form>
                             </div>
+                        ` : `
+                            <div class="space-y-4">
+                                <p class="text-gray-700 text-xs">Scan the QR code using Google Authenticator app.</p>
+                                <div class="flex justify-center my-3">
+                                    <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
+                                </div>
+                                <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
+                                    <input type="hidden" name="username" value="${loggedInUser}">
+                                    <input type="hidden" name="enable" value="${!currentUser.gauthEnabled}">
+                                    <button type="submit" class="px-4 py-2 rounded text-white font-bold text-xs ${currentUser.gauthEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} cursor-pointer">
+                                        ${currentUser.gauthEnabled ? 'Disable Google Auth' : 'Enable Google Auth'}
+                                    </button>
+                                </form>
+                            </div>
+                        `}
 
-                            <div class="pt-4">
-                                <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer text-xs">Back to Dashboard</a>
-                            </div>
+                        <div class="pt-4">
+                            <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer text-xs">Back to Dashboard</a>
                         </div>
                     </div>
                 </body>
@@ -113,6 +142,36 @@ function setupAuthRoutes(db, getBotInstance) {
             `);
         } catch(err) {
             console.error("Secure auth error:", err);
+            res.redirect('/');
+        }
+    });
+
+    // Toggle GAuth API
+    router.post('/api/admin/toggle-gauth', async (req, res) => {
+        const { username, enable } = req.body;
+        try {
+            const userRef = doc(db, 'users', username);
+            await updateDoc(userRef, { gauthEnabled: enable === 'true' });
+            res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}&tab=app`);
+        } catch(e) {
+            console.error(e);
+            res.redirect('/');
+        }
+    });
+
+    // Toggle Telegram API
+    router.post('/api/admin/toggle-telegram', async (req, res) => {
+        const { username, enable } = req.body;
+        try {
+            const userRef = doc(db, 'users', username);
+            const updateData = { telegramEnabled: enable === 'true' };
+            if (enable === 'true' && !docSnapData?.telegramCode) {
+                updateData.telegramCode = Math.floor(100000 + Math.random() * 900000).toString();
+            }
+            await updateDoc(userRef, updateData);
+            res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}&tab=telegram`);
+        } catch(e) {
+            console.error(e);
             res.redirect('/');
         }
     });
