@@ -271,6 +271,7 @@ async function handleCreateClient(req, res, db) {
             betActive: true,
             defaultPct: 0,
             txnPassword: txnPassword || '',
+            mustChangePassword: true,
             createdAt: new Date().toISOString()
         });
 
