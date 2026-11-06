@@ -43,7 +43,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. SECURE AUTH & VERIFICATION PAGE (FULLY FUNCTIONAL WITH TABS & ACTIONS)
+    // 2. SECURE AUTH & VERIFICATION PAGE (WITH BOTH QR CODE & SECRET KEY DISPLAY)
     router.get('/admin/secureauth', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         const tab = req.query.tab || 'app';
@@ -106,6 +106,10 @@ function setupAuthRoutes(db, getBotInstance) {
                                 <div class="flex justify-center my-3">
                                     <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow mx-auto">
                                 </div>
+                                <div class="bg-gray-50 p-3 rounded border border-gray-200 max-w-sm mx-auto">
+                                    <p class="text-[11px] text-gray-600 font-semibold">Secret Key (Manual Entry):</p>
+                                    <code class="text-blue-600 font-bold text-xs tracking-wider bg-gray-200 px-2 py-1 rounded inline-block mt-1 select-all">${secretBase32}</code>
+                                </div>
                                 <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
                                     <input type="hidden" name="username" value="${loggedInUser}">
                                     <input type="hidden" name="enable" value="${!currentUser.gauthEnabled}">
@@ -132,9 +136,13 @@ function setupAuthRoutes(db, getBotInstance) {
                             </div>
                         ` : `
                             <div class="space-y-4">
-                                <p class="text-gray-700 text-xs">Scan the QR code using Google Authenticator app on your smartphone.</p>
+                                <p class="text-gray-700 text-xs">Scan the QR code or enter the secret key manually in your Google Authenticator app.</p>
                                 <div class="flex justify-center my-3">
                                     <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow mx-auto">
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded border border-gray-200 max-w-sm mx-auto">
+                                    <p class="text-[11px] text-gray-600 font-semibold">Secret Key (Manual Entry):</p>
+                                    <code class="text-blue-600 font-bold text-xs tracking-wider bg-gray-200 px-2 py-1 rounded inline-block mt-1 select-all">${secretBase32}</code>
                                 </div>
                                 <form action="/api/admin/toggle-gauth" method="POST" class="space-y-3">
                                     <input type="hidden" name="username" value="${loggedInUser}">
@@ -165,7 +173,7 @@ function setupAuthRoutes(db, getBotInstance) {
         try {
             const userRef = doc(db, 'users', username);
             await updateDoc(userRef, { gauthEnabled: enable === 'true' });
-            res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}&tab=app`);
+            res.redirect(`/admin/secureauth?username=${encodeURIComponent(username)}&tab=gauth`);
         } catch(e) {
             console.error(e);
             res.redirect('/');
