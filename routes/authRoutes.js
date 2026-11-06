@@ -288,7 +288,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 5. LOGIN OTP VERIFICATION PAGE
+    // 5. LOGIN OTP VERIFICATION PAGE (WITH MULTI-AUTH INPUTS)
     router.get('/login/verify-otp', async (req, res) => {
         const username = req.query.username || '';
         let hasGauth = false;
@@ -318,16 +318,28 @@ function setupAuthRoutes(db, getBotInstance) {
             </head>
             <body class="bg-[#116491] min-h-screen flex flex-col items-center justify-center p-6 text-white font-sans">
                 <div class="flex flex-col items-center justify-center w-full max-w-sm">
-                    <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center">
-                        <h2 class="text-sm font-bold text-gray-800 mb-2">Security Verification</h2>
-                        <p class="text-gray-600 text-[11px] mb-4">Please enter your verification code.</p>
+                    <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center space-y-4">
+                        <h2 class="text-sm font-bold text-gray-800">Security Verification</h2>
+                        <p class="text-gray-600 text-[11px]">Please enter your verification codes below.</p>
                         
-                        <form action="/api/login/verify-otp" method="POST" class="space-y-4" autocomplete="off">
+                        <form action="/api/login/verify-otp" method="POST" class="space-y-3 text-left" autocomplete="off">
                             <input type="hidden" name="username" value="${username}">
-                            <div>
-                                <input type="text" name="token" required placeholder="Enter verification code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
-                            </div>
-                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
+                            
+                            ${hasGauth ? `
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Google Authenticator Code:</label>
+                                    <input type="text" name="gauthCode" placeholder="Enter 6-digit GAuth code" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
+                                </div>
+                            ` : ''}
+
+                            ${hasTelegram ? `
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Telegram OTP Code:</label>
+                                    <input type="text" name="telegramCode" placeholder="Enter Telegram OTP" maxlength="6" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-sm text-center font-bold tracking-widest text-gray-800 focus:outline-none focus:border-cyan-500">
+                                </div>
+                            ` : ''}
+
+                            <button type="submit" class="w-full bg-[#0088cc] hover:bg-[#006699] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer mt-2">
                                 Verify & Login →
                             </button>
                         </form>
@@ -338,9 +350,9 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 6. LOGIN OTP VERIFICATION API
+    // 6. LOGIN OTP VERIFICATION API (HANDLES BOTH CODES SIMULTANEOUSLY)
     router.post('/api/login/verify-otp', async (req, res) => {
-        const { username, token } = req.body;
+        const { username, gauthCode, telegramCode } = req.body;
         try {
             const userRef = doc(db, 'users', username);
             const docSnap = await getDoc(userRef);
@@ -350,25 +362,29 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             const user = docSnap.data();
-            let verified = false;
+            let gauthVerified = true;
+            let telegramVerified = true;
 
+            // Check Google Authenticator if enabled
             if (user.gauthEnabled && user.gauthSecret) {
-                verified = speakeasy.totp.verify({
+                gauthVerified = speakeasy.totp.verify({
                     secret: user.gauthSecret,
                     encoding: 'base32',
-                    token: token,
-                    window: 1
+                    token: gauthCode ? gauthCode.trim() : '',
+                    window: 2
                 });
             }
 
-            if (!verified && user.telegramEnabled && req.session.pendingTelegramOtp) {
-                if (token.trim() === req.session.pendingTelegramOtp.trim()) {
-                    verified = true;
+            // Check Telegram OTP if enabled
+            if (user.telegramEnabled && req.session.pendingTelegramOtp) {
+                if (!telegramCode || telegramCode.trim() !== req.session.pendingTelegramOtp.trim()) {
+                    telegramVerified = false;
+                } else {
                     delete req.session.pendingTelegramOtp;
                 }
             }
 
-            if (!verified) {
+            if (!gauthVerified || !telegramVerified) {
                 return res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}&error=invalid`);
             }
 
