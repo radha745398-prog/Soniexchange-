@@ -117,6 +117,11 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
+            // CHECK IF PASSWORD CHANGE IS MANDATORY ON FIRST LOGIN
+            if (user.mustChangePassword === true) {
+                return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
+            }
+
             if (user.gauthEnabled === true || user.telegramEnabled === true) {
                 req.session.pendingAuthUser = user.username;
                 const bot = getBotInstance ? getBotInstance() : null;
@@ -141,11 +146,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 req.session.masterAdmin = user.username;
             }
 
-            if (user.mustChangePassword === true) {
-                return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
-            }
-
-            // FIXED: Redirect to Dashboard instead of soni-view
             res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
         } catch(err) {
             console.error("Login process error:", err);
@@ -305,6 +305,10 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}&error=invalid`);
             }
 
+            if (user.mustChangePassword === true) {
+                return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
+            }
+
             req.session.loggedInUser = user.username;
             req.session.userRole = user.role;
             if (user.role === 'ADMIN' || user.username === 'Soniexchange') {
@@ -312,7 +316,6 @@ function setupAuthRoutes(db, getBotInstance) {
             }
             delete req.session.pendingAuthUser;
 
-            // FIXED: Redirect to Dashboard instead of soni-view
             res.redirect(`/dashboard?username=${encodeURIComponent(user.username)}`);
         } catch (err) {
             console.error(err);
@@ -320,7 +323,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 8. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
+    // 8. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE (MATCHING SCREENSHOT 1)
     router.get('/change-temporary-password', (req, res) => {
         const username = req.query.username || '';
         res.send(`
@@ -328,24 +331,34 @@ function setupAuthRoutes(db, getBotInstance) {
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Change Temporary Password - Soniexchange</title>
+                <title>Change Password - Soniexchange</title>
                 <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             </head>
-            <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 text-xs">
-                <div class="bg-white p-6 rounded shadow-lg max-w-md w-full text-gray-800">
-                    <h2 class="font-bold text-base mb-3 text-[#0077b6] border-b pb-1">Change Temporary Password</h2>
-                    <p class="text-gray-600 mb-4 text-[11px]">For security reasons, please update your temporary password before accessing the system.</p>
-                    <form action="/api/update-temporary-password" method="POST" class="space-y-3">
+            <body class="bg-[#116491] min-h-screen flex items-center justify-center p-4 font-sans">
+                <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full text-gray-800">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="border-t border-gray-300 flex-grow mr-3"></div>
+                        <span class="text-gray-700 text-sm font-bold flex items-center gap-1.5">Login <i class="fa-solid fa-lock text-xs"></i></span>
+                        <div class="border-t border-gray-300 flex-grow ml-3"></div>
+                    </div>
+                    <form action="/api/update-temporary-password" method="POST" class="space-y-4" autocomplete="off">
                         <input type="hidden" name="username" value="${username}">
                         <div>
-                            <label class="block font-semibold mb-1">New Password:</label>
-                            <input type="password" name="newPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Current Password:</label>
+                            <input type="password" name="currentPassword" required placeholder="Enter Current password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
                         <div>
-                            <label class="block font-semibold mb-1">Confirm New Password:</label>
-                            <input type="password" name="confirmPassword" required class="w-full border p-2 rounded bg-gray-50 text-xs">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">New Password:</label>
+                            <input type="password" name="newPassword" required placeholder="Enter New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
                         </div>
-                        <button type="submit" class="w-full bg-[#0077b6] hover:bg-[#005b8e] text-white font-bold py-2 rounded cursor-pointer">Update Password</button>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Confirm Password:</label>
+                            <input type="password" name="confirmPassword" required placeholder="Confirm New Password" class="w-full bg-gray-50 border border-gray-300 rounded p-2.5 text-xs text-gray-800 focus:outline-none focus:border-cyan-500">
+                        </div>
+                        <button type="submit" class="w-full bg-[#1b3b4b] hover:bg-[#132a36] text-white font-bold py-2.5 rounded text-xs transition shadow cursor-pointer">
+                            Change Password
+                        </button>
                     </form>
                 </div>
             </body>
@@ -353,11 +366,12 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 9. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY
+    // 9. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY (MATCHING SCREENSHOT 2)
     router.post('/api/update-temporary-password', async (req, res) => {
-        const { username, newPassword, confirmPassword } = req.body;
+        const { username, currentPassword, newPassword, confirmPassword } = req.body;
+        
         if (newPassword !== confirmPassword) {
-            return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}`);
+            return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}&error=mismatch`);
         }
 
         try {
@@ -369,9 +383,17 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             const userData = docSnap.data();
+            
+            // Verify current password matches temporary password
+            const isMatch = (currentPassword === userData.password) || (await bcrypt.compare(currentPassword, userData.password).catch(() => false));
+            if (!isMatch) {
+                return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}&error=invalid_current`);
+            }
+
             const userRole = userData.role || 'Client';
             const isClient = (userRole === 'Client' || userRole === 'User');
 
+            // IF CLIENT: Update password and redirect straight to login page
             if (isClient) {
                 await updateDoc(userRef, {
                     password: newPassword,
@@ -380,6 +402,7 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
+            // IF ADMIN / MASTER: Generate transaction password and show 30-sec screen
             const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
             await updateDoc(userRef, {
@@ -424,7 +447,7 @@ function setupAuthRoutes(db, getBotInstance) {
 
                         <div class="pt-2">
                             <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition cursor-pointer">
-                                <i class="fa-solid fa-arrow-left mr-1"></i> Go to Sign In Now
+                                <i class="fa-solid fa-arrow-left mr-1"></i> Back
                             </a>
                         </div>
                     </div>
