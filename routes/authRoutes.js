@@ -43,7 +43,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. SECURE AUTH & VERIFICATION PAGE (RESTORED TO ORIGINAL DESIGN)
+    // 2. SECURE AUTH & VERIFICATION PAGE (WITH WORKING QR & TELEGRAM DATA)
     router.get('/admin/secureauth', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         try {
@@ -91,16 +91,11 @@ function setupAuthRoutes(db, getBotInstance) {
                         </div>
 
                         <div class="space-y-4">
-                            <p class="text-gray-700 text-xs">Please enter below auth code in your 'Secure Auth Verification App'.</p>
-                            <div class="flex justify-center gap-1.5 my-2">
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">4</span>
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">6</span>
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">6</span>
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">7</span>
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">0</span>
-                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">8</span>
+                            <p class="text-gray-700 text-xs">Please scan below QR code or enter auth code in your 'Secure Auth Verification App'.</p>
+                            <div class="flex justify-center my-3">
+                                <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white shadow">
                             </div>
-                            <p class="text-[11px] text-gray-500">If you haven't downloaded,<br>please download 'Secure Auth Verification App' from below link.<br>Using this app you will receive auth code during login authentication.</p>
+                            <p class="text-gray-600">Telegram connection code: <b class="text-blue-600">${currentUser.telegramCode || 'Not Generated'}</b></p>
                             
                             <div class="flex justify-center pt-2">
                                 <a href="#" class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded text-xs font-semibold inline-flex items-center gap-1.5 shadow">
