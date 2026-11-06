@@ -43,7 +43,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 2. SECURE AUTH & TELEGRAM VERIFICATION PAGE
+    // 2. SECURE AUTH & VERIFICATION PAGE (RESTORED TO ORIGINAL DESIGN)
     router.get('/admin/secureauth', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         try {
@@ -76,17 +76,43 @@ function setupAuthRoutes(db, getBotInstance) {
                     <script src="https://cdn.tailwindcss.com"></script>
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 </head>
-                <body class="min-h-screen flex flex-col text-xs bg-[#f4f6f8]">
-                    <main class="flex-1 p-6 max-w-xl mx-auto w-full">
-                        <div class="bg-white border rounded p-6 shadow-xs text-center space-y-4">
-                            <h2 class="text-sm font-bold">Secure Auth Verification Status: <span class="${isAuthEnabled ? 'text-green-600' : 'text-red-500'}">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span></h2>
-                            <p class="text-gray-600">Telegram connection code: <b class="text-blue-600">${currentUser.telegramCode || 'Not Generated'}</b></p>
-                            <div class="flex justify-center my-3">
-                                <img src="${qrCodeDataUrl}" alt="QR Code" class="w-36 h-36 border p-1 bg-white">
-                            </div>
-                            <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer">Back to Dashboard</a>
+                <body class="min-h-screen flex flex-col text-xs bg-white">
+                    <div class="max-w-xl mx-auto w-full p-6 text-center space-y-6">
+                        <div class="flex items-center justify-center gap-2 font-bold text-sm">
+                            <span>Secure Auth Verification Status:</span>
+                            <span class="px-2 py-0.5 rounded text-white ${isAuthEnabled ? 'bg-green-600' : 'bg-red-500'}">${isAuthEnabled ? 'Enabled' : 'Disabled'}</span>
                         </div>
-                    </main>
+                        <p class="text-gray-600 text-xs">Please select below option to enable secure auth verification</p>
+                        
+                        <div class="flex justify-center border-b border-gray-200">
+                            <button class="px-4 py-2 border-b-2 border-blue-600 font-bold text-blue-600 text-xs">Enable Using Mobile App</button>
+                            <button class="px-4 py-2 text-gray-500 font-semibold text-xs">Enable Using Telegram</button>
+                            <button class="px-4 py-2 text-gray-500 font-semibold text-xs">Enable Using Google Auth</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-gray-700 text-xs">Please enter below auth code in your 'Secure Auth Verification App'.</p>
+                            <div class="flex justify-center gap-1.5 my-2">
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">4</span>
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">6</span>
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">6</span>
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">7</span>
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">0</span>
+                                <span class="w-10 h-10 bg-gray-800 text-white flex items-center justify-center font-bold rounded text-base">8</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500">If you haven't downloaded,<br>please download 'Secure Auth Verification App' from below link.<br>Using this app you will receive auth code during login authentication.</p>
+                            
+                            <div class="flex justify-center pt-2">
+                                <a href="#" class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded text-xs font-semibold inline-flex items-center gap-1.5 shadow">
+                                    <i class="fa-brands fa-android"></i> Download on the Android
+                                </a>
+                            </div>
+
+                            <div class="pt-4">
+                                <a href="/dashboard?username=${encodeURIComponent(loggedInUser)}" class="inline-block bg-[#0077b6] text-white px-4 py-1.5 rounded font-bold cursor-pointer text-xs">Back to Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
                 </body>
                 </html>
             `);
@@ -117,7 +143,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // CRITICAL: Check if password change is mandatory on first login
             if (user.mustChangePassword === true) {
                 return res.redirect(`/change-temporary-password?username=${encodeURIComponent(user.username)}`);
             }
@@ -220,11 +245,7 @@ function setupAuthRoutes(db, getBotInstance) {
                 <div class="flex flex-col items-center justify-center w-full max-w-sm">
                     <div class="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full text-center">
                         <h2 class="text-sm font-bold text-gray-800 mb-2">Security Verification</h2>
-                        <p class="text-gray-600 text-[11px] mb-4">
-                            ${hasGauth && hasTelegram ? 'Please enter your Google Authenticator 6-digit code or request an OTP via Telegram.' : 
-                              hasTelegram ? 'Please enter the OTP sent to your connected Telegram account.' : 
-                              'Please enter the 6-digit code from your Google Authenticator app.'}
-                        </p>
+                        <p class="text-gray-600 text-[11px] mb-4">Please enter your verification code.</p>
                         
                         <form action="/api/login/verify-otp" method="POST" class="space-y-4" autocomplete="off">
                             <input type="hidden" name="username" value="${username}">
@@ -235,17 +256,6 @@ function setupAuthRoutes(db, getBotInstance) {
                                 Verify & Login →
                             </button>
                         </form>
-
-                        ${hasTelegram ? `
-                            <div class="mt-4 pt-3 border-t border-gray-200">
-                                <form action="/api/login/resend-telegram-otp" method="POST">
-                                    <input type="hidden" name="username" value="${username}">
-                                    <button type="submit" class="text-blue-600 hover:underline text-[11px] font-semibold bg-transparent border-0 cursor-pointer">
-                                        📩 Resend / Send OTP via Telegram
-                                    </button>
-                                </form>
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             </body>
@@ -253,25 +263,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 6. RESEND TELEGRAM OTP ROUTE
-    router.post('/api/login/resend-telegram-otp', async (req, res) => {
-        const { username } = req.body;
-        try {
-            const userRef = doc(db, 'users', username);
-            const docSnap = await getDoc(userRef);
-            const bot = getBotInstance ? getBotInstance() : null;
-            if (docSnap.exists() && docSnap.data().telegramChatId && bot) {
-                const teleOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                req.session.pendingTelegramOtp = teleOtp;
-                await bot.sendMessage(docSnap.data().telegramChatId, `🔐 Your Soniexchange Login OTP code is: *${teleOtp}*.`, { parse_mode: 'Markdown' });
-            }
-        } catch (e) {
-            console.error(e);
-        }
-        res.redirect(`/login/verify-otp?username=${encodeURIComponent(username)}`);
-    });
-
-    // 7. LOGIN OTP VERIFICATION API
+    // 6. LOGIN OTP VERIFICATION API
     router.post('/api/login/verify-otp', async (req, res) => {
         const { username, token } = req.body;
         try {
@@ -323,7 +315,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 8. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE (MATCHING SCREENSHOT 1)
+    // 7. FIRST TIME TEMPORARY PASSWORD CHANGE PAGE
     router.get('/change-temporary-password', (req, res) => {
         const username = req.query.username || '';
         res.send(`
@@ -366,7 +358,7 @@ function setupAuthRoutes(db, getBotInstance) {
         `);
     });
 
-    // 9. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY (MATCHING SCREENSHOT 2)
+    // 8. API FOR FIRST TIME PASSWORD & 30-SEC TRANSACTION PASSWORD DISPLAY
     router.post('/api/update-temporary-password', async (req, res) => {
         const { username, currentPassword, newPassword, confirmPassword } = req.body;
         
@@ -383,18 +375,14 @@ function setupAuthRoutes(db, getBotInstance) {
             }
 
             const userData = docSnap.data();
-            
-            // Verify current password matches temporary password
             const isMatch = (currentPassword === userData.password) || (await bcrypt.compare(currentPassword, userData.password).catch(() => false));
             if (!isMatch) {
                 return res.redirect(`/change-temporary-password?username=${encodeURIComponent(username)}&error=invalid_current`);
             }
 
             const userRole = userData.role || 'Client';
-            // Check if user is a client (supporting both 'Client' and 'User')
             const isClient = (userRole === 'Client' || userRole === 'User');
 
-            // IF CLIENT: Update password, remove flag, and redirect straight to login page
             if (isClient) {
                 await updateDoc(userRef, {
                     password: newPassword,
@@ -403,7 +391,6 @@ function setupAuthRoutes(db, getBotInstance) {
                 return res.redirect('/');
             }
 
-            // IF ADMIN / SUPER / MASTER: Generate transaction password, remove flag, and show 30-sec screen
             const txnPass = Math.floor(100000 + Math.random() * 900000).toString();
 
             await updateDoc(userRef, {
@@ -436,16 +423,6 @@ function setupAuthRoutes(db, getBotInstance) {
                             <p class="text-gray-800 font-semibold text-[11px] mt-0.5">आपका लेनदेन पासवर्ड <span class="text-blue-600 font-bold text-xl tracking-wider">${txnPass}</span> है।</p>
                         </div>
 
-                        <div class="text-gray-700 text-[11px] leading-relaxed space-y-1 px-4">
-                            <p>Please remember this transaction password, from now on all transactions of the website can be done only with this password and keep one thing in mind, do not share this password with anyone.</p>
-                            <p>कृपया इस लेन-देन के पासवर्ड को याद रखें, अब से वेबसाइट के सभी हस्तांतरण केवल इस पासवर्ड से किए जा सकते हैं और एक बात का ध्यान रखें, इस पासवर्ड को किसी के साथ साझा न करें।</p>
-                        </div>
-
-                        <div class="text-gray-600 text-[11px] pt-1 font-medium">
-                            Thank you, Team Soniexchange<br>
-                            धन्यवाद, टीम Soniexchange
-                        </div>
-
                         <div class="pt-2">
                             <a href="/" class="inline-block bg-[#343a40] hover:bg-black text-white font-bold px-6 py-1.5 rounded text-xs shadow-xs transition cursor-pointer">
                                 <i class="fa-solid fa-arrow-left mr-1"></i> Back
@@ -474,7 +451,7 @@ function setupAuthRoutes(db, getBotInstance) {
         }
     });
 
-    // 10. SECURE LOGOUT ROUTE
+    // 9. SECURE LOGOUT ROUTE
     router.get('/logout', (req, res) => {
         try {
             req.session.destroy(() => {
