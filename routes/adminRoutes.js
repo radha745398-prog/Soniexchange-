@@ -43,7 +43,7 @@ function setupAdminRoutes(db) {
         }
     });
 
-    // 2. CLIENT LIST VIEW (WITH NEGATIVE VALUES HIGHLIGHTED IN RED)
+    // 2. CLIENT LIST VIEW
     router.get('/soni-view', async (req, res) => {
         const loggedInUser = req.query.username || req.session.loggedInUser || 'Soniexchange';
         const tab = req.query.tab || 'active';
@@ -177,7 +177,7 @@ function setupAdminRoutes(db) {
                                 </span>
                             </div>
                             <div class="flex justify-between py-0.5"><span>Upper Level:</span><span class="font-semibold">0</span></div>
-                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold ${totalPoints < 0 ? 'text-red-300 font-bold' : ''}">${totalPLFormatted}</span></div>
+                            <div class="flex justify-between py-0.5"><span>Down Level Profit/Loss:</span><span class="font-semibold ${totalPoints < 0 ? 'bg-red-600 text-white px-1.5 py-0.2 rounded' : ''}">${totalPLFormatted}</span></div>
                             <div class="flex justify-between py-0.5">
                                 <span>Available Balance:</span>
                                 <span class="font-semibold flex items-center space-x-1">
