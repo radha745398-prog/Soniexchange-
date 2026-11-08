@@ -90,10 +90,17 @@ function setupAdminRoutes(db) {
                 const plClass = clientPL < 0 ? 'text-red-600 font-bold' : '';
                 const plFormatted = clientPL < 0 ? `-${Math.abs(clientPL).toLocaleString()}` : clientPL.toLocaleString();
 
-                // STRICT LOGIC: ONLY Diamond Super Admin ('Soniexchange') gets the Switch button for ANY user (Master, Super, or Client)
-                const switchButtonHTML = loggedInUser === 'Soniexchange' ? `
-                    <a href="https://soniexchange-client.onrender.com?user=${encodeURIComponent(u.username)}&admin=${encodeURIComponent(loggedInUser)}" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>
-                ` : '';
+                // STRICT LOGIC: ONLY Diamond Super Admin ('Soniexchange') gets the Switch button
+                // If accountType is Master or Super, switch inside admin panel. If Client, redirect to client portal domain.
+                let switchButtonHTML = '';
+                if (loggedInUser === 'Soniexchange') {
+                    const accType = (u.accountType || u.role || '').toLowerCase();
+                    if (accType.includes('master') || accType.includes('super')) {
+                        switchButtonHTML = `<a href="/soni-view?username=${encodeURIComponent(u.username)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
+                    } else {
+                        switchButtonHTML = `<a href="https://soniexchange-client.onrender.com?user=${encodeURIComponent(u.username)}&admin=${encodeURIComponent(loggedInUser)}" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
+                    }
+                }
 
                 return `
                 <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
