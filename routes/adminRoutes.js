@@ -91,12 +91,12 @@ function setupAdminRoutes(db) {
                 const plFormatted = clientPL < 0 ? `-${Math.abs(clientPL).toLocaleString()}` : clientPL.toLocaleString();
 
                 // STRICT LOGIC: ONLY Diamond Super Admin ('Soniexchange') gets the Switch button
-                // If accountType is Master or Super, switch inside admin panel. If Client, redirect to client portal domain.
+                // If accountType/role is Master or Super, switch to their Dashboard. If Client, redirect to client portal domain.
                 let switchButtonHTML = '';
                 if (loggedInUser === 'Soniexchange') {
                     const accType = (u.accountType || u.role || '').toLowerCase();
                     if (accType.includes('master') || accType.includes('super')) {
-                        switchButtonHTML = `<a href="/soni-view?username=${encodeURIComponent(u.username)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
+                        switchButtonHTML = `<a href="/dashboard?username=${encodeURIComponent(u.username)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
                     } else {
                         switchButtonHTML = `<a href="https://soniexchange-client.onrender.com?user=${encodeURIComponent(u.username)}&admin=${encodeURIComponent(loggedInUser)}" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
                     }
