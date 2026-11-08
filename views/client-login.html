@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoniExchange - Client Login</title>
+    <title>SoniExchange - Client Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -11,11 +11,11 @@
             padding: 0;
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-weight: 400; /* Normal text weight */
+            font-weight: 400; /* Normal typography, not extra bold */
         }
 
         body {
-            /* Admin Panel Slate/Dark-Blue Match */
+            /* Exact Soni Admin Panel Blue/Slate Theme Match */
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
             display: flex;
@@ -25,7 +25,7 @@
             color: #ffffff;
         }
 
-        /* Top Brand Logo */
+        /* Top Brand Header */
         .brand-header {
             margin-top: 45px;
             text-align: center;
@@ -40,7 +40,7 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
-        /* Center White Card */
+        /* Login Card */
         .login-card {
             background: #ffffff;
             width: 88%;
@@ -88,7 +88,7 @@
             border-left: 1px solid #e2e8f0;
         }
 
-        /* Admin Theme Buttons */
+        /* Buttons */
         .btn {
             width: 100%;
             padding: 11px;
@@ -104,7 +104,7 @@
         }
 
         .btn-primary {
-            background: #0f172a; /* Admin Dark Tone */
+            background: #0f172a; 
             color: #ffffff;
             margin-top: 14px;
             margin-bottom: 8px;
@@ -133,9 +133,10 @@
             font-size: 12px;
             margin-bottom: 12px;
             text-align: center;
+            font-weight: 500;
         }
 
-        /* Bottom Footer */
+        /* Footer Layout */
         .footer {
             width: 100%;
             background: #090d16;
@@ -173,7 +174,7 @@
 
     <!-- Main Card -->
     <div class="login-card">
-        <div class="card-title">Login 👎</div>
+        <div class="card-title">Login</div>
 
         <div id="adminNotice" class="admin-banner">
             <i class="fa-solid fa-shield-halved"></i> Admin Switch Mode Active
@@ -210,7 +211,7 @@
     </div>
 
     <script>
-        // Admin Panel Impersonate/Switch Handler
+        // Automatic Admin Impersonation Token Handler
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('impersonate_token');
@@ -224,7 +225,7 @@
         };
 
         function handleLogin() {
-            alert("Client Login Triggered!");
+            alert("Logging into SoniExchange Client Portal...");
         }
 
         function demoLogin() {
@@ -235,4 +236,3 @@
     </script>
 </body>
 </html>
-
