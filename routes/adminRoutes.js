@@ -90,11 +90,16 @@ function setupAdminRoutes(db) {
                 const plClass = clientPL < 0 ? 'text-red-600 font-bold' : '';
                 const plFormatted = clientPL < 0 ? `-${Math.abs(clientPL).toLocaleString()}` : clientPL.toLocaleString();
 
+                // STRICT LOGIC: ONLY Diamond Super Admin ('Soniexchange') gets the Switch button for ANY user (Master, Super, or Client)
+                const switchButtonHTML = loggedInUser === 'Soniexchange' ? `
+                    <a href="https://soniexchange-client.onrender.com?user=${encodeURIComponent(u.username)}&admin=${encodeURIComponent(loggedInUser)}" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>
+                ` : '';
+
                 return `
                 <tr class="border-b bg-white text-[11px] hover:bg-gray-50">
                     <td class="p-2 border-r flex items-center justify-between">
                         <span class="bg-[#2b3a4a] text-white px-2 py-1 rounded-xs font-bold text-[10px]">${u.username}</span>
-                        <a href="/admin/impersonate/${encodeURIComponent(u.username)}?admin=${encodeURIComponent(loggedInUser)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>
+                        ${switchButtonHTML}
                     </td>
                     <td class="p-2 border-r text-right">${Number(u.creditRef || 0).toLocaleString()}</td>
                     <td class="p-2 border-r text-right">${Math.abs(Number(u.points || 0)).toLocaleString()}</td>
