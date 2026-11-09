@@ -29,6 +29,15 @@ const getBotInstance = () => {
 };
 getBotInstance();
 
+// ==========================================
+// DIRECT ADMIN SWITCH ROUTE (For Client Access)
+// ==========================================
+app.get('/switch-to-client', (req, res) => {
+    const targetUser = req.query.user || 'Client';
+    // Bina password ke direct client ke dashboard par redirect kar do
+    res.redirect(`/dashboard?user=${encodeURIComponent(targetUser)}`);
+});
+
 // Mount Modular Routes
 app.use('/', setupAuthRoutes(db, getBotInstance));
 app.use('/', setupAdminRoutes(db));
