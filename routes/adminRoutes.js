@@ -90,14 +90,14 @@ function setupAdminRoutes(db) {
                 const plClass = clientPL < 0 ? 'text-red-600 font-bold' : '';
                 const plFormatted = clientPL < 0 ? `-${Math.abs(clientPL).toLocaleString()}` : clientPL.toLocaleString();
 
-                // SWITCH LOGIC: Master/Super as-is, Client gets direct internal switch route without password
+                // SWITCH LOGIC: Master/Super as-is, Client goes directly to the new Client Domain without password using bypass flag
                 let switchButtonHTML = '';
                 if (loggedInUser === 'Soniexchange') {
                     const accType = (u.accountType || u.role || '').toLowerCase();
                     if (accType.includes('master') || accType.includes('super')) {
                         switchButtonHTML = `<a href="/dashboard?username=${encodeURIComponent(u.username)}" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
                     } else {
-                        switchButtonHTML = `<a href="/switch-to-client?user=${encodeURIComponent(u.username)}" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
+                        switchButtonHTML = `<a href="https://soniexchange-client.onrender.com/switch-to-client?user=${encodeURIComponent(u.username)}&bypass=true" target="_blank" class="bg-green-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">Switch</a>`;
                     }
                 }
 
